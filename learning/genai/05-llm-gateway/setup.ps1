@@ -5,7 +5,8 @@
 .DESCRIPTION
     Creates or reuses `.venv` next to this script, installs every dependency
     from the adjacent requirements.txt, registers the `genai-05-llm-gateway` Jupyter
-    kernel, and assigns that kernel to every notebook in this chapter.
+    kernel, verifies both companion notebooks exist, and assigns that kernel to
+    every notebook in this chapter.
 
     Pass -SkipKernel to install dependencies without registering or assigning
     the Jupyter kernel.
@@ -22,6 +23,10 @@ $VenvPython = Join-Path $VenvDir "Scripts\python.exe"
 $KernelName = "genai-05-llm-gateway"
 $KernelDisplayName = "Python (GenAI 05 LLM Gateway .venv)"
 $KernelSetter = Join-Path $ScriptDir "..\..\..\scripts\set-notebook-kernel.py"
+$ExpectedNotebooks = @(
+    "01-gateway-control-plane-theory.ipynb",
+    "02-gateway-routing-resilience-lab.ipynb"
+)
 
 $PythonCommand = Get-Command python -ErrorAction SilentlyContinue
 if (-not $PythonCommand) {
@@ -35,6 +40,12 @@ if (-not (Test-Path $Requirements)) {
 }
 if (-not (Test-Path $KernelSetter)) {
     throw "Kernel metadata helper was not found at $KernelSetter"
+}
+foreach ($Notebook in $ExpectedNotebooks) {
+    $NotebookPath = Join-Path $ScriptDir $Notebook
+    if (-not (Test-Path $NotebookPath)) {
+        throw "Expected companion notebook was not found at $NotebookPath"
+    }
 }
 
 if (Test-Path $VenvPython) {
@@ -65,6 +76,6 @@ if (-not $SkipKernel) {
 }
 
 Write-Host ""
-Write-Host "Setup complete for GenAI 05 LLM Gateway." -ForegroundColor Green
+Write-Host "Setup complete for both GenAI 05 LLM Gateway notebooks." -ForegroundColor Green
 Write-Host "Virtual environment: $VenvDir"
 Write-Host "Jupyter kernel: $KernelDisplayName"

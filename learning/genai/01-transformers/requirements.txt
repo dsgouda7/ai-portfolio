@@ -1,12 +1,14 @@
-# Packages required to run the eight Transformer and base-LLM notebooks
+# Packages required to run the Transformer core and optional revision notebooks
 numpy
 matplotlib
 seaborn
 plotly
 torch
+lightning
 transformers
 tokenizers
 sentencepiece
 ipython
 ipykernel
+nbclient
 nbconvert

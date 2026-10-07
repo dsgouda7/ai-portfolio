@@ -2,6 +2,10 @@
 
 LLM quality is multidimensional. A fluent answer can be wrong, and a correct paraphrase can look unlike its reference. Therefore, no single score can certify a model. Start with the decision or claim, then combine metrics that provide different kinds of evidence.
 
+This chapter is the canonical owner of that metric caveat and of reference, semantic,
+model-based, and benchmark evidence. Later chapters link back instead of repeating the full
+taxonomy.
+
 ![Evaluation taxonomy from questions to evidence](images/01-llm-evaluation-metrics-and-benchmarks-theory-01.png)
 
 ## 1. Metric taxonomy
@@ -67,3 +71,7 @@ Keep per-example results and report slices that match risk: manuscript, query ty
 7. Any disagreement: inspect examples and let the original task claim decide; never select whichever metric is largest afterward.
 
 Riverside's minimum suite is BERTScore for semantic fidelity, perplexity for domain-fit regression, a private MCQ benchmark for manuscript recall, and recurring manual review. The governing principle is: **measure the claim, preserve disagreement, guard against leakage, and inspect the failures.**
+
+Continue to [LLM-as-judge and safety](02-llm-as-judge-safety-and-pipeline.ipynb) for evaluator
+trust, [hallucination detection](03-hallucination-detection.ipynb) for unsupported-claim
+localization, and [calibration](04-calibration-and-confidence.ipynb) for abstention policy.

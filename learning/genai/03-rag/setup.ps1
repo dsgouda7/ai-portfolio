@@ -5,7 +5,7 @@
 .DESCRIPTION
     Creates or reuses `.venv` next to this script, installs every dependency
     from the adjacent requirements.txt, registers the `genai-03-rag` Jupyter
-    kernel, and assigns that kernel to every notebook in this chapter.
+    kernel, and assigns that kernel to all three notebooks in this chapter.
 
     Pass -SkipKernel to install dependencies without registering or assigning
     the Jupyter kernel.

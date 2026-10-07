@@ -1,10 +1,26 @@
-# PyTorch Fundamentals
+# Legacy PyTorch Bridges
 
-This chapter closes the gap between labeled data and framework code in two steps:
+The required PyTorch route now lives in
+[PyTorch for LLMs 00-04](../../pytorch-for-llms/00-deep-learning-map/). This directory preserves
+evidence that has not yet reached its final optional home.
 
-1. [Arrays to Model Tensors](00-arrays-to-model-tensors.ipynb) · [Theory notes](00-arrays-to-model-tensors-theory.md) starts with NumPy indexing, slicing, reshape, transpose, broadcasting, and matrix multiplication, then proves the same classifier and sequence-input contracts in TensorFlow and PyTorch.
-2. [Keras to PyTorch: Antarctic Field Guide](01-keras-to-pytorch-antarctic-field-guide.ipynb) carries those shape and dtype contracts into explicit PyTorch modules, autograd, optimization, and inference.
+## Preserved Shape and Sequence Evidence
 
-Complete both notebooks in order. The first makes every axis visible; the second makes the training state visible.
+- [Arrays to Model Tensors](00-arrays-to-model-tensors.ipynb)
+- [Handwritten theory](00-arrays-to-model-tensors-theory.md)
 
-Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS. Either script creates or reuses this chapter's `.venv`, installs the adjacent `requirements.txt`, registers the chapter-unique `genai-prereq-03-pytorch` Jupyter kernel, and assigns it to both notebooks.
+Its table-shape, indexing, reshape, transpose, broadcasting, and matrix-operation evidence has
+been merged into required Part 01. Its sequence-window evidence remains here until the approved
+sequence-memory and tokenization chapters are implemented.
+
+## Optional Keras Translation
+
+- [Keras to PyTorch: Antarctic Field Guide](optional/01-keras-to-pytorch-antarctic-field-guide.ipynb)
+
+This notebook preserves Keras/PyTorch vocabulary, `fit()` versus explicit-loop comparison, and
+evaluation-mode differences. It is no longer on the required route.
+
+## Setup
+
+Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS for these preserved notebooks. New
+learners should instead use the setup script in each canonical PyTorch chapter.

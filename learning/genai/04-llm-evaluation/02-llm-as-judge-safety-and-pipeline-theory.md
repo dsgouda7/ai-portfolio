@@ -1,6 +1,8 @@
 # LLM-as-Judge, Safety, and Evaluation Pipelines: Intuition Notes
 
-The companion notebook demonstrates pipeline shape; production values require in-domain calibration.
+This chapter is the canonical owner of evaluator bias, human agreement, safety gates, and release
+evidence. The companion notebook demonstrates pipeline shape; production values require in-domain
+calibration.
 
 ## 1. Begin with the release decision
 
@@ -72,3 +74,8 @@ An alert is not a diagnosis. It should pause promotion, expose failed examples, 
 5. Report item and slice evidence with uncertainty, and retain human ownership.
 
 The durable model is simple: judges produce evidence, safety gates constrain action, and a versioned regression pipeline turns evidence into accountable release decisions.
+
+Reference and semantic metric behavior remains in
+[Part 1](01-llm-evaluation-metrics-and-benchmarks.ipynb); unsupported-claim localization remains in
+[Part 3](03-hallucination-detection.ipynb); confidence policy remains in
+[Part 4](04-calibration-and-confidence.ipynb).

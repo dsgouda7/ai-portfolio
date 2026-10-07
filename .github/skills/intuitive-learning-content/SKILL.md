@@ -20,7 +20,7 @@ Read only the references needed for the task:
 - Complete-block continuation: [the complete Transformer block](../../../learning/genai/01-transformers/03-transformer-block.ipynb)
 - Modern architecture continuation: [modern decoder-only LLM](../../../learning/genai/01-transformers/06-modern-decoder-only-llm.ipynb)
 - Data-lineage continuation: [pretraining data pipeline](../../../learning/genai/01-transformers/07-pretraining-data-pipeline.ipynb)
-- Training-lifecycle continuation: [pretrain a base model](../../../learning/genai/01-transformers/08-pretrain-a-base-model.ipynb)
+- Training-lifecycle continuation: [pretrain a base model](../../../learning/genai/01-transformers/08b-pretrain-a-base-model-lab.ipynb)
 - Theory-note style: [Transformer block theory notes](../../../learning/genai/01-transformers/03-transformer-block-theory.md)
 
 The root guide wins when references conflict.

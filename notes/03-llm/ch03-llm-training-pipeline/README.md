@@ -13,7 +13,7 @@ How raw internet text becomes GPT-4 or Claude: the three-stage pipeline (pretrai
   - RLHF vs DPO: when to use each
   - LoRA and prefix tuning: adapting without full retraining
 
-> **From-scratch companion:** [`learning/genai/01-transformers/04-decoder-only-language-model.ipynb`](../../../learning/genai/01-transformers/04-decoder-only-language-model.ipynb) — its training section fits a MiniLM decoder-only Transformer end to end: vocabulary → embeddings → Transformer blocks → cross-entropy training loop → accuracy curve. Read it before this chapter to make the training-pipeline concepts concrete.
+> **From-scratch companion:** [`learning/genai/01-transformers/08b-pretrain-a-base-model-lab.ipynb`](../../../learning/genai/01-transformers/08b-pretrain-a-base-model-lab.ipynb) — it runs the manual training, validation, checkpoint, reload, and resume lifecycle before this chapter generalizes the pipeline.
 
 ## Learning Objectives
 

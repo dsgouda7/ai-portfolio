@@ -2,7 +2,11 @@
 
 Eight independent LoRA continued-pretraining experiments use one Riverside novel each, the same pinned SmolLM2 base, and the same recipe. They ask: **does the adapter model later chapters better without unacceptable damage to general-language behavior?**
 
-The notebook is CUDA-only. Training and overwrite are separate opt-ins so an accidental rerun cannot silently replace completed evidence.
+The notebook's model execution is CUDA-only, but its default preflight is CPU-safe. Preflight
+audits the environment, all eight chronological splits, duplicate hashes, stage order, checkpoint
+schedule, bootstrap size, and gate constants without loading a tokenizer or model. CUDA training,
+the one-novel pilot, the all-novel continuation, and overwrite are separate opt-ins so an
+accidental rerun cannot silently replace completed evidence.
 
 ## 1. Why the Split Is by Chapter
 
@@ -16,7 +20,25 @@ Complete chapters are the separation unit because nearby prose is highly related
 
 Only `chapter-*.txt` files participate. Appendices are recorded as exclusions. Before checkpoint selection, test files are hashed but not decoded or tokenized. The audit also checks that every chapter appears once, partitions do not overlap, all eight novels exist, and no chapter file is an exact duplicate.
 
-## 2. Tokenization and Training Boundaries
+## 2. Stage the experiment before scaling it
+
+The order is part of the evidence:
+
+```text
+environment and split audit
+-> one-novel pilot
+-> validation selection and adapter reload parity
+-> one-time test opening
+-> paired bootstrap, retention, and gates
+-> the other seven novels
+```
+
+The pilot must produce interval checkpoints, a selected adapter, parity deltas, test results,
+uncertainty, retention, a status, and a manifest before the same runner is allowed to spend compute
+on the rest of the catalog. There is no quick branch that trains fewer steps and consults test
+early.
+
+## 3. Tokenization and Training Boundaries
 
 Each chapter is tokenized independently, receives one terminal EOS token, and is divided into blocks of at most 512 tokens. Tails shorter than 64 tokens are dropped. No block joins two chapters.
 
@@ -24,7 +46,7 @@ SmolLM2 uses the same token ID for padding and EOS. Labels must therefore be mas
 
 Every novel starts fresh with a new base model, rank-8 LoRA adapter, optimizer, scheduler, seed, and checkpoint directory. Checkpoints are saved at steps 25, 50, 75, and 100. Training loss is useful telemetry, but it does not choose the winner.
 
-## 3. Token-Weighted Validation and Checkpoint Choice
+## 4. Token-Weighted Validation and Checkpoint Choice
 
 Validation scores every real next-token target. Add the negative log-likelihood from all validation tokens, add the token counts, and divide once. This gives every token equal influence. Averaging chapter means would let a short chapter count as much as a long one; averaging batch losses could make the result depend on padding and batch shape.
 
@@ -32,7 +54,7 @@ Each saved adapter is loaded onto a fresh pinned base and scored by this explici
 
 **Tiny example:** step 25 scores 2.41 over 18,000 validation tokens; step 50 scores 2.32; step 75 scores 2.35; step 100 scores 2.44. Select step 50, save it as `selected-adapter`, reload it, verify the validation score, and only then open test chapters.
 
-## 4. Test Isolation and Uncertainty
+## 5. Test Isolation and Uncertainty
 
 The selected adapter and tokenizer are saved, then reloaded on another fresh base. The reloaded adapter score and the disabled-base score must match their pre-save validation values within the declared tolerance. This parity check proves that the artifact on disk is the artifact that was measured.
 
@@ -44,7 +66,7 @@ Uncertainty is estimated with 2,000 paired bootstrap repeats. Each repeat resamp
 
 Many novels have only four to six test chapters, so the interval is a sensitivity check, not a population guarantee. If it crosses zero, the conclusion changes with chapter membership and is **INCONCLUSIVE**, even when the point estimate looks strong.
 
-## 5. Decision Rules and Artifact Lineage
+## 6. Decision Rules and Artifact Lineage
 
 - **PASS:** test perplexity improves by at least 5%, the interval's lower bound is above zero, and general-retention regression is at most 5%.
 - **FAIL:** retention regression exceeds 5%, or the whole improvement interval is below zero.
@@ -54,7 +76,7 @@ Read uncertainty first, retention second, then runtime and GPU memory. Cheap tra
 
 Artifact lineage connects every claim to its ingredients. Each novel keeps interval checkpoints, the selected adapter and tokenizer, and an `experiment-manifest.json`. The manifest records source paths, hashes and byte counts; exclusions; model and tokenizer revisions; seed; packages and hardware; token counts; recipe; checkpoint scores; selected step; parity deltas; test and retention results; bootstrap settings; generations; runtime; and peak GPU memory. Final JSON and CSV ledgers are valid only when all eight novels have one result and one manifest.
 
-## 6. Failure Modes and Practical Runbook
+## 7. Failure Modes and Practical Runbook
 
 **Leakage:** random chunks, cross-chapter blocks, duplicates, or test-driven tuning inflate evidence. Rebuild the split.
 

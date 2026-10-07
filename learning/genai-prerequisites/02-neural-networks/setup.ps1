@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Creates a local virtual environment and installs everything needed to run
-    the SmartVal and Melodyne chapter notebooks.
+    the required SmartVal notebook and optional Melodyne capstone.
 
 .DESCRIPTION
     Creates a `.venv` next to this script (if it does not already exist),
@@ -75,6 +75,6 @@ if (-not $SkipKernel) {
 Write-Host "`nSetup complete." -ForegroundColor Green
 Write-Host "Chapter notebooks:"
 Write-Host "  1. 01-smartval-neural-networks-and-backprop.ipynb"
-Write-Host "  2. 02-melodyne-backprop-synthesizer.ipynb"
+Write-Host "  2. optional/02-melodyne-backprop-synthesizer.ipynb"
 Write-Host "Pick the 'Python (neural-networks .venv)' kernel in either notebook."
 Write-Host "The venv lives at: $VenvDir"

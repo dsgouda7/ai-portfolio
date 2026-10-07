@@ -86,7 +86,21 @@ result: chosen moved farther from the shared start -> preferred direction
 
 The lesson is relative movement from the same SFT before-photo, not which response originally had higher raw probability. Only the current policy receives gradients. `beta` controls reference regularization, not optimizer step size: smaller values may permit farther movement; larger values keep behavior closer. Ambiguous or inconsistent labels teach the wrong ranking directly.
 
-## 4. Provenance is not evidence
+## 4. The visible boundary is the objective
+
+The durable comparison is not the trainer class. It is the label boundary:
+
+| Objective | What the model sees | What creates loss |
+| --- | --- | --- |
+| CPT | Raw Riverside tokens | Every attended next-token target |
+| SFT | System, request, context, assistant suffix | Assistant suffix plus one EOS |
+| DPO | One prompt and two complete suffixes | Relative chosen/rejected movement from the frozen SFT reference |
+
+That is why attention masking and loss masking must remain separate in your head. A prompt can be
+visible and still carry `-100` labels. EOS can be visible *and* graded because stopping is part of
+the contract.
+
+## 5. Provenance is not evidence
 
 The notebook records model IDs and revisions, seed, package versions, arguments, artifact ancestry, profile paths, and hashes for all 40 training chapters. This is a strong lineage contract: it explains what produced an artifact and supports reconstruction.
 
@@ -94,7 +108,7 @@ It does not establish quality. All chapters participate in training, runs use on
 
 Independent evidence must be separately versioned and isolated from training-data construction, checkpoint selection, prompt tuning, and threshold setting. Use the objective-appropriate baseline, workload measures, retention and safety checks, and gates fixed before results are inspected. A saved artifact proves only that state was saved.
 
-## 5. Selection rules and failure modes
+## 6. Selection rules and failure modes
 
 - **CPT** for recurring language patterns. Watch truncation, bad packing, excess exposure, and forgetting.
 - **SFT** for role, format, scope, and stopping. Watch prompt-label leakage, missing EOS, target truncation, unstable serialization, and weak demonstrations.

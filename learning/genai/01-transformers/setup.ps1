@@ -5,7 +5,7 @@
 .DESCRIPTION
     Creates or reuses `.venv` next to this script, installs every dependency
     from the adjacent requirements.txt, registers the `genai-01-transformers` Jupyter
-    kernel, and assigns that kernel to every notebook in this chapter.
+    kernel, and assigns that kernel to every core and optional notebook in this chapter.
 
     Pass -SkipKernel to install dependencies without registering or assigning
     the Jupyter kernel.
@@ -65,6 +65,6 @@ if (-not $SkipKernel) {
 }
 
 Write-Host ""
-Write-Host "Setup complete for GenAI 01 Transformers." -ForegroundColor Green
+Write-Host "Setup complete for the GenAI 01 Transformers core and optional notebooks." -ForegroundColor Green
 Write-Host "Virtual environment: $VenvDir"
 Write-Host "Jupyter kernel: $KernelDisplayName"

@@ -1,10 +1,13 @@
-# PyTorch RNN Bridge
+# PyTorch RNN Bridge Migration Note
 
-This chapter closes the recurrent sequence with two notebooks:
+The two notebooks in this directory are preserved as the original PyTorch translation and cinematic evidence. This standalone bridge is no longer a separate required stop.
 
-1. [The PyTorch RNN Bridge](01-pytorch-rnn-bridge.ipynb) translates the established Keras RNN, tokenization, embedding, padding, and masked-loss contracts into PyTorch.
-2. [Cinematic Piano Memory](02-cinematic-piano-memory.ipynb) trains transparent vanilla RNN and LSTM cells on an original Dm-Bb-F-C motif, then makes checkpoint learning, long-horizon accuracy, and gradient retention audible.
+Its contracts now live in the consolidated sequence-memory arc:
 
-Complete them in order before continuing to [Transformer Foundations](../../genai/01-transformers/README.md).
+1. [05A - Sequence Memory Theory](../../pytorch-for-llms/05-sequence-memory/05A-sequence-memory-theory.ipynb)
+2. [05B - Sequence Memory PyTorch Lab](../../pytorch-for-llms/05-sequence-memory/05B-sequence-memory-pytorch-lab.ipynb)
+3. [05C - Cinematic Piano Memory](../../pytorch-for-llms/05-sequence-memory/05C-cinematic-piano-memory.ipynb)
 
-Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS. Either script creates or reuses this chapter's `.venv`, installs the adjacent `requirements.txt`, registers the chapter-unique `genai-prereq-07-pytorch-rnn` Jupyter kernel, and assigns it to the notebook.
+The merged lab adds the external forecasting problem, sliding windows, temporal split, `Dataset`/`DataLoader`, prediction evaluation, shifted token targets, packed sequences, padding-aware loss, causal invariance, and clipping. The capstone reuses canonical training helpers instead of reteaching their APIs.
+
+Keep [the original bridge](01-pytorch-rnn-bridge.ipynb) and [the original piano notebook](02-cinematic-piano-memory.ipynb) when comparing the migration or recovering unique historical evidence.

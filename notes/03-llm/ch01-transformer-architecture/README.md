@@ -31,8 +31,8 @@ The [Transformer Foundations series](../../../learning/genai/01-transformers/REA
 | Substrate | [Tokenization and Embeddings](../../../learning/genai/01-transformers/01-tokenization-and-embeddings.ipynb) | Pieces, IDs, lookup rows, embedding gradients, and the ordering failure |
 | Attention | [Attention, Position, and RoPE](../../../learning/genai/01-transformers/02-attention-and-position.ipynb) | Q/K/V, scaled attention, additive position, RoPE, and routing evidence |
 | Reusable block | [The Complete Transformer Block](../../../learning/genai/01-transformers/03-transformer-block.ipynb) | Multi-head attention, FFN, normalization, residuals, logits, and backpropagation |
-| Decoder | [Decoder-Only Language Model](../../../learning/genai/01-transformers/04-decoder-only-language-model.ipynb) | MiniLM training, autoregressive generation, value projections, causal accumulation, DistilGPT-2 internals |
-| Reader-writer | [Encoder-Decoder and Cross-Attention](../../../learning/genai/01-transformers/05-encoder-decoder-and-cross-attention.ipynb) | Source encoding, cross-attention, teacher forcing, free-running generation, T5/BART, architecture comparison |
+| Decoder | [Decoder-Only Language Model](../../../learning/genai/01-transformers/04a-decoder-only-language-model-theory.ipynb) | Causal objective, aligned targets, autoregressive generation, and cache intuition |
+| Reader-writer | [Encoder-Decoder and Cross-Attention](../../../learning/genai/01-transformers/05a-encoder-decoder-and-cross-attention-theory.ipynb) | Source encoding, cross-attention, teacher forcing, and free-running generation |
 
 **Pedagogical approach used throughout (the [Rigour Rubric](../../authoring-guidelines.md#20--rigour-rubric--the-nine-techniques-from-the-transformer-notebook)):**
 - One running example end-to-end: "the cat sat on the mat"

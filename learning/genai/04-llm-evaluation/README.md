@@ -1,13 +1,25 @@
 # LLM Evaluation
 
-This four-notebook sequence covers reference and semantic metrics, LLM-as-judge and safety evaluation, hallucination detection, and confidence calibration.
+This four-notebook sequence has one canonical owner for each evaluation question:
 
 1. [Automated Metrics and Benchmarks](01-llm-evaluation-metrics-and-benchmarks.ipynb) · [Theory notes](01-llm-evaluation-metrics-and-benchmarks-theory.md)
 2. [LLM-as-Judge, Safety, and Eval Pipeline](02-llm-as-judge-safety-and-pipeline.ipynb) · [Theory notes](02-llm-as-judge-safety-and-pipeline-theory.md)
 3. [Hallucination Detection](03-hallucination-detection.ipynb) · [Theory notes](03-hallucination-detection-theory.md)
 4. [Calibration and Confidence](04-calibration-and-confidence.ipynb) · [Theory notes](04-calibration-and-confidence-theory.md)
 
-Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS. Either script creates or reuses this chapter's `.venv`, installs the adjacent `requirements.txt`, downloads the required NLTK data, registers the chapter-unique `genai-04-llm-evaluation` Jupyter kernel, and assigns it to all four notebooks.
+1. **Metrics and benchmarks:** what reference, semantic, and model-based metrics can observe.
+2. **LLM-as-judge and safety:** how a judge and release pipeline can be trusted.
+3. **Hallucination detection:** how unsupported or contradictory claims are localized.
+4. **Calibration and confidence:** how confidence becomes abstention policy.
+
+`evaluation_shared.py` centralizes the Riverside fixture, deterministic seeding, token
+normalization, schema checks, and the generic teaching caveat. Each notebook retains its unique
+measured evidence and links forward instead of repeating the full metric warning or judge-bias
+taxonomy.
+
+Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS. Either script creates or reuses this
+chapter's `.venv`, installs the adjacent `requirements.txt`, registers the chapter-unique
+`genai-04-llm-evaluation` Jupyter kernel, and assigns it to all four notebooks.
 
 ## Continue Into Operations
 

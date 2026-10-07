@@ -54,27 +54,6 @@ Write-Host "Installing dependencies from $Requirements..."
 & $VenvPython -m pip install -r $Requirements
 if ($LASTEXITCODE -ne 0) { throw "Dependency installation failed." }
 
-Write-Host "Downloading NLTK data used by the evaluation notebooks..."
-$NltkDataScript = @'
-import nltk
-
-resources = [
-    "punkt",
-    "punkt_tab",
-    "wordnet",
-    "stopwords",
-    "averaged_perceptron_tagger",
-    "averaged_perceptron_tagger_eng",
-    "maxent_ne_chunker",
-    "maxent_ne_chunker_tab",
-    "words",
-]
-for resource in resources:
-    nltk.download(resource, quiet=True)
-'@
-& $VenvPython -c $NltkDataScript
-if ($LASTEXITCODE -ne 0) { throw "NLTK data download failed." }
-
 if (-not $SkipKernel) {
     Write-Host "Registering Jupyter kernel '$KernelName'..."
     & $VenvPython -m ipykernel install --user --name $KernelName --display-name $KernelDisplayName

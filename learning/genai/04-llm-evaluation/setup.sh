@@ -44,25 +44,6 @@ echo "Upgrading pip, setuptools, and wheel..."
 echo "Installing dependencies from $REQUIREMENTS..."
 "$VENV_PYTHON" -m pip install -r "$REQUIREMENTS"
 
-echo "Downloading NLTK data used by the evaluation notebooks..."
-"$VENV_PYTHON" - <<'PY'
-import nltk
-
-resources = [
-    "punkt",
-    "punkt_tab",
-    "wordnet",
-    "stopwords",
-    "averaged_perceptron_tagger",
-    "averaged_perceptron_tagger_eng",
-    "maxent_ne_chunker",
-    "maxent_ne_chunker_tab",
-    "words",
-]
-for resource in resources:
-    nltk.download(resource, quiet=True)
-PY
-
 if [ "$SKIP_KERNEL" -eq 0 ]; then
     echo "Registering Jupyter kernel '$KERNEL_NAME'..."
     "$VENV_PYTHON" -m ipykernel install --user --name "$KERNEL_NAME" --display-name "$KERNEL_DISPLAY_NAME"

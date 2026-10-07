@@ -1,20 +1,25 @@
 # Chapter 02: Neural Networks and Backpropagation
 
-This chapter uses two self-contained examples. SmartVal establishes the neural-network mechanics; Melodyne revises backpropagation through an audible parameter-recovery problem.
+The required chapter is theory-first. It uses XOR to force a hidden representation, then follows
+one loss backward into a four-weight responsibility report and verifies that report with finite
+differences.
 
-## Recommended Order
+## Required Notebook
 
-### 1. [SmartVal Neural Networks and Backpropagation](01-smartval-neural-networks-and-backprop.ipynb)
+### [SmartVal: Why Hidden Layers and Backpropagation Exist](01-smartval-neural-networks-and-backprop.ipynb)
 
-**Owns:** nonlinear hidden representations, manual backpropagation, `tf.GradientTape`, depth versus width, and training versus inference behavior.
+**Owns:** XOR failure, hidden representations, ReLU gates, chain-rule responsibility, gradient
+verification, and concise boundaries for depth, width, dropout, and normalization.
 
-SmartVal remains one connected case study because its later experiments reuse the dense-network vocabulary and training loop established by XOR. The added forward/backward animation makes the responsibility route visible without replacing the manual derivative check.
+It deliberately does not teach another framework training loop. Those mechanics begin in the
+canonical PyTorch route.
 
-### 2. [Melodyne Backprop Synthesizer](02-melodyne-backprop-synthesizer.ipynb)
+## Optional Audible Capstone
 
-**Owns:** differentiable audio rendering, finite-difference gradient verification, and learning interpretable synth controls from target audio.
+### [Melodyne Backprop Lab](optional/02-melodyne-backprop-synthesizer.ipynb)
 
-The notes are fixed while bass, mid, treble, and drive are learned. This isolates backpropagation from sequence generation: the later Melodyne RNN notebook predicts what comes next, while this notebook learns how known notes should sound.
+**Preserves:** differentiable rendering, the four-gradient audit, recovery gates, and audible
+evidence. It is useful after SmartVal, but it is not required to continue.
 
 ## Setup
 
@@ -23,8 +28,11 @@ Run the setup script in this directory:
 - Windows: `./setup.ps1`
 - Linux or macOS: `bash ./setup.sh`
 
-The script installs the shared dependencies and assigns the `neural-networks` kernel to both notebooks.
+The script installs the shared dependencies and assigns the `neural-networks` kernel to the
+notebooks in this chapter.
 
 ## Chapter Handoff
 
-After both notebooks, continue to [Arrays to Model Tensors](../03-pytorch-fundamentals/00-arrays-to-model-tensors.ipynb), then [Keras to PyTorch: Antarctic Field Guide](../03-pytorch-fundamentals/01-keras-to-pytorch-antarctic-field-guide.ipynb). The first bridge makes indexing, reshaping, broadcasting, and model axes explicit; the second changes the framework vocabulary while preserving forward pass, loss, backpropagation, and optimizer responsibilities.
+Continue to
+[PyTorch for LLMs 00: The Deep-Learning Map](../../pytorch-for-llms/00-deep-learning-map/00-deep-learning-map.ipynb).
+The manual responsibility report becomes a real `loss.backward()` call there.

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Creates the chapter-local environment for GenAI 05 LLM Gateway.
+# Creates the chapter-local environment for both GenAI 05 LLM Gateway notebooks.
 
 set -euo pipefail
 
@@ -10,6 +10,10 @@ VENV_PYTHON="$VENV_DIR/bin/python"
 KERNEL_NAME="genai-05-llm-gateway"
 KERNEL_DISPLAY_NAME="Python (GenAI 05 LLM Gateway .venv)"
 KERNEL_SETTER="$SCRIPT_DIR/../../../scripts/set-notebook-kernel.py"
+EXPECTED_NOTEBOOKS=(
+    "01-gateway-control-plane-theory.ipynb"
+    "02-gateway-routing-resilience-lab.ipynb"
+)
 SKIP_KERNEL=0
 
 for argument in "$@"; do
@@ -30,6 +34,12 @@ fi
 
 [ -f "$REQUIREMENTS" ] || { echo "requirements.txt was not found at $REQUIREMENTS" >&2; exit 1; }
 [ -f "$KERNEL_SETTER" ] || { echo "Kernel metadata helper was not found at $KERNEL_SETTER" >&2; exit 1; }
+for notebook in "${EXPECTED_NOTEBOOKS[@]}"; do
+    [ -f "$SCRIPT_DIR/$notebook" ] || {
+        echo "Expected companion notebook was not found at $SCRIPT_DIR/$notebook" >&2
+        exit 1
+    }
+done
 
 if [ -x "$VENV_PYTHON" ]; then
     echo "Reusing virtual environment at $VENV_DIR"
@@ -56,6 +66,6 @@ if [ "$SKIP_KERNEL" -eq 0 ]; then
 fi
 
 echo ""
-echo "Setup complete for GenAI 05 LLM Gateway."
+echo "Setup complete for both GenAI 05 LLM Gateway notebooks."
 echo "Virtual environment: $VENV_DIR"
 echo "Jupyter kernel: $KERNEL_DISPLAY_NAME"

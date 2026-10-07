@@ -1062,8 +1062,9 @@ specific downstream chapter will reuse by name.
 
 ## 14 · Additional Pedagogical Patterns Found in the Gold-Standard Notebooks
 
-This section documents patterns observed consistently in `03-rag/01-hybrid-search.ipynb` through
-`05-llm-gateway/01-llm-gateway.ipynb` and the `02-llm-finetuning/` series, which are not yet covered by Sections 1-13.
+This section documents patterns observed consistently in `03-rag/01a-hybrid-retrieval-theory.ipynb`
+through `05-llm-gateway/02-gateway-routing-resilience-lab.ipynb` and the
+`02-llm-finetuning/` series, which are not yet covered by Sections 1-13.
 
 ### 14.1 Prediction-Check Print Block — close the predict-first loop explicitly
 

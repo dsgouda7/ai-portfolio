@@ -13,7 +13,7 @@ The engineering vocabulary for deployment decisions: parameter counting, VRAM bu
   - Mixture of Experts: routing and active-parameter economics
   - Grouped Query Attention (GQA): memory bandwidth optimization
 
-> **From-scratch companion:** [`learning/genai/01-transformers/04-decoder-only-language-model.ipynb`](../../../learning/genai/01-transformers/04-decoder-only-language-model.ipynb) — its real-model section loads `distilgpt2` through PyTorch `GPT2LMHeadModel`, inspects Transformer blocks and attention heads, and plots next-token probabilities. Use it before this chapter to connect parameter-counting theory to a real model.
+> **From-scratch companion:** [`learning/genai/01-transformers/04b-decoder-only-language-model-lab.ipynb`](../../../learning/genai/01-transformers/04b-decoder-only-language-model-lab.ipynb) — it makes causal masks, aligned targets, token loss, and generation executable before this chapter examines larger model internals.
 
 ## Learning Objectives
 

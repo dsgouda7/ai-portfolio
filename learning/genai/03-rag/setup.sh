@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Creates the chapter-local environment for GenAI 03 RAG.
+# Creates the chapter-local environment for the three-notebook GenAI 03 RAG sequence.
 
 set -euo pipefail
 

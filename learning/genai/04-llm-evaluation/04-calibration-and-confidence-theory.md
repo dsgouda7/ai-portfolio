@@ -1,5 +1,8 @@
 # Calibration and Confidence: Handwritten Theory Notes
 
+This chapter is the canonical owner of reliability, ECE, temperature scaling, risk-coverage, and
+abstention policy. It consumes claim-risk evidence from Part 3 without reteaching claim detection.
+
 ## 1. Confidence is not correctness
 
 Correctness is an observed outcome: an answer is correct or incorrect after evaluation. Confidence is a score produced before that outcome is known. Calibration asks whether the score has an honest long-run meaning.
@@ -44,9 +47,12 @@ At a 0.70 threshold, it may serve 70 answers and get 63 correct: coverage is 70%
 
 Higher thresholds reduce or preserve coverage, but improve served-answer accuracy only when confidence ranking is useful. Temperature scaling changes numeric thresholds but preserves ranking, so it cannot improve the ideal frontier indexed by coverage. Report risk and coverage directly; coverage is not recall, so their harmonic mean is not ordinary F1.
 
-## 5. Hallucination plus confidence routing
+## 5. Claim risk plus confidence routing
 
-Calibration asks how often scores like this are correct. A hallucination guard asks whether the answer is unsupported, contradictory, or populated with ungrounded entities. A fluent fabrication can be high-confidence, so confidence cannot be the only gate. A grounded answer may still be uncertain and deserve a caveat.
+Calibration asks how often scores like this are correct. The
+[claim-localization chapter](03-hallucination-detection.ipynb) separately asks whether the answer
+is unsupported or contradictory. A fluent fabrication can be high-confidence, so confidence
+cannot be the only gate. A grounded answer may still be uncertain and deserve a caveat.
 
 ![Handwritten two-gate routing diagram for hallucination risk and calibrated confidence](images/04-calibration-and-confidence-theory-02.png)
 

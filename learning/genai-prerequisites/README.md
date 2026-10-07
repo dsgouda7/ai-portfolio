@@ -1,28 +1,30 @@
 # GenAI Prerequisites
 
-This sequence builds the mathematical, machine-learning, framework, and sequence contracts required by the GenAI track. Complete the chapters in order unless the route below marks a branch optional.
+This sequence builds the mathematical, machine-learning, and backpropagation intuition required
+before the code-first [PyTorch for LLMs](../pytorch-for-llms/README.md) spine.
 
 ## Core Route
 
-| # | Chapter | Primary framework | Outcome |
-|---|---|---|---|
-| 00 | [Math Foundations](00-math-foundations/math-foundations-for-ml.ipynb) | NumPy + SciPy | Build motion from local change, read vectors and probability, then use local derivatives for constrained gradient descent |
-| 01 | [ML Basics](01-ml-basics/ml-basics.ipynb) | NumPy + scikit-learn | Build train/validation/test, optimization, classification, and generalization contracts |
-| 02 | [Neural Networks and Backpropagation](02-neural-networks/README.md) | TensorFlow/Keras | Derive backpropagation with SmartVal, then apply it to an audible Melodyne synthesizer restoration |
-| 03 | [Arrays and PyTorch Fundamentals](03-pytorch-fundamentals/README.md) | NumPy ↔ TensorFlow/Keras ↔ PyTorch | Name and transform real model axes, then translate familiar model, loss, autograd, optimizer, dtype, and device contracts into PyTorch |
-| 04 | [Convolutional Neural Networks](04-cnns/convolutional-neural-networks.ipynb) | TensorFlow/Keras ↔ PyTorch | Optional vision branch: convolution, receptive fields, residual paths, and transfer learning |
-| 05 | [RNN/LSTM Sequence Modeling](05-rnn-sequence-modeling/rnn-sequence-modeling.ipynb) | TensorFlow/Keras ↔ PyTorch | Derive recurrent state, BPTT, vanishing gradients, and LSTM gating |
-| 06 | [Tokenization and Embeddings](06-tokenization/tokenization-and-embeddings.ipynb) | TensorFlow/Keras ↔ PyTorch | Build BPE intuition, train embedding rows, and handle padding and masked loss |
-| 07 | [PyTorch RNN Bridge and Memory Capstone](07-pytorch-rnn-bridge/README.md) | TensorFlow/Keras ↔ PyTorch | Carry the sequence contract into PyTorch, then hear RNN and LSTM memory diverge beyond the training horizon |
+| # | Chapter | Outcome |
+|---|---|---|
+| 00 | [Math Foundations](00-math-foundations/math-foundations-for-ml.ipynb) | Build motion from local change, read vectors and probability, then use local derivatives for constrained gradient descent |
+| 01 | [ML Basics](01-ml-basics/ml-basics.ipynb) | Build train/validation/test, optimization, classification, and generalization contracts without duplicating a framework course |
+| 02 | [Neural Networks and Backpropagation](02-neural-networks/README.md) | Expose XOR's linear failure, hidden representations, responsibility, and verified gradients |
 
-For the language-model route, chapter 04 is optional: follow `00 → 01 → 02 → 03 → 05 → 06 → 07`. Complete chapter 04 when vision, multimodal work, or convolution-heavy systems are relevant.
+Then complete [PyTorch for LLMs](../pytorch-for-llms/README.md) Parts 00-06.
+
+## Optional Branches
+
+- [Melodyne audible backpropagation](02-neural-networks/optional/README.md)
+- [PyTorch vision: CNNs and autoencoders](optional-vision/README.md)
+- [Keras-to-PyTorch translation reference](03-pytorch-fundamentals/optional/README.md)
+
+The former CNN, Keras-first RNN/tokenization, arrays bridge, and RNN bridge directories remain as
+migration references. Their required learning outcomes now have one canonical PyTorch owner.
 
 ## Chapter Setup
 
-Run setup from each chapter directory you plan to use. On Windows run `.\setup.ps1`; on Linux or macOS run `bash ./setup.sh`. Each script creates or reuses the chapter-local `.venv`, installs dependencies, registers the chapter kernel, and assigns that kernelspec to the chapter notebooks.
+Run setup from each chapter directory you plan to use. On Windows run `.\setup.ps1`; on Linux or
+macOS run `bash ./setup.sh`.
 
-## Comparison Policy
-
-Every notebook contains at least one compact TensorFlow/Keras ↔ PyTorch comparison block after the underlying concept is taught. These blocks emphasize invariant computation and the API or tensor-layout difference most likely to cause translation bugs. TensorFlow-first notebooks keep PyTorch snippets in Markdown so their executable dependency set remains unchanged; chapters 03 and 07 provide the runnable PyTorch practice.
-
-After both chapter 07 notebooks, continue to [Transformer Foundations](../genai/01-transformers/README.md).
+After the foundations, continue to [PyTorch for LLMs](../pytorch-for-llms/README.md).

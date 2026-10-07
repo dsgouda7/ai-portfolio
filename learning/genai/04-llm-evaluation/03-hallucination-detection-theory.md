@@ -6,18 +6,15 @@ This distinction matters because quality is not factuality. Similarity metrics m
 
 ![Hallucination types and complementary detection signals](images/03-hallucination-detection-theory-01.png)
 
-## 1. Grounding Is Not World Truth
+## 1. Claim Outcomes Are Not a Hallucination Taxonomy
 
 A claim is **grounded** when the supplied evidence supports it. A claim is **true** when it agrees with the world. These are related but different properties. A true claim omitted by retrieval is ungrounded, while a false statement in a faulty source can be grounded to that source. A RAG guard evaluates attribution to its evidence; world-truth verification requires authoritative sources or human fact-checking.
 
-Useful failure labels are:
-
-- **Intrinsic:** the claim contradicts the supplied evidence.
-- **Extrinsic:** the evidence neither supports nor contradicts the added claim.
-- **Entity-level:** a name, date, number, title, or role is wrong or unsupported.
-- **Relation-level:** real entities are connected by the wrong action or relation.
-
-The labels overlap and are routing aids, not perfectly separate classes. Relation errors are especially difficult because nearly every word in a sentence may be supported except the decisive verb.
+Split answers into atomic claims, then use three evidence outcomes: **supported**,
+**contradicted**, or **unknown**. Unknown means the supplied evidence is silent; it does not mean
+the claim is globally false. After assigning an outcome, localize the reviewer target as an entity
+gap, relation mismatch, number/date change, or missing evidence span. These are operational labels,
+not a broad taxonomy of every possible hallucination.
 
 ## 2. One Riverside Claim, Four Signals
 
@@ -82,3 +79,6 @@ For the Riverside claim, the guard should surface the unsupported upgrade from "
 10. Keep a human or authoritative-source path for consequential and relation-level claims.
 
 A useful hallucination guard does not promise truth from one score. It makes evidence boundaries explicit, combines complementary signals, explains uncertainty, and routes unresolved claims to the right verification process.
+
+Judge bias is owned by [Part 2](02-llm-as-judge-safety-and-pipeline.ipynb). Confidence calibration
+and abstention thresholds are owned by [Part 4](04-calibration-and-confidence.ipynb).

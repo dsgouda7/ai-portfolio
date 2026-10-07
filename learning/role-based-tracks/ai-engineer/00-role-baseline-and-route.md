@@ -33,7 +33,7 @@ Do not use "I have used this before" as a skip condition. A skip needs an inspec
 | Gate | You may skip the study material only if you can show all of this | If the gate fails |
 |---|---|---|
 | Math and ML foundations | Derive and numerically check a gradient; explain train/validation/test separation; choose a metric that matches a stated failure; identify leakage in a proposed split | Start with the required [GenAI prerequisite route](#phase-1-foundations) |
-| PyTorch | Build a small `nn.Module`; explain batch, sequence, and feature dimensions; run `zero_grad`, forward, backward, and `step`; save and reload a `state_dict`; verify inference parity | Complete [Arrays and PyTorch Fundamentals](../../genai-prerequisites/03-pytorch-fundamentals/README.md) |
+| PyTorch | Build a small `nn.Module`; explain batch, sequence, and feature dimensions; run `zero_grad`, forward, backward, and `step`; save and reload a `state_dict`; verify inference parity | Complete [PyTorch for LLMs](../../pytorch-for-llms/README.md) |
 | Language-model mechanics | Trace one token through embedding, position, attention, residual, normalization, and output projection; explain causal masking; distinguish decoder-only from encoder-decoder behavior; isolate a decoding failure from a training-objective failure | Complete the [RNN and Transformer route](#phase-2-language-model-mechanics) |
 | Adaptation | Given a behavior failure, choose among continued pretraining, SFT, preference alignment, full tuning, freezing, LoRA, and QLoRA; produce held-out evidence and artifact lineage; reject a run when the evidence is weak | Complete [LLM Fine-Tuning](#phase-3-adaptation) |
 | Retrieval | Construct separate lexical and semantic failure cases; fuse or rerank results; measure retrieval independently of generation; test authorization and unsupported-query boundaries | Complete [RAG](#phase-4-retrieval-and-evaluation) |
@@ -54,9 +54,9 @@ The required competency is the ability to reason about the operations. The noteb
 1. [Math Foundations for ML](../../genai-prerequisites/00-math-foundations/math-foundations-for-ml.ipynb)
 2. [ML Basics](../../genai-prerequisites/01-ml-basics/ml-basics.ipynb)
 3. [Neural Networks and Backpropagation](../../genai-prerequisites/02-neural-networks/README.md)
-4. [Arrays and PyTorch Fundamentals](../../genai-prerequisites/03-pytorch-fundamentals/README.md)
-5. [RNN Sequence Modeling](../../genai-prerequisites/05-rnn-sequence-modeling/rnn-sequence-modeling.ipynb)
-6. [Tokenization and Embeddings](../../genai-prerequisites/06-tokenization/tokenization-and-embeddings.ipynb)
+4. [PyTorch Foundations](../../pytorch-for-llms/README.md)
+5. [Sequence Memory](../../pytorch-for-llms/05-sequence-memory/README.md)
+6. [Tokenization and Embeddings](../../pytorch-for-llms/06-tokenization-and-embeddings/README.md)
 
 ### Optional
 
@@ -78,8 +78,8 @@ If you cannot localize a model failure below the API level, complete this phase.
 2. [Tokenization and Embeddings](../../genai/01-transformers/01-tokenization-and-embeddings.ipynb)
 3. [Attention, Position, and RoPE](../../genai/01-transformers/02-attention-and-position.ipynb)
 4. [The Complete Transformer Block](../../genai/01-transformers/03-transformer-block.ipynb)
-5. [Decoder-Only Language Models](../../genai/01-transformers/04-decoder-only-language-model.ipynb)
-6. [Encoder-Decoder and Cross-Attention](../../genai/01-transformers/05-encoder-decoder-and-cross-attention.ipynb)
+5. [Decoder-Only Language Models](../../genai/01-transformers/04a-decoder-only-language-model-theory.ipynb)
+6. [Encoder-Decoder and Cross-Attention](../../genai/01-transformers/05a-encoder-decoder-and-cross-attention-theory.ipynb)
 
 The [Transformer Foundations README](../../genai/01-transformers/README.md) defines the three-part contract and fresh-kernel behavior.
 
@@ -119,8 +119,8 @@ An answer score cannot tell you whether the retriever missed the evidence or the
 
 ### Required or Skip with Evidence
 
-1. [Hybrid Search](../../genai/03-rag/01-hybrid-search.ipynb)
-2. [RAG Evaluation](../../genai/03-rag/02-rag-evaluation.ipynb)
+1. [Hybrid Search](../../genai/03-rag/01a-hybrid-retrieval-theory.ipynb)
+2. [RAG Evaluation](../../genai/03-rag/02-rag-failure-localization-and-evaluation.ipynb)
 3. [Metrics and Benchmarks](../../genai/04-llm-evaluation/01-llm-evaluation-metrics-and-benchmarks.ipynb)
 4. [LLM-as-Judge, Safety, and Pipeline](../../genai/04-llm-evaluation/02-llm-as-judge-safety-and-pipeline.ipynb)
 5. [Hallucination Detection](../../genai/04-llm-evaluation/03-hallucination-detection.ipynb)
@@ -142,7 +142,7 @@ Without a gateway contract, every provider change becomes an application change 
 
 ### Required or Skip with Evidence
 
-1. [LLM Gateways: Routing, Resilience, and Cost Control](../../genai/05-llm-gateway/01-llm-gateway.ipynb)
+1. [LLM Gateways: Routing, Resilience, and Cost Control](../../genai/05-llm-gateway/README.md)
 
 The notebook uses deterministic provider simulations so you can isolate systems behavior. The [Gateway README](../../genai/05-llm-gateway/README.md) explicitly hands production serving internals to the infrastructure track.
 
@@ -242,7 +242,7 @@ All linked targets now exist in source. Chapters 01-05 completed a successful lo
 
 | ID | Competency | Existing evidence source | Minimum evidence | Current status |
 |---|---|---|---|---|
-| C1 | ML, neural-network, tokenization, and PyTorch foundations | [Prerequisites](../../genai-prerequisites/README.md) and [Arrays and PyTorch Fundamentals](../../genai-prerequisites/03-pytorch-fundamentals/README.md) | Deterministic train, evaluate, save, reload, and failure diagnosis | Available |
+| C1 | ML, neural-network, tokenization, and PyTorch foundations | [Prerequisites](../../genai-prerequisites/README.md) and [PyTorch for LLMs](../../pytorch-for-llms/README.md) | Deterministic train, evaluate, save, reload, and failure diagnosis | Available |
 | C2 | Transformer and language-model mechanics | [PyTorch RNN Bridge](../../genai-prerequisites/07-pytorch-rnn-bridge/README.md) and [Transformers](../../genai/01-transformers/README.md) | Shape and mask trace plus controlled mechanism comparison | Available |
 | C3 | Objective and parameter-efficient adaptation | [LLM Fine-Tuning](../../genai/02-llm-finetuning/README.md) | Held-out task/retention comparison, lineage, and release decision | Available; full-corpus practice requires CUDA |
 | C4 | Retrieval, grounding, and boundary checks | [RAG](../../genai/03-rag/README.md) | Retrieval report, generation report, gold-context ablation, authorization test | Available |

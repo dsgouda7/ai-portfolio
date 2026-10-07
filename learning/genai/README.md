@@ -28,40 +28,42 @@ The shared [Riverside House fiction corpus](content/README.md) lives at `content
 chapter can reuse one canonical manuscript world. Chapter directories should reference this
 root rather than own duplicate manuscript trees.
 
-> **Notebooks are PyTorch-only.** Every notebook in this track is built with PyTorch +
-> HuggingFace (LoRA/PEFT, DPO/TRL for fine-tuning) — the actual tools used in production.
-> Earlier revisions of this track also shipped parallel TF/Keras notebooks; those were
-> removed since testing and development here is PyTorch-based. Each notebook's code cells
-> that use a PyTorch API are annotated with a note on what the call does and its Keras
-> equivalent, so a Keras-background reader can still follow along without a separate
-> Keras notebook.
+> **Notebooks are PyTorch-first.** Complete [PyTorch for LLMs](../pytorch-for-llms/README.md)
+> before this track. Keras translation remains optional reference material rather than a parallel
+> implementation path.
 
 ---
 
 ## Contents
 
-| # | Directory | Topic | What you build | What you can do when done | Prerequisites |
-|---|-----------|-------|----------------|--------------------------|---------------|
-| 08 | `01-transformers/` | Transformer foundations and base LLM construction in eight parts | Tokenization and embeddings; attention and position; reusable blocks; decoder-only and encoder-decoder architectures; a modern Llama-style block; pretraining data; a randomly initialized base model | Trace text through every forward stage and backpropagation into a validated base checkpoint | [Prerequisite 03](../genai-prerequisites/03-pytorch-fundamentals/README.md) |
-| 09 | `02-llm-finetuning/` | LLM adaptation | CPT, SFT, DPO, full tuning, freezing, LoRA, QLoRA, and evidence-based model selection | Choose what behavior to teach, where to store the update, and what evidence supports release | `01-transformers/` |
-| 10 | `03-rag/` | Retrieval-augmented generation | Hybrid retrieval, reranking, boundary checks, and a RAG evaluation harness | Retrieve current authorized evidence and diagnose retriever versus generator failure | `02-llm-finetuning/` |
-| 11 | `04-llm-evaluation/` | LLM evaluation in depth | Automated metrics, LLM-as-judge, human evaluation, safety, hallucination detection, and calibration | Build a regression-aware evaluation pipeline and reason about evaluator uncertainty | `02-llm-finetuning/`, `03-rag/` |
-| 12 | `05-llm-gateway/` | LLM request control plane | Provider normalization, routing, rate limiting, fallback, caching, and cost controls | Operate multiple model providers behind one observable application contract | `02-llm-finetuning/`, `03-rag/` |
+| Directory | Topic | What you build | Prerequisites |
+|-----------|-------|----------------|---------------|
+| [01-transformers/](01-transformers/README.md) | Transformer foundations and base-model construction | Mechanisms, decoder and encoder-decoder labs, modern blocks, verified data, and a restorable base checkpoint | [PyTorch for LLMs](../pytorch-for-llms/README.md) |
+| [02-llm-finetuning/](02-llm-finetuning/README.md) | LLM adaptation | CPT, SFT, DPO, full tuning, freezing, LoRA, QLoRA, comparison, and staged GPU practice | `01-transformers/` |
+| [03-rag/](03-rag/README.md) | Retrieval-augmented generation | Hybrid retrieval, reranking, authorization, failure localization, and oracle-context diagnosis | `02-llm-finetuning/` |
+| [04-llm-evaluation/](04-llm-evaluation/README.md) | LLM evaluation | Metrics, judge/safety controls, hallucination localization, and calibration/abstention | `02-llm-finetuning/`, `03-rag/` |
+| [05-llm-gateway/](05-llm-gateway/README.md) | LLM request control plane | Normalization, routing, limits, budgets, fallback, caching, and telemetry | `02-llm-finetuning/`, `03-rag/` |
 
 ---
 
 ## Transformer Foundations Route
 
-The curriculum is continuous: prerequisites are chapters 00–07, and the GenAI track continues with chapters 08–12. Before entering chapter 08, complete the ordered [prerequisite sequence](../genai-prerequisites/README.md), including tokenization and the PyTorch RNN bridge.
+Before entering Transformers, complete the [foundation prerequisites](../genai-prerequisites/README.md)
+and [PyTorch for LLMs](../pytorch-for-llms/README.md).
 
 1. [Tokenization and Embeddings](01-transformers/01-tokenization-and-embeddings.ipynb) · [Theory notes](01-transformers/01-tokenization-and-embeddings-theory.md)
 2. [Attention, Position, and RoPE](01-transformers/02-attention-and-position.ipynb) · [Theory notes](01-transformers/02-attention-and-position-theory.md)
 3. [The Complete Transformer Block](01-transformers/03-transformer-block.ipynb) · [Theory notes](01-transformers/03-transformer-block-theory.md)
-4. [Decoder-Only Language Model](01-transformers/04-decoder-only-language-model.ipynb) · [Theory notes](01-transformers/04-decoder-only-language-model-theory.md)
-5. [Encoder-Decoder and Cross-Attention](01-transformers/05-encoder-decoder-and-cross-attention.ipynb) · [Theory notes](01-transformers/05-encoder-decoder-and-cross-attention-theory.md)
+4. [Decoder-Only Theory](01-transformers/04a-decoder-only-language-model-theory.ipynb) · [PyTorch lab](01-transformers/04b-decoder-only-language-model-lab.ipynb) · [Handwritten notes](01-transformers/04-decoder-only-language-model-theory.md)
+5. [Encoder-Decoder Theory](01-transformers/05a-encoder-decoder-and-cross-attention-theory.ipynb) · [PyTorch lab](01-transformers/05b-encoder-decoder-and-cross-attention-lab.ipynb) · [Handwritten notes](01-transformers/05-encoder-decoder-and-cross-attention-theory.md)
 6. [Modern Decoder-Only LLM](01-transformers/06-modern-decoder-only-llm.ipynb) · [Theory notes](01-transformers/06-modern-decoder-only-llm-theory.md)
 7. [Pretraining Data Pipeline](01-transformers/07-pretraining-data-pipeline.ipynb) · [Theory notes](01-transformers/07-pretraining-data-pipeline-theory.md)
-8. [Pretrain a Base Model](01-transformers/08-pretrain-a-base-model.ipynb) · [Theory notes](01-transformers/08-pretrain-a-base-model-theory.md)
+8. [Pretraining Theory](01-transformers/08a-pretrain-a-base-model-theory.ipynb) · [Manual PyTorch lab](01-transformers/08b-pretrain-a-base-model-lab.ipynb) · [Handwritten notes](01-transformers/08-pretrain-a-base-model-theory.md)
+
+Optional continuations:
+
+- [Train the same contract with Lightning](01-transformers/09-training-a-base-model-with-lightning.ipynb)
+- [Audit a tiny Transformer as an AI engineer](01-transformers/10-tiny-transformer-for-ai-engineers.ipynb)
 
 The first three notebooks form the mechanistic foundation and use `the cat sat on the mat` so every information movement stays inspectable. Parts 4–6 compare architecture families and modernize the decoder block. Parts 7–8 use real local corpus artifacts to build a reproducible pretraining stream and saved base-model checkpoint.
 
@@ -70,5 +72,5 @@ The first three notebooks form the mechanistic foundation and use `the cat sat o
 ## Learning path summary
 
 ```
-../genai-prerequisites (00–07) -> 01-transformers -> 02-llm-finetuning -> 03-rag -> 04-llm-evaluation -> 05-llm-gateway
+../genai-prerequisites -> ../pytorch-for-llms -> 01-transformers -> 02-llm-finetuning -> 03-rag -> 04-llm-evaluation -> 05-llm-gateway
 ```

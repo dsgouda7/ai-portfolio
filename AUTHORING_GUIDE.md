@@ -709,7 +709,7 @@ Parameter-efficient techniques (partial freeze, LoRA, QLoRA) that hit the same a
 
 ## 18 · Primer and Bridge Chapter Conventions
 
-A **primer chapter** teaches prerequisite tooling for a track without yet having a production system to attach it to (e.g., `03-pytorch-fundamentals`). A **bridge chapter** connects one architecture to the next in a conceptual arc (e.g., `07-pytorch-rnn-bridge` bridges RNNs to attention-ready tensor contracts).
+A **primer chapter** teaches prerequisite tooling for a track without yet having a production system to attach it to (e.g., `pytorch-for-llms/00-deep-learning-map`). A **bridge chapter** connects one architecture to the next in a conceptual arc (e.g., `pytorch-for-llms/05-sequence-memory` bridges recurrent memory to attention-ready tensor contracts).
 
 These chapters are exempt from the Grand Challenge requirement but must satisfy a narrower version:
 
@@ -730,7 +730,7 @@ All primer and bridge chapters must close with a three-tier coverage table (§ 1
 
 ```markdown
 **Out of scope in this chapter (and where to find them):**
-- Custom `Dataset` subclass — `07-pytorch-rnn-bridge/` uses this pattern directly
+- Custom `Dataset` subclass — `pytorch-for-llms/05-sequence-memory/` uses this pattern directly
 - `torch.onnx` export — `07-ai-infrastructure/` deployment section
 - Weight initialisation defaults — `notes/00-math-under-the-hood/ch09`
 ```
@@ -743,8 +743,8 @@ The final substantive section of any primer or bridge chapter must be a **forwar
 **Forward: what you just built will be used immediately.**
 
 The manual training loop — `zero_grad → forward → backward → step` — is the loop you'll
-unroll into time steps in `07-pytorch-rnn-bridge/`. The `nn.Module` subclass pattern is the class
+unroll into time steps in `pytorch-for-llms/05-sequence-memory/`. The `nn.Module` subclass pattern is the class
 `LSTMCell` will use. The `state_dict` save pattern is the checkpoint the RNN trainer will write.
 
-> **Next:** `07-pytorch-rnn-bridge/01-pytorch-rnn-bridge.ipynb`
+> **Next:** `pytorch-for-llms/05-sequence-memory/05B-sequence-memory-pytorch-lab.ipynb`
 ```

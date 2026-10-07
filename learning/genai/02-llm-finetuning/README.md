@@ -1,17 +1,45 @@
 # LLM Fine-Tuning
 
-Riverside House uses each notebook for one layer of the fine-tuning story: objective intuition, parameter mechanics, then evaluation and decisions.
+Riverside House uses four notebooks for four decisions: what the examples should teach, where the
+update should live, what independent evidence supports, and whether the complete CUDA evidence
+contract survives across eight novels.
 
-**Series anchor:** Parts 1 and 2 reuse the same Aria thread from *The Weight of Distant Light* so the objective and parameter choices stay directly comparable.
+**Series anchor:** Parts 1 and 2 reuse the same Aria scene from *The Weight of Distant Light*. Part
+3 keeps every candidate tied to one declared job. Part 4 starts with the same novel as a pilot
+before it permits the other seven runs.
 
 1. [What Should the Model Learn?](01-llm-finetuning-data-techniques.ipynb) · [Theory notes](01-llm-finetuning-data-techniques-theory.md)
 2. [Where Should the Update Live?](02-llm-finetuning-parameter-techniques.ipynb) · [Theory notes](02-llm-finetuning-parameter-techniques-theory.md)
 3. [Evaluation, Comparison & Decision](03-llm-finetuning-comparison-and-decision.ipynb) · [Theory notes](03-llm-finetuning-comparison-and-decision-theory.md)
 4. [GPU Practice: Fine-Tune and Evaluate Every Riverside Novel](04-llm-finetuning-practice.ipynb) · [Theory notes](04-llm-finetuning-practice-theory.md)
 
-The notebooks share the committed `content/` corpus, generated `data/`, calibration artifacts, and local teaching checkpoints in this directory. Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS; either script creates this chapter's `.venv`, installs `requirements.txt`, registers its Jupyter kernel, and assigns that kernel to all four notebooks.
+The notebooks share the repository-owned `content/` corpus, generated `data/`, and local teaching
+checkpoints. Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS; either script creates this
+chapter's `.venv`, installs `requirements.txt`, registers its Jupyter kernel, and assigns that
+kernel to all four notebooks.
 
-Parts 1-3 select a CPU or CUDA profile. Part 4 is intentionally CUDA-only and stops immediately when PyTorch cannot see a compatible GPU.
+Parts 1-3 select a CPU or CUDA profile. Part 4 has two explicit modes:
+
+- `FINETUNING_PRACTICE_MODE=preflight` is the default CPU-safe path. It audits all chronological
+  splits, duplicate checks, stage ordering, checkpoint schedule, bootstrap size, and gates without
+  loading a tokenizer or model.
+- `FINETUNING_PRACTICE_MODE=cuda` enables model work and fails immediately if PyTorch cannot see a
+  compatible GPU. Add `FINETUNING_RUN_ONE_NOVEL=1` for the required pilot. Add
+  `FINETUNING_RUN_ALL_NOVELS=1` only after the pilot stages have been inspected. Destructive
+  replacement remains a separate `FINETUNING_OVERWRITE_RUNS=1` opt-in.
+
+The CUDA notebook order is fixed:
+
+```text
+environment and split audit
+-> one-novel pilot
+-> validation selection and reload parity
+-> one-time test opening
+-> paired bootstrap, retention, and gates
+-> the other seven novels and final ledgers
+```
+
+No quick path bypasses test isolation.
 
 ## Continue Into Operations
 

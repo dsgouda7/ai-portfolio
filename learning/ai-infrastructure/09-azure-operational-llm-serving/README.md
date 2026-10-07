@@ -40,7 +40,7 @@ chapter was authored.
 This chapter composes mechanisms owned elsewhere; it does not reteach them:
 
 - [Fine-tuning comparison and release evidence](../../genai/02-llm-finetuning/03-llm-finetuning-comparison-and-decision.ipynb)
-- [Gateway routing, rate limiting, fallback, and caching](../../genai/05-llm-gateway/01-llm-gateway.ipynb)
+- [Gateway routing, rate limiting, fallback, and caching](../../genai/05-llm-gateway/02-gateway-routing-resilience-lab.ipynb)
 - [Quantized artifacts and backend compatibility](../06-quantization/quantization-in-depth.ipynb)
 - [Inference scheduling, TTFT, TPOT, and admission](../07-inference-systems/inference-systems.ipynb)
 - [Frozen Riverside v1 contracts](../../../projects/riverside-ai-platform/contracts/README.md)

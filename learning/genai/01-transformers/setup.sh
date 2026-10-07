@@ -56,6 +56,6 @@ if [ "$SKIP_KERNEL" -eq 0 ]; then
 fi
 
 echo ""
-echo "Setup complete for GenAI 01 Transformers."
+echo "Setup complete for the GenAI 01 Transformers core and optional notebooks."
 echo "Virtual environment: $VENV_DIR"
 echo "Jupyter kernel: $KERNEL_DISPLAY_NAME"

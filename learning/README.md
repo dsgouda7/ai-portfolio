@@ -7,15 +7,19 @@ For exploratory exercises and third-party course material see [playground/](../p
 
 ---
 
-## GenAI — `genai/`
+## PyTorch-to-GenAI Route
 
-The primary learning track.  Covers sequence models, the Transformer architecture,
-applied LLM patterns, fine-tuning, and applied mini-projects.
+The primary route is intentionally split by job:
 
-Start with the ordered [GenAI prerequisites](genai-prerequisites/README.md), which now include the Keras-to-PyTorch fundamentals and PyTorch RNN bridge alongside the math, ML, neural-network, CNN, RNN, and tokenization foundations.
+1. [GenAI prerequisites](genai-prerequisites/README.md) build mathematical, ML, and
+   backpropagation intuition.
+2. [PyTorch for LLMs](pytorch-for-llms/README.md) makes tensors, autograd, training, data,
+   checkpoints, sequence memory, tokenization, and embeddings executable.
+3. [GenAI](genai/README.md) builds Transformers, pretraining, fine-tuning, RAG, evaluation, and
+   gateways on top of that PyTorch contract.
 
-See [genai/README.md](genai/README.md) for the full directory listing, learning arc,
-and prerequisites per chapter.
+The required route is PyTorch-first. Keras translation, vision, embedding history, Lightning, and
+full-code revision are optional branches rather than parallel implementations of the same lesson.
 
 Authoring standard: [genai/authoring-guide.md](genai/authoring-guide.md)
 

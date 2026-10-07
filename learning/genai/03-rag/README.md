@@ -1,11 +1,28 @@
 # Retrieval-Augmented Generation
 
-This two-notebook sequence separates retrieval quality from answer quality.
+This three-notebook sequence separates retrieval theory, pipeline implementation, and
+retriever-versus-generator failure localization.
 
-1. [Hybrid Search](01-hybrid-search.ipynb) · [Theory notes](01-hybrid-search-theory.md)
-2. [RAG Evaluation](02-rag-evaluation.ipynb) · [Theory notes](02-rag-evaluation-theory.md)
+1. [Hybrid Retrieval Theory](01a-hybrid-retrieval-theory.ipynb) ·
+   [Theory notes](01-hybrid-retrieval-theory.md)
+2. [Hybrid Retrieval PyTorch Lab](01b-hybrid-retrieval-lab.ipynb) ·
+   [Shared theory notes](01-hybrid-retrieval-theory.md)
+3. [RAG Failure Localization and Evaluation](02-rag-failure-localization-and-evaluation.ipynb) ·
+   [Theory notes](02-rag-failure-localization-and-evaluation-theory.md)
 
-Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS; either script creates this chapter's `.venv`, installs `requirements.txt`, registers its Jupyter kernel, and assigns that kernel to both notebooks. The deeper general evaluation track remains in [`../04-llm-evaluation/`](../04-llm-evaluation/).
+The theory notebook owns lexical-versus-dense failures, RRF intuition, candidate ceilings,
+Recall@K/MRR, authorization ordering, and support boundaries. The lab owns the PyTorch encoder,
+fusion sweeps, reranking, degraded mode, telemetry, and manifests. The final notebook owns
+per-query RAG diagnosis and oracle-context ablation; general judge bias, hallucination detection,
+and calibration remain in [`../04-llm-evaluation/`](../04-llm-evaluation/).
+
+`rag_shared.py` centralizes deterministic fixtures, tokenization, seeding, and the shared teaching
+caveat. The notebooks keep each teaching mechanism visible rather than hiding the pipeline behind
+an end-to-end helper.
+
+Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS; either script creates this chapter's
+`.venv`, installs `requirements.txt`, registers its Jupyter kernel, and assigns that kernel to all
+three notebooks.
 
 ## Continue Into Operations
 

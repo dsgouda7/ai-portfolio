@@ -57,6 +57,12 @@ SFT LoRA is aligned to the job, but its five synthetic records are too small and
 
 If all offline gates pass, write a decision and lineage record, then begin a small monitored canary with the previous immutable release ready for rollback. Watch live prompt mix, failures, latency, and cost. Route traffic back immediately if a live gate degrades; expand only while healthy. If matched LoRA and full-FT assistants both survive, choose the less burdensome candidate unless full FT's repeatable gain pays for its additional cost.
 
+The notebook executes this control plane with temporary fixture artifacts. It proves that an
+overlapping file digest blocks promotion, a disjoint external suite can reach the gates, the
+decision record binds both dataset fingerprints and the candidate digest, and the rollback target
+survives record reload. A temporary canary package is created only after every enabled fixture gate
+passes. Those numbers test the contract; they are not model evidence.
+
 ## 6. Common Failure Modes
 
 - Ranking unlike objectives with one perplexity or preference table.

@@ -28,6 +28,12 @@ This reduces gradient and optimizer state and guarantees that the frozen tensors
 
 LoRA keeps a projection's original weight `W` frozen and learns a low-rank correction beside it. For layer input `x`, matrix `A` compresses the input into a small bottleneck and matrix `B` expands it back to the output width. The layer adds that correction to the frozen projection's output to produce the combined result `y`.
 
+The notebook builds this path manually before calling PEFT. `B` begins at zero, so the wrapped
+layer initially matches the frozen base exactly. On the first backward pass, `B` receives a
+gradient while `A` does not yet have a non-zero route through `B`. After `B` moves, the second
+backward pass gives both narrow matrices gradients. The base projection remains unchanged. PEFT's
+helper automates this injection across named modules; it does not change those mechanics.
+
 For a 4096-wide projection with rank 8, `W` has shape 4096 by 4096, while `A` is 8 by 4096 and `B` is 4096 by 8. The two narrow matrices hold far fewer trainable values than a full replacement for `W`.
 
 The notebook attaches rank-8 corrections to `q_proj`, `k_proj`, `v_proj`, and `o_proj`. Only the adapter matrices receive gradients; the shared base stays unchanged. This sharply reduces optimizer state and produces a small per-job artifact. Several Riverside jobs can share one pinned base and load different adapters.
