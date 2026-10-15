@@ -17,17 +17,9 @@ reversal because input and answer now have separate roles.
 
 ## The route is not a leaderboard
 
-**Image pending:** `images/03-evo-01-model-evolution-map.png`
-*What this will show:* A route of complaints, not a ranking of newer models.
+![Counts lead to a bounded window, a running note, and a reader and writer. Looking back removes a source-access restriction.](images/03-evo-01-model-evolution-map.png)
+*A route of complaints, not a ranking of newer models.*
 
-> **Copilot image prompt**
-> - **Target file:** `images/03-evo-01-model-evolution-map.png`
-> - **Teaches:** A route of complaints, not a ranking of newer models.
-> - **Aspect ratio:** 16:9
-> - **Prompt:** Arrange cards: counts, ordered window, running note (RNN), reader and writer with one card, writer looks back, Transformer. Above counts show red wait quietly now warm. Label arrows: unseen combinations; clue outside window; different answer sequence; cannot look back; reading remains sequential. Add protected note (LSTM) as a side refinement from running note labelled memory can fade, not a required predecessor of attention. Use blue input, orange notes, green output, clean hand-drawn whiteboard style.
-> - **Must show:** Seven legible cards; LSTM side refinement; arrows name complaints; no accuracy claims.
-> - **Must not show:** invented numbers, unreadable text, decorative clutter, logos, copyrighted characters
-> - **Alt text:** Counts lead to a bounded window, a running note, and a reader and writer. Looking back removes a source-access restriction.
 
 LSTM refines a memory route; it is not a required rung toward attention. Attention predates
 Transformers. Encoder and decoder mean reading and writing roles, implemented by different layers.

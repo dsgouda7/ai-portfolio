@@ -4,7 +4,7 @@ Generate these images manually when ready. Keep placeholders in the lesson until
 
 ## 03-first-use-concept-map.png
 
-Status: pending
+Status: generated (MAI-Image-2.6)
 Used in: `../README.md` — Recommended reader route
 
 - **Target file:** `images/03-first-use-concept-map.png`

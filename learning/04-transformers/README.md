@@ -27,17 +27,9 @@ The first chapters use small sentences such as `the cat sat on the mat` because 
 | 5B | Can a learned writer reverse `[3, 1, 4, 1]` without being given its earlier answers? | **Deliberate reuse:** implement and measure Part 5A's source-to-target route. |
 | 6 | What changes inside a modern block while next-token prediction stays the same? | **New refinements** plus **deliberate reuse** of Part 2 position and Part 4 generation. |
 
-**Image pending:** `images/04-reader-map.png`
-*What this will show:* You can distinguish familiar foundations from each new Transformer mechanism.
+![Six cards show how token foundations lead to attention, blocks, causal writing, separate source memory, and modern refinements. Labels distinguish recap from new work and deliberate reuse.](images/04-reader-map.png)
+*You can distinguish familiar foundations from each new Transformer mechanism.*
 
-> **Copilot image prompt**
-> - **Target file:** `images/04-reader-map.png`
-> - **Teaches:** You can distinguish familiar foundations from each new Transformer mechanism.
-> - **Aspect ratio:** 16:9
-> - **Prompt:** Draw a left-to-right route of six labelled cards: Part 1 pieces and lookup rows (recap), Part 2 token-to-token lookup and position (new mechanism), Part 3 reusable block (new mechanism), Part 4A/4B one growing tape (new mechanism plus deliberate reuse), Part 5A/5B source reader and target writer (deliberate reuse plus new internals), Part 6 modern block (refinement and deliberate reuse). Put the sentence the cat sat on the mat under Parts 1–3; put aria heard under Part 4; put source [3,1,4,1] and target [1,4,1,3] under Part 5. Arrows show teaching dependencies, not historical chronology. Use a clean hand-drawn whiteboard style, blue inputs, orange new questions, green working components, and a labelled recap/new/reuse legend.
-> - **Must show:** All six Parts; both theory/lab pairs; distinct recap, new mechanism, and deliberate reuse labels; explicit teaching-order label.
-> - **Must not show:** invented numbers, unreadable text, decorative clutter, logos, copyrighted characters
-> - **Alt text:** Six cards show how token foundations lead to attention, blocks, causal writing, separate source memory, and modern refinements. Labels distinguish recap from new work and deliberate reuse.
 
 ### History versus why we teach it now
 
@@ -106,17 +98,9 @@ Self-attention means looking among positions in the same stream. Causal means a 
 
 This table isolates the information-moving steps. The residual paths that carry earlier states onward and normalization steps that control their scale remain part of the full blocks taught below; they are not removed.
 
-**Image pending:** `images/04-block-family-comparison.png`
-*What this will show:* The writer with a separate source has one extra place to look: cross-attention.
+![Encoder and decoder-only blocks each have attention then a feed-forward step. A source-conditioned writer adds cross-attention between its causal self-attention and feed-forward step.](images/04-block-family-comparison.png)
+*The writer with a separate source has one extra place to look: cross-attention.*
 
-> **Copilot image prompt**
-> - **Target file:** `images/04-block-family-comparison.png`
-> - **Teaches:** The writer with a separate source has one extra place to look: cross-attention.
-> - **Aspect ratio:** 16:9
-> - **Prompt:** Draw three side-by-side vertical stacks in a clean hand-drawn whiteboard style. Encoder: source [3,1,4,1] into self-attention (all valid source positions) then FFN (private per-position refinement). Decoder-only: aria heard into causal self-attention (prefix only) then FFN. Encoder-decoder writer: target [BOS,1,4] into causal self-attention then cross-attention then FFN; a separate blue source-memory bank [3,1,4,1] feeds only cross-attention. Use blue input cards, orange visibility boundaries, and green processed states. Label residual paths and normalization omitted from this comparison, not absent.
-> - **Must show:** Exact operation order in all three stacks; fixed source memory enters cross-attention; future target positions blocked; residual/normalization omission caveat.
-> - **Must not show:** invented numbers, unreadable text, decorative clutter, logos, copyrighted characters
-> - **Alt text:** Encoder and decoder-only blocks each have attention then a feed-forward step. A source-conditioned writer adds cross-attention between its causal self-attention and feed-forward step.
 
 Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS. Either script creates or reuses this stage's `.venv`, installs the adjacent `requirements.txt`, registers the stage-unique `learning-04-transformers` Jupyter kernel, and assigns it to every notebook in this directory. Every notebook starts in a fresh kernel.
 

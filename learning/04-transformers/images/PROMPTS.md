@@ -1,10 +1,10 @@
 # Image Prompts
 
-Generate each pending image manually with its Copilot prompt. Save it at the target path before replacing the matching placeholder with an image embed; then mark its status generated.
+Each image was generated from its prompt with Azure AI Foundry `MAI-Image-2.6`; regenerate by editing the prompt and rerunning the generator. Pending images stay as placeholders until a file exists.
 
 ## 04-reader-map.png
 
-Status: pending
+Status: generated (MAI-Image-2.6)
 
 Used in: README.md — Reader map: what changes in each Part
 
@@ -12,14 +12,14 @@ Used in: README.md — Reader map: what changes in each Part
 > - **Target file:** `images/04-reader-map.png`
 > - **Teaches:** You can distinguish familiar foundations from each new Transformer mechanism.
 > - **Aspect ratio:** 16:9
-> - **Prompt:** Draw a left-to-right route of six labelled cards: Part 1 pieces and lookup rows (recap), Part 2 token-to-token lookup and position (new mechanism), Part 3 reusable block (new mechanism), Part 4A/4B one growing tape (new mechanism plus deliberate reuse), Part 5A/5B source reader and target writer (deliberate reuse plus new internals), Part 6 modern block (refinement and deliberate reuse). Put the sentence the cat sat on the mat under Parts 1–3; put aria heard under Part 4; put source [3,1,4,1] and target [1,4,1,3] under Part 5. Arrows show teaching dependencies, not historical chronology. Use a clean hand-drawn whiteboard style, blue inputs, orange new questions, green working components, and a labelled recap/new/reuse legend.
+> - **Prompt:** A clean hand-drawn whiteboard diagram on white, 16:9. Title at top: "Stage 04 route (teaching order, not history)". Six rounded cards in one left-to-right row joined by arrows. Card 1 (blue border): "Part 1" / "pieces and lookup rows" / tag "recap". Card 2 (orange): "Part 2" / "tokens look at tokens + position" / tag "new". Card 3 (orange): "Part 3" / "reusable block" / tag "new". Card 4 (orange with green stripe): "Part 4A / 4B" / "one growing tape (causal writing)" / tag "new + reuse". Card 5 (green with orange stripe): "Part 5A / 5B" / "source reader + target writer" / tag "reuse + new". Card 6 (green): "Part 6" / "modern block" / tag "refine + reuse". Under cards 1-3 a small caption "the cat sat on the mat"; under card 4 "aria heard"; under card 5 "source 3 1 4 1 -> target 1 4 1 3". Bottom-right legend with three swatches: blue "recap", orange "new mechanism", green "deliberate reuse". Large, sparse, correctly spelled text; nothing else.
 > - **Must show:** All six Parts; both theory/lab pairs; distinct recap, new mechanism, and deliberate reuse labels; explicit teaching-order label.
 > - **Must not show:** invented numbers, unreadable text, decorative clutter, logos, copyrighted characters
 > - **Alt text:** Six cards show how token foundations lead to attention, blocks, causal writing, separate source memory, and modern refinements. Labels distinguish recap from new work and deliberate reuse.
 
 ## 04-block-family-comparison.png
 
-Status: pending
+Status: generated (MAI-Image-2.6)
 
 Used in: README.md — What is inside each block family?
 
@@ -34,7 +34,7 @@ Used in: README.md — What is inside each block family?
 
 ## 04-rope-in-real-path.png
 
-Status: pending
+Status: generated (MAI-Image-2.6)
 
 Used in: 02-attention-and-position.ipynb — Before the dials: where the question and label come from
 
