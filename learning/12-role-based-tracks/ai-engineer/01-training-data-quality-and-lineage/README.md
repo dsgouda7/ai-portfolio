@@ -1,8 +1,18 @@
 # Training Data Quality and Lineage
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 Riverside House has 13 structurally valid training rows and a release deadline. The problem is that structural validity is the least interesting fact about the file: duplicate leakage, invalid role order, PII, missing or unknown rights, split contamination, thin slices, contradictory preferences, and a length shortcut are all present.
 
 [Open the notebook](training-data-quality-and-lineage.ipynb) to build a deterministic data gate that measures those failures, fingerprints the source and curated candidate, and writes a machine-readable promotion report. The notebook reads the shared fixtures in `../shared/training-data/` without modifying them.
+
+## Chapter boundary: enter, challenge out, hand off
+
+**Enter with:** the SFT/preference data manifest and held-out split from Stage 06. This is role synthesis, not a replacement for Stages 01–11; retain the [role-baseline evidence gate](../00-role-baseline-and-route.md).
+
+**Challenge out of this chapter only when you can show:** a source-and-candidate digest, leakage/rights/PII findings, and the blocked-versus-curated data decision. Retain evidence location, scope/environment, date, reviewer, limitations, and revalidation trigger. Source files and expected results alone do not waive a demonstrated-skill gate. Missing or stale proof sends you back to the owner above, not forward by job title.
+
+**Hand off to** [02-prompt-release-and-experimentation](../02-prompt-release-and-experimentation/README.md): carry the fingerprinted data decision; one surviving fixture row is not training readiness.
 
 ## Setup
 

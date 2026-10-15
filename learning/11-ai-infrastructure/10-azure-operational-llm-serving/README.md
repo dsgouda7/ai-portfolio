@@ -1,5 +1,7 @@
 # Azure Operational LLM Serving
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 > **Evidence banner:** `LOCAL` mechanisms, `SUBSTITUTED` model work, `UNVALIDATED` Azure behavior.
 
 **Previous:** [Systems Composition](../09-systems-composition/README.md)  

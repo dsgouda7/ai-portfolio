@@ -8,6 +8,10 @@
 
 > **Interview prep:** First pass → sections 1–4 (~15 min). Sections 5–6 are supporting depth. **What interviewers probe:** “What makes an agent different from a workflow engine?” (fixed-graph-vs-runtime-model) and “Where must authority live, and why can the LLM never own it?” **Opening narrative:** the tension statement → workflow-vs-agent table → determinism spectrum → control/data plane split.
 
+**Before this reference:** A workflow follows steps you wrote down; an agent lets a model propose the next step. Neither grants that proposal permission.
+
+**Prerequisite evidence:** Use the [00 hands-on owner](../00-agent-foundations-and-tool-contracts/00-agent-foundations-and-tool-contracts.ipynb) to reject an unknown tool or malformed argument before the handler runs. This optional design reference extends that mechanism; its diagrams, snippets, and projected numbers are not a new execution result or a replacement for the notebook.
+
 ## 1 · Problem statement
 
 Production agentic infrastructure is hard for one specific reason: it combines **probabilistic
@@ -372,3 +376,5 @@ interview signals judgment more than reciting the full enterprise diagram does.
 - JSON Schema specification (what grammar-constrained decoding is typically validated against) — <https://json-schema.org/>
 - Back to the [Agentic AI Platform — System Design](system-design.md) uber doc
 - Next: [02 — Agent Lifecycle & Runtime](02-agent-lifecycle-and-runtime.md)
+
+**Handoff to a falsifiable check:** What stops a valid proposal from repeating forever? Take that question to the [01-reasoning-planning-and-control notebook](../01-reasoning-planning-and-control/01-reasoning-planning-and-control.ipynb); retain the run, inputs, environment, and limitations before upgrading a design claim to observed behavior.

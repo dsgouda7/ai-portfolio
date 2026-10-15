@@ -1,5 +1,7 @@
 # Token Embeddings to Transformers: Handwritten Theory Notes
 
+**Returning from Stage 03?** Choosing text pieces, assigning stable IDs, and retrieving trainable rows are a recap. This Part deliberately rebuilds them around `the cat sat on the mat` so later attention experiments share one concrete starting point. Standalone readers start here; no earlier tokenizer lesson is required.
+
 ## 1. Text needs two conversions
 
 A model cannot read a Python string. Before a Transformer block can do anything, text passes through two separate mechanisms:

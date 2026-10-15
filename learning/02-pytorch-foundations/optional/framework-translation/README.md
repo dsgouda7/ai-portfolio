@@ -1,5 +1,9 @@
 # Optional Framework Translation
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
+
+
 [Keras to PyTorch: Antarctic Field Guide](01-keras-to-pytorch-antarctic-field-guide.ipynb)
 preserves the framework-translation evidence from the former required route:
 

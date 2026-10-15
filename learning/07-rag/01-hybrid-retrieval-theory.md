@@ -24,6 +24,8 @@ For `What does RIGHTS-17 require?`, BM25 might return:
 
 BM25 excels at identifiers, names, numbers, and approved wording. It may miss `parental leave` for `welcoming a baby` when useful words do not overlap.
 
+**One word, two jobs:** Stage 03's token embedding maps each token ID to a learned row the language model reads. A retrieval embedding instead summarizes a whole question or passage as one vector so search can compare their meaning. It is evidence for finding text, not a replacement for the model's per-token input rows.
+
 **Dense retrieval asks which passages have similar meaning.** A model represents queries and passages as vectors and ranks nearby vectors. For `support when welcoming a baby`, it might return:
 
 1. Parental Leave

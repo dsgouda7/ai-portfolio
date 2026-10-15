@@ -1,5 +1,15 @@
 # Handoff and Customer Success
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
+## Chapter boundary: enter, challenge out, hand off
+
+**Enter with:** Chapter 07 incident/recovery records plus rollout, support, and ownership boundaries. This is role synthesis, not a replacement for Stages 01–11; retain the [role-baseline evidence gate](../00-role-baseline-and-engagement-lifecycle.md).
+
+**Challenge out of this chapter only when you can show:** an alert-to-owner-to-safe-action path and observed operator drills, with failed drills and unsupported acceptance left blocked. Retain evidence location, scope/environment, date, reviewer, limitations, and revalidation trigger. Source files and expected results alone do not waive a demonstrated-skill gate. Missing or stale proof sends you back to the owner above, not forward by job title.
+
+**Hand off to** [09-capstone](../09-capstone/README.md): carry the readiness verdict, drill evidence, accepted receiving owners, and revalidation triggers.
+
 ## Transfer Knowledge, Not Just Files
 
 When Riverside launches, the editorial team cannot call the FDE every time an alert fires or a policy needs updating. This module builds the package that makes the team independent and keeps the service operable.

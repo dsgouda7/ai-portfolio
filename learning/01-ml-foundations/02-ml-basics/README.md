@@ -1,5 +1,9 @@
 # ML Contracts
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
+
+
 This condensed foundation chapter uses one SmartVal dataset to separate the contracts that are
 often blurred together:
 

@@ -1,5 +1,9 @@
 # Chapter 03: Neural Networks and Backpropagation
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
+
+
 The required chapter is theory-first. It uses XOR to force a hidden representation, then follows
 one loss backward into a four-weight responsibility report and verifies that report with finite
 differences.

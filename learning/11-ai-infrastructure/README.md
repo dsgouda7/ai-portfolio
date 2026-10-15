@@ -1,5 +1,7 @@
 # Stage 11 — AI Infrastructure
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Previous:** [Stage 10 — Agentic AI](../10-agentic-ai/) · **Current:** Stage 11 — AI Infrastructure · **Next:** [Stage 12 — Role-Based Tracks](../12-role-based-tracks/)
 
 **What this covers:** The engineering that makes large language models practical at scale — GPU hardware architecture, training infrastructure, and inference systems.
@@ -45,6 +47,20 @@ regional capacity, and cost remain **live-unvalidated**.
 - **Start at Ch10** only when you can produce the Chapter 09 composition evidence or equivalent:
   a queue diagnosis, an admission/backpressure decision, scaling signals tied to the complaint, and
   a compatible deployment/rollback identity
+
+### What a shortcut skips, and what earns it
+
+A shortcut changes your reading order, not the required capability or the canonical Stages 01–11 foundation. Retain the readiness evidence with its command or method, input/release identity, environment, date, reviewer, limitations, and revalidation trigger. An expected-output table or copied source is not a run.
+
+| Entry | Material you are not replaying | Evidence to show before taking the shortcut | If evidence is missing |
+|---|---|---|---|
+| Ch1 | Nothing within this stage | Explain attention, training versus inference, held-out quality, and gateway request controls from the stated Stage 04–09 prerequisites | Return to the owning foundation stage |
+| Ch2 | Ch1 hardware, memory hierarchy, and bandwidth/compute limits | Use one named device/workload to explain whether bytes moved or arithmetic is the binding limit; distinguish measured timing from a roofline estimate | Read Ch1 |
+| Ch6 | Ch1–05 hardware, precision, profiling, attention IO, and distributed training | Supply a dtype/byte memory calculation, a separate runtime/cache reserve, and a fixed held-out quality baseline for the target runtime; training-scale topics remain owed if your work needs them | Read Ch1–03 for missing memory or measurement evidence; Ch4–05 for attention or training claims |
+| Ch9 | Ch1–08 device and inference mechanisms, not their evidence obligations | Explain prefill versus decode, KV-cache memory, TTFT versus TPOT, and a bounded gateway retry/deadline policy; attach a named workload measurement or explicitly labeled fixture demonstration | Read Ch7 and the Stage 09 gateway lab; use Ch1–03 when hardware measurements are missing |
+| Ch10 | Ch1–08 mechanisms and a replay of Ch9 only when equivalent composition evidence already exists | Retain the queue diagnosis, admission decision, complaint-linked scaling signal, and compatible release/rollback identity listed above; identify which live-serving tests remain unrun | Complete Ch9; a local fixture never waives the live Azure gates |
+
+Passing a shortcut check authorizes the named learning exercise only. CPU fallbacks, reference timings, modeled capacity, and local fixture results keep those labels; none certifies a GPU deployment or production service.
 
 ---
 

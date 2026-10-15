@@ -1,5 +1,7 @@
 # Designing an Agentic AI Platform — System Design
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 > **Interview framing:** *"Design a platform that lets users create and deploy AI agents, register
 > tools/MCP servers/skills, configure LLM providers, and run those agents safely in production —
 > with health tracking, rollback, audit, guardrails, budgets, loop detection, and security
@@ -25,6 +27,8 @@ trajectory replay, tool/MCP governance, and LLM-specific recovery patterns get f
 **How to use this track** — First pass: read this doc end-to-end, then sections 1–3 of each component doc (~45 min total). `Internals:` subsections in the component docs go one level deeper — tackle those on a second pass, targeted at the 3 components most likely to come up for your specific role. Before an interview: re-read sections 5 and 7 of this doc (they answer ~60% of follow-up questions), then the Quick Revision Notes and Interview Questions from each relevant component doc.
 
 ---
+
+**Optional reference, not an entry prerequisite.** OrderFlow already separates proposing a purchase from being allowed to commit it. This map groups those responsibilities into **planes**: named owners of one kind of work, not necessarily separate services. Bring the [Stage 10 chapter evidence](../README.md) before making a platform claim; start with [tool-contract failures](../00-agent-foundations-and-tool-contracts/00-agent-foundations-and-tool-contracts.ipynb) if that separation is unfamiliar. Diagrams and interview designs here are not executed deployment evidence.
 
 ## 1 · What the platform actually needs to do
 
@@ -420,3 +424,5 @@ interview; it signals judgment, not just knowledge.
 - Hierarchical Navigable Small World (HNSW) paper — <https://arxiv.org/abs/1603.09320>
 - FAISS indexes guide (HNSW / IVF-PQ parameters) — <https://github.com/facebookresearch/faiss/wiki/Faiss-indexes>
 - Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena (position bias) — <https://arxiv.org/abs/2306.05685>
+
+**Return to the learning route:** Use the [ownership map](../README.md) to choose the notebook for the failure you need to prove. Once OrderFlow survives its [local recovery suite](../09-reliability-recovery-and-production-decisions/09-reliability-recovery-and-production-decisions.ipynb), [Stage 11](../../11-ai-infrastructure/README.md) asks a different question: can the serving path sustain the workload without hiding queues?

@@ -1,5 +1,7 @@
 # Stage 08: LLM Evaluation
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Previous:** [Stage 07 · RAG](../07-rag/README.md)
 
 **Current:** Stage 08 · LLM Evaluation

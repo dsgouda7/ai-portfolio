@@ -1,5 +1,8 @@
 # Chapter 01: Sequence Memory
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
+
 This required PyTorch-first arc preserves one memory question across three fresh-kernel notebooks.
 
 > **Preview contract:** 01B uses token IDs, padding, shifted targets, and causal invariance to make

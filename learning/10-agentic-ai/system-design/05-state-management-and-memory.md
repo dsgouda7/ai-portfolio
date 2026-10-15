@@ -15,6 +15,10 @@ of deterministic application code.
 
 ---
 
+**Before this reference:** A transcript tells you what was said. A work record tells you which step finished, whose data it belongs to, and what may happen next. A checkpoint saves one work record; an event log preserves the sequence of accepted changes.
+
+**Prerequisite evidence:** Use the [02 hands-on owner](../02-state-context-and-memory/02-state-context-and-memory.ipynb) to restart from persisted state and verify namespace isolation and required-fact recall. This optional design reference extends that mechanism; its diagrams, snippets, and projected numbers are not a new execution result or a replacement for the notebook.
+
 ## 1 · Problem statement: agent state is not chat history
 
 The most common mistake in a system-design interview answer is treating "agent state" as
@@ -535,3 +539,5 @@ don't add it because "agents are supposed to have memory."
 - Related: [06 — Non-Determinism, Loops & Termination](06-non-determinism-loops-and-termination.md),
   [08 — Observability, Tracing & Health](08-observability-tracing-and-health.md),
   [11 — Governance, Guardrails & Security](11-governance-guardrails-and-security.md)
+
+**Handoff to a falsifiable check:** Can explicit routing resume that work record at the correct node? Take that question to the [03-durable-workflows-with-langgraph notebook](../03-durable-workflows-with-langgraph/03-durable-workflows-with-langgraph.ipynb); retain the run, inputs, environment, and limitations before upgrading a design claim to observed behavior.

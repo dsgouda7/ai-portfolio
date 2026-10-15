@@ -1,5 +1,7 @@
 # Chapter 00 — Agent Foundations and Tool Contracts
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Failure being repaired:** OrderFlow can emit plausible text, but malformed or unauthorized calls can still reach an action boundary.
 
 **Prerequisites:** [Stage 09 gateway contracts](../../09-llm-gateway/README.md), typed Python functions, and JSON objects.

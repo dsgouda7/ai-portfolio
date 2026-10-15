@@ -1,5 +1,9 @@
 # Part 05: The Modern Training Lifecycle
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
+
+
 - [Notebook](05-modern-training-lifecycle.ipynb)
 - [Handwritten theory](05-modern-training-lifecycle-theory.md)
 
@@ -19,3 +23,6 @@ Run **“Your turn: change only patience”** in
 step, change only `YOUR_PATIENCE`, measure the reported stop point, diagnose how many non-improving
 epochs were tolerated, and explain whether the evidence supports the stopping-rule claim without
 claiming a better model.
+
+
+The trainer now has explicit learning and measurement jobs. It still has no memory of earlier inputs. Continue to [Sequence Memory](../../03-language-model-foundations/01-sequence-memory/README.md), which reuses this loop while carrying information through ordered steps. The notebook's resume-file key check is a layout check, not an exact interrupted-training recovery test.

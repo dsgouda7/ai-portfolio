@@ -1,5 +1,9 @@
 # Part 03: Models and Training Loops
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
+
+
 - [Notebook](03-models-and-training-loops.ipynb)
 - [Handwritten theory](03-models-and-training-loops-theory.md)
 

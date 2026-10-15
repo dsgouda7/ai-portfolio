@@ -1,8 +1,18 @@
 # AI Engineer Capstone: Riverside Release Review
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 You are the release owner for a Riverside House AI application candidate. Your job is not to make every score green. Your job is to assemble enough traceable evidence for another engineer to decide whether the candidate should be promoted, held, rejected, or sent back for a narrower experiment.
 
 This capstone integrates existing work through versioned contracts, stable IDs, digests, and links. Do not copy notebook functions, fixture rows, or platform implementation into this directory. A result may be locally measured, fixture-derived, modeled, or cloud-validated; those classes are not interchangeable.
+
+## Chapter boundary: enter, challenge out, hand off
+
+**Enter with:** the Chapters 01–05 reports plus separate retrieval/generation and Stage 10–11 operational evidence. This is role synthesis, not a replacement for Stages 01–11; retain the [role-baseline evidence gate](../00-role-baseline-and-route.md).
+
+**Challenge out of this chapter only when you can show:** one release-scoped package whose required gates, unsupported claims, rollback identity, first decision, and next experiment survive independent review. Retain evidence location, scope/environment, date, reviewer, limitations, and revalidation trigger. Source files and expected results alone do not waive a demonstrated-skill gate. Missing or stale proof sends you back to the owner above, not forward by job title.
+
+**Hand off to** [graduation and practicum handoff](../../graduation-and-practicum-handoff.md): carry the bounded final decision and weakest-gate experiment into the supervised practicum.
 
 ## Start Here
 

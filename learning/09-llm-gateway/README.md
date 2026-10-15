@@ -1,5 +1,7 @@
 # Stage 09: LLM Gateway
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Previous:** [Stage 08 · LLM Evaluation](../08-llm-evaluation/README.md)
 
 **Current:** Stage 09 · LLM Gateway

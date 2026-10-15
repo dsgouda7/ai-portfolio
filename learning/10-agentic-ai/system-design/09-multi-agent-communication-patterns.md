@@ -23,6 +23,10 @@ can't be trusted to self-report honestly.
 
 ---
 
+**Before this reference:** Inventory and supplier specialists can check different facts at the same time. Their messages still need an address, a task identifier, and an authority boundary; splitting the conversation does not split responsibility for approval.
+
+**Prerequisite evidence:** Use the [08 hands-on owner](../08-multi-agent-communication-and-coordination/08-multi-agent-communication-and-coordination.ipynb) to verify typed task envelopes, bounded specialist context, and no approval authority in read-only specialists. This optional design reference extends that mechanism; its diagrams, snippets, and projected numbers are not a new execution result or a replacement for the notebook.
+
 ## 1 · Problem statement
 
 Splitting one agent into several specialized agents (a researcher, a planner, a tool-executor)
@@ -457,3 +461,5 @@ up in practice — most early products never reach that scale.
 - Back to the [uber doc — Designing an Agentic AI Platform](system-design.md)
 - [06 — Non-Determinism, Loops & Termination](06-non-determinism-loops-and-termination.md) for the budget/loop machinery each agent enforces individually
 - [11 — Governance, Guardrails & Security](11-governance-guardrails-and-security.md) for policy engine and audit store details referenced above
+
+**Handoff to a falsifiable check:** If one specialist fails after another commits, who reconciles the joint result? Take that question to the [09-reliability-recovery-and-production-decisions notebook](../09-reliability-recovery-and-production-decisions/09-reliability-recovery-and-production-decisions.ipynb); retain the run, inputs, environment, and limitations before upgrading a design claim to observed behavior.

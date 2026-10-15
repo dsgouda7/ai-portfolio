@@ -1,5 +1,9 @@
 # Encoder-Decoder Transformers and Cross-Attention: Handwritten Theory Notes
 
+### Familiar roles, new insides
+
+You may already know reader/writer roles from Stage 03: one component reads the source, and another writes a separate target. See [02C's earlier explanation](../03-language-model-foundations/02-tokenization-and-embeddings/02C-context-windows-to-static-embeddings.ipynb) and [model-evolution notebook 3](../03-language-model-foundations/model-evolution/03-recurrent-encoder-decoder-to-attention.ipynb). Here their insides become Transformer blocks: positions exchange information through attention instead of passing a recurrent state along one step at a time. The full explanation follows for standalone readers.
+
 ## 1. Start with the job: read one sequence, write another
 
 An encoder-decoder Transformer separates the source from the response. The **encoder** reads the complete source and produces one contextual vector for every source position. The **decoder** writes left to right. At each step it can use earlier target tokens and retrieve information from any valid encoder position.
@@ -28,6 +32,8 @@ Decoder self-attention and cross-attention answer different questions. Masked se
 
 In cross-attention, **queries come from decoder states**, while **keys and values come from encoder outputs**. Queries express the current target step's need; source keys advertise what each position contains; source values deliver the selected information. Per head, the weight grid has shape `(target, source)`, so source and target lengths can differ. Cross-attention has no future-source mask because the full source is already known. A source padding mask is still required so padded positions cannot be retrieved.
 
+**Why this deliberately crude attempt?** The mean below is a controlled experiment isolating lost source addresses: after averaging, the writer cannot ask for the first `1` rather than the second `1` in `[3, 1, 4, 1]`. It is not a reconstruction of historical recurrent fixed-summary models. Those readers learned their compression while processing the source in order, and their final summary may encode order. Their shared limitation is the fixed-size handoff with no direct route back to each source position, not a guarantee that every short sequence must fail.
+
 Keeping every encoder position avoids the fixed-summary bottleneck of early sequence-to-sequence models. Mean-pooling would blur positional identity. Cross-attention instead lets each target step select a different mixture of source values.
 
 For reversal, decoder step 0 should route to source position 3, step 1 to position 2, then positions 1 and 0. Those four digit rows should resemble an anti-diagonal; the later EOS prediction has no one-to-one source position. The repeated `1` shows why position matters: content alone cannot distinguish its two occurrences. Prediction loss must teach the model to combine decoder step, source position, and token content.
@@ -35,6 +41,8 @@ For reversal, decoder step 0 should route to source position 3, step 1 to positi
 Attention maps are diagnostics, not complete explanations. Outputs also depend on value vectors, other heads and layers, residual streams, and feed-forward blocks. Use held-out task accuracy to test behavior and the map to check whether routing matches the expected rule.
 
 ## 3. Teacher Forcing and Free-Running Generation
+
+**Familiar training rule, separate memory:** This repeats the Part 4 training/generation distinction, now with fixed source memory and a separate target prefix. During practice, the writer receives the correct earlier target token; this is teacher forcing. During generation, it receives its own earlier choice. The source `[3, 1, 4, 1]` stays available in both cases. Supplying the previous answer is not permission to read the current answer.
 
 During training, the known target is shifted into aligned sequences:
 
@@ -50,6 +58,8 @@ During generation, the target is unavailable. The encoder runs once, then the de
 ![Handwritten comparison of teacher forcing, free-running decoding, and the two cache types](images/03-encoder-decoder-and-cross-attention-theory-02.png)
 
 ## 4. Encoder Memory and Two Kinds of Cache
+
+**Familiar saved history, one new distinction:** Part 4 saved earlier keys and values to avoid repeating prefix work; that saved state is a cache. Here the target history still grows one token at a time. The complete source does not grow, so its memory and each layer's source keys and values can stay fixed for this request. Fixed during generation does not mean the reader's learned weights stop training.
 
 Three reusable objects are easy to confuse. First, the encoder output is computed once per source and remains fixed during that request. Second, each decoder layer can project that fixed output into its own cross-attention keys and values and cache them. These are layer-specific views, not one universal key/value tensor. Third, decoder self-attention has a separate cache: every generated target token adds keys and values, so this cache grows with the prefix.
 

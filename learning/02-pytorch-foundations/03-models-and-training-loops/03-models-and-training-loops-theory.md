@@ -2,6 +2,8 @@
 
 ## 1. Raw tensors already contain the learning mechanism
 
+Start with two sensor measurements: engine load and ambient temperature. Give each a learned influence, add the two contributions, and then add a baseline offset. This straight weighted prediction is **linear regression**; a **parameter** is one adjustable influence or offset. The compact line below writes that same recipe with arrays.
+
 A linear regression can be written directly:
 
 ```text
@@ -130,3 +132,6 @@ may return several named outputs. The same principles hold:
 
 **Durable summary:** `nn.Module` does not replace tensor math; it makes parameter ownership,
 forward behavior, movement, and persistence explicit.
+
+
+Next, [Data, Checkpoints, and Hyperparameters](../04-data-checkpoints-and-hyperparameters/04-data-checkpoints-and-hyperparameters.ipynb) resumes the fuel model in a fresh process. The complaint is no longer how to compute a prediction: it is how to deliver all examples exactly once and decide which state must survive an interruption.

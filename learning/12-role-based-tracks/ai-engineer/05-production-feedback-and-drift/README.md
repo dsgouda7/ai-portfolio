@@ -1,5 +1,7 @@
 # Production Feedback and Drift
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 > **Evidence banner:** `FIXTURE` inputs, `VALIDATED` deterministic outcomes,
 > `OUTPUTS CLEARED`, `UNVALIDATED` production behavior.
 
@@ -12,6 +14,14 @@ actually implicates.
 The notebook makes no provider, model, network, or cloud call. It reads the
 shared synthetic fixture directly and writes generated candidate artifacts only
 when a learner later runs the relevant cell.
+
+## Chapter boundary: enter, challenge out, hand off
+
+**Enter with:** the Chapter 04 release identity and Chapter 03 content-free trace contract. This is role synthesis, not a replacement for Stages 01–11; retain the [role-baseline evidence gate](../00-role-baseline-and-route.md).
+
+**Challenge out of this chapter only when you can show:** window-specific counts and uncertainty, reviewed privacy-safe regression cases, lineage, and a component-owned intervention decision. Retain evidence location, scope/environment, date, reviewer, limitations, and revalidation trigger. Source files and expected results alone do not waive a demonstrated-skill gate. Missing or stale proof sends you back to the owner above, not forward by job title.
+
+**Hand off to** [06-capstone](../06-capstone/README.md): carry the reviewed iteration decision and follow-up test; a source change alone is not improved production behavior.
 
 ## Start Here
 

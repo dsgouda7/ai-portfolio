@@ -20,6 +20,10 @@ about.
 
 ---
 
+**Before this reference:** Switching a model provider resembles changing a supplier behind one purchasing desk. The desk must preserve the request contract, account for failed attempts, and stop when the remaining deadline is spent.
+
+**Prerequisite evidence:** Use the [Stage 09 gateway lab](../../09-llm-gateway/02-gateway-routing-resilience-lab.ipynb) to retain routing, retry, fallback, and cost evidence with a named provider boundary. This optional design reference extends that mechanism; its diagrams, snippets, and projected numbers are not a new execution result or a replacement for the notebook.
+
 ## 1 · Problem statement
 
 Agents need to use different models and providers — OpenAI, Azure OpenAI, Anthropic, Google,
@@ -425,3 +429,5 @@ so a new model version earns production traffic instead of being flipped on for 
 - Circuit Breaker pattern — Azure Architecture Center — <https://learn.microsoft.com/en-us/azure/architecture/patterns/circuit-breaker>
 - Anthropic prompt caching documentation — <https://platform.claude.com/docs/en/docs/build-with-claude/prompt-caching>
 - OpenAI prompt caching guide — <https://developers.openai.com/api/docs/guides/prompt-caching>
+
+**Handoff to a falsifiable check:** Can the trace explain which route or argument changed when the provider changed? Take that question to the [05-agent-evaluation-and-observability notebook](../05-agent-evaluation-and-observability/05-agent-evaluation-and-observability.ipynb); retain the run, inputs, environment, and limitations before upgrading a design claim to observed behavior.

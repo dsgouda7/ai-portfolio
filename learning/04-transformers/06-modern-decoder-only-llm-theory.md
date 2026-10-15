@@ -38,6 +38,8 @@ RMSNorm operates independently on every token. It does not mix tokens, add conte
 
 The durable idea is: **normalization controls the condition of the residual stream; it does not create the model's knowledge.**
 
+**Deliberate revisit of Part 2:** You already watched query/key pairs turn like dials. Here that same position rule is refined inside a modern attention block. Track where it happens after the head split, and how an old rotated key can be saved for the next writing step. This is the production-path continuation of the earlier picture, not a different kind of position signal.
+
 ## 3. RoPE Puts Position Inside the Comparison
 
 Attention needs order. Without position, `the cat sat on the mat` and `the mat sat on the cat` contain the same token multiset.

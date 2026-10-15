@@ -1,5 +1,7 @@
 # Prompt Release and Experimentation
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 > **Evidence banner:** `LOCAL FIXTURES`, `DETERMINISTIC ANALYSIS`, `EXECUTED SUCCESSFULLY`, `OUTPUTS CLEARED`.
 
 Riverside House has a prompt candidate that looks better in aggregate: four of
@@ -12,6 +14,14 @@ tool schema, retrieval configuration, model alias, and evaluator as one pinned
 application bundle; compare candidate and baseline on the same cases; inspect
 critical slices; quantify finite-sample uncertainty; design shadow and A/B
 assignment; and require canary and rollback evidence before promotion.
+
+## Chapter boundary: enter, challenge out, hand off
+
+**Enter with:** the Chapter 01 data decision plus Stage 07–09 retrieval, evaluation, and gateway evidence. This is role synthesis, not a replacement for Stages 01–11; retain the [role-baseline evidence gate](../00-role-baseline-and-route.md).
+
+**Challenge out of this chapter only when you can show:** a pinned baseline/candidate comparison on identical cases, critical-slice rejection, uncertainty, and a retained rollback target. Retain evidence location, scope/environment, date, reviewer, limitations, and revalidation trigger. Source files and expected results alone do not waive a demonstrated-skill gate. Missing or stale proof sends you back to the owner above, not forward by job title.
+
+**Hand off to** [03-application-latency-and-cost](../03-application-latency-and-cost/README.md): carry the accepted bundle identity and rejected-candidate reasons, not an aggregate-only pass.
 
 ## Start Here
 

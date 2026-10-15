@@ -1,5 +1,7 @@
 # Discovery and Success Criteria
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 Riverside House wants to help editors find answers and continue manuscripts faster. The temptation is to start choosing models, agents, and databases.
 
 This chapter pauses before the design. You will follow one editor's work, identify who can make each decision, and turn a promising idea into outcomes that Riverside can actually test.
@@ -12,6 +14,14 @@ flowchart LR
     D --> E["Write testable success criteria"]
     E --> F["List decisions still blocking design"]
 ```
+
+## Chapter boundary: enter, challenge out, hand off
+
+**Enter with:** the role-baseline foundation evidence and one clearly bounded synthetic or authorized workflow. This is role synthesis, not a replacement for Stages 01–11; retain the [role-baseline evidence gate](../00-role-baseline-and-engagement-lifecycle.md).
+
+**Challenge out of this chapter only when you can show:** a discovery pack with source-labeled baselines, decision owners, testable criteria, forbidden cases, and owned unknowns. Retain evidence location, scope/environment, date, reviewer, limitations, and revalidation trigger. Source files and expected results alone do not waive a demonstrated-skill gate. Missing or stale proof sends you back to the owner above, not forward by job title.
+
+**Hand off to** [02-architecture-translation](../02-architecture-translation/README.md): carry the discovery decision and open authority gaps; BLOCKED is a valid input, not permission to invent approval.
 
 ## What you will build
 

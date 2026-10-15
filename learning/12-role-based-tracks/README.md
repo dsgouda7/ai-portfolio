@@ -1,5 +1,7 @@
 # Stage 12 — Role-Based Tracks
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Previous:** [Stage 11 — AI Infrastructure](../11-ai-infrastructure/) · **Current:** Stage 12 — Role-Based Tracks · **Next:** complete the chosen role capstone and retain portfolio evidence.
 
 These tracks organize existing technical chapters around the work performed in a particular role.

@@ -1,5 +1,7 @@
 # Chapter 06 — Safety, Human Control, and Governance
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Failure being repaired:** Supplier-controlled text can influence approval unless identity, authority, policy, and approval state are enforced outside the prompt.
 
 **Prerequisites:** [Chapter 05](../05-agent-evaluation-and-observability/README.md), tool validation from [Chapter 00](../00-agent-foundations-and-tool-contracts/README.md), and trust-boundary basics.

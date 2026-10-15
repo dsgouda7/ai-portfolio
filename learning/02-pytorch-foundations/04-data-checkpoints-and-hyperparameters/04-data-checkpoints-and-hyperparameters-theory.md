@@ -67,6 +67,10 @@ optimizer changes the continuation, even if the first reloaded prediction is ide
 A scheduler, scaler, sampler, or early-stopping counter may add more state later. "Resumable" is a
 claim about all continuation dependencies, not a filename.
 
+**Evidence limit:** this notebook proves prediction parity after weight reload and writes a bundle containing model, optimizer, progress, and configuration state. It does not reload that bundle and compare the next training update with an uninterrupted run. In particular, the shuffled loader's random-generator state is not saved, so exact batch-order continuation is not established. Treat the file as a checkpoint-layout example, not proof of exact recovery.
+
+Variable-length sequences add another batching complaint: rows must fit a rectangle without pretending that blank slots are real observations. Filling those slots is **padding**; keeping each row's true **length** tells you where the content ends. Stage 03 applies that contract to text and distinguishes which blanks must not be read from which blanks must not be graded.
+
 ## 5. Configuration is not learned state
 
 The model does not learn batch size or learning rate as parameters in this experiment. Those
@@ -123,3 +127,6 @@ sampling. The same contracts remain:
 
 **Durable summary:** data loading and checkpointing are not plumbing; they are contracts about
 which evidence arrives, in what order, and which state survives interruption.
+
+
+**Next complaint:** correct batches and saved state do not stop validation from accidentally changing the model. [The Modern Training Lifecycle](../05-modern-training-lifecycle/05-modern-training-lifecycle.ipynb) separates learning, measurement, model selection, and interruption state.

@@ -1,5 +1,8 @@
 # Chapter 02: Tokenization and Embeddings
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
+
 This required chapter keeps one legal-corpus example across three fresh-kernel notebooks.
 
 **Prerequisite route:** complete Stage 02, or use the

@@ -1,8 +1,12 @@
 # Chapter 07 — MCP and Agent Interoperability
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Failure being repaired:** N-by-M adapters hide capability and schema drift, so an old client shape can reach an incompatible provider.
 
 **Prerequisites:** [Chapter 06](../06-safety-human-control-and-governance/README.md), Chapter 00 tool contracts, and client/server lifecycle basics.
+
+**Before the protocol vocabulary:** the client asks a capability server what actions it offers, checks the returned contract, and only then sends a call. **JSON-RPC** is a structured request/reply envelope with a method name, arguments, and an identifier tying the reply to the request. **MCP** standardizes that discovery and call lifecycle; it does not decide whether OrderFlow is authorized to buy.
 
 ## Local Learning Contract
 

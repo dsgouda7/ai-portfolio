@@ -1,5 +1,7 @@
 # Chapter 02a — Skills: Discovery, Composition, and Versioning
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Failure being repaired:** Copied know-how floats across tool versions, loads too much context, and changes decisions without a release boundary.
 
 **Prerequisites:** [Chapter 02](../02-state-context-and-memory/README.md), tool contracts from [Chapter 00](../00-agent-foundations-and-tool-contracts/README.md), and semantic versioning basics.

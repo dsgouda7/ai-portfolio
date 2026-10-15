@@ -64,6 +64,8 @@ Then comes the nagging question: the clean pattern is added to content **before*
 
 That does not prove additive position fails. It proves that relative distance is learnable but not guaranteed to remain explicit in the score geometry. The complaint is now precise: put position where attention actually compares tokens.
 
+Before the dials, think of `cat` asking for context. Its query is a learned question; another position's key is the label it can match; that position's value is what it delivers. The real path is `states -> Q/K/V projections -> head split -> rotate Q and K -> scaled scores -> masks -> softmax -> weighted values`. Projections make those three learned views. Heads are smaller parallel lookup lanes. Scaling controls score size; masks block illegal routes; softmax makes weights that sum to one. Values are not rotated. The notebook's Section 3 is a visual preview of the turning, not a claim that rotation happens before projection. Sections 4–5 connect the picture to the learned questions, labels, values, and score calculation.
+
 ## 5. RoPE puts position inside the comparison
 
 RoPE acts after queries and keys are projected and split into heads. It treats each adjacent feature pair as a tiny two-dimensional dial.

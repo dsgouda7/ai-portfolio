@@ -1,8 +1,14 @@
 # Stage 02: PyTorch Foundations
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
+
+
 This stage turns Stage 01's conceptual contracts into one visible PyTorch training path. Take the
 full route when any responsibility in the loop is still fuzzy; use the quick refresher only when
 you can already explain the whole skeleton.
+
+**Ownership:** you bring Stage 01's reasons for learning and checking a model. This stage owns tensors (number containers with named dimensions), autograd (automatic tracing of how error depends on those numbers), modules (homes for learned state), and data, training, and checkpoint mechanics. Language-shaped examples preview these mechanics; [Stage 03](../03-language-model-foundations/README.md) owns what the text pieces mean and how sequence tasks are built.
 
 ## Choose your route
 
@@ -31,3 +37,6 @@ kernel to that chapter's notebooks.
 **Previous:** [Stage 01 — ML Foundations](../01-ml-foundations/README.md)  
 **Current:** Stage 02 — PyTorch Foundations  
 **Next:** [Stage 03 — Language-Model Foundations](../03-language-model-foundations/README.md)
+
+
+The trainer can now update and reload a model, but a single sensor row contains no memory of earlier rows. [Sequence Memory](../03-language-model-foundations/01-sequence-memory/README.md) asks how the prediction can carry useful information from earlier steps. Bring the training loop and named-axis habit, not an assumption that a language-shaped tensor already understands language.

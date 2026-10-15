@@ -1,5 +1,7 @@
 # Data Onboarding and Contracts
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 Riverside House has six source systems and fourteen synthetic records. At first
 glance, every record looks ready because it has an ID and a payload. A closer
 look finds an old policy, a scrambled two-column PDF, a repeated rights page, a
@@ -8,6 +10,14 @@ contractor who still appears in an old group snapshot.
 
 This chapter decides which records may move toward retrieval evaluation, which
 must wait for an owner, and which must never enter the current index.
+
+## Chapter boundary: enter, challenge out, hand off
+
+**Enter with:** Chapter 02 source/use-case boundaries and the Chapter 01 source-owner inventory. This is role synthesis, not a replacement for Stages 01–11; retain the [role-baseline evidence gate](../00-role-baseline-and-engagement-lifecycle.md).
+
+**Challenge out of this chapter only when you can show:** per-source mapping and readiness, version/deletion lineage, drift handling, and current-authority checks. Retain evidence location, scope/environment, date, reviewer, limitations, and revalidation trigger. Source files and expected results alone do not waive a demonstrated-skill gate. Missing or stale proof sends you back to the owner above, not forward by job title.
+
+**Hand off to** [04-identity-isolation-and-compliance](../04-identity-isolation-and-compliance/README.md): carry the bounded current view and every blocked or conditional source, not a blanket ready label.
 
 ## Situation
 

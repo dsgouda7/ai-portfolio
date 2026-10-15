@@ -19,6 +19,10 @@ trace/eval volume) well before generic CPU/memory exhaustion.
 
 ---
 
+**Before this reference:** More waiting workers do not create more provider quota. Each accepted purchase spends model calls, tool time, state writes, and an audit record; admission must protect the tightest shared limit.
+
+**Prerequisite evidence:** Use the [09 hands-on owner](../09-reliability-recovery-and-production-decisions/09-reliability-recovery-and-production-decisions.ipynb) to separate deterministic local recovery results from the modeled daily-capacity estimate. This optional design reference extends that mechanism; its diagrams, snippets, and projected numbers are not a new execution result or a replacement for the notebook.
+
 ## 1 · Problem statement
 
 Running a single agent is a solved problem — call a model, call some tools, checkpoint state,
@@ -338,3 +342,5 @@ for checkpoint semantics referenced in §3–§5, [06 — Non-Determinism, Loops
 for the budget mechanisms enforced at admission and the model/tool gateways, and
 [07 — Agent Evaluation Frameworks](07-agent-evaluation-frameworks.md) for the tiered evaluation
 pipeline referenced in §5.
+
+**Handoff to a falsifiable check:** Which queue actually withholds capacity when replicas are added? Take that question to the [Stage 11 systems-composition lab](../../11-ai-infrastructure/09-systems-composition/systems-composition-lab.ipynb); retain the run, inputs, environment, and limitations before upgrading a design claim to observed behavior.

@@ -1,5 +1,7 @@
 # Stage 10 — Agentic AI
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Previous:** [Stage 09 — LLM Gateway](../09-llm-gateway/) · **Current:** Stage 10 — Agentic AI · **Next:** [Stage 11 — AI Infrastructure](../11-ai-infrastructure/)
 
 Build **OrderFlow**, an AI-native B2B purchase-order system, from a fragile tool-calling loop into an auditable multi-agent workflow.

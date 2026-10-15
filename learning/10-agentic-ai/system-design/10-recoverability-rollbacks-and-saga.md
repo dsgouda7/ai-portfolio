@@ -21,6 +21,10 @@ that makes "just roll it back" categorically harder than it is for a single data
 > **Interview prep:** First pass → sections 1–3 (idempotency, saga pattern, orchestration vs. choreography). **What interviewers probe:** “What is check-before-compensate and when does it change the answer between retry and compensate?” and “Why prefer orchestrated sagas over choreographed sagas for agent platforms specifically?” **Opening narrative:** idempotency key as the foundation → saga orchestrator → check-before-compensate → escalation when compensation itself fails.
 ---
 
+**Before this reference:** A lost purchase receipt does not mean the order failed. Reuse one business-operation key to avoid a second order: that is idempotency. If later work fails, compensation is a separate corrective action, not erasure of history.
+
+**Prerequisite evidence:** Use the [09 hands-on owner](../09-reliability-recovery-and-production-decisions/09-reliability-recovery-and-production-decisions.ipynb) to lose a committed response, retry with the same key, then inspect one commitment and reverse-order compensation. This optional design reference extends that mechanism; its diagrams, snippets, and projected numbers are not a new execution result or a replacement for the notebook.
+
 ## 1 · Problem statement
 
 Agents are useful precisely because they *do* things: create tickets, send emails, update
@@ -434,3 +438,5 @@ have more than a handful of write tools or the manual runbooks stop scaling.
 - [11 — Governance, Guardrails & Security](11-governance-guardrails-and-security.md) for HITL approval mechanics
 - [06 — Non-Determinism, Loops & Termination](06-non-determinism-loops-and-termination.md) for budget/escalation ties
 - [03 — Tool, MCP & Skill Registry](03-tool-mcp-and-skill-registry.md) for where compensation classification lives in the registry schema
+
+**Handoff to a falsifiable check:** Who may approve the correction, and does approval still match the exact payload? Take that question to the [06-safety-human-control-and-governance notebook](../06-safety-human-control-and-governance/06-safety-human-control-and-governance.ipynb); retain the run, inputs, environment, and limitations before upgrading a design claim to observed behavior.

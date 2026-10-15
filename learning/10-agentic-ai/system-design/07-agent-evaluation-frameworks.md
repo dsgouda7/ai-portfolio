@@ -19,6 +19,10 @@ function with one input and one expected output.
 
 ---
 
+**Before this reference:** Two purchase runs can both say completed while one ordered the wrong quantity. The final answer is only the last line; the trajectory is the sequence of decisions and actions that produced it.
+
+**Prerequisite evidence:** Use the [05 hands-on owner](../05-agent-evaluation-and-observability/05-agent-evaluation-and-observability.ipynb) to catch both seeded route and argument defects and name their failing steps. This optional design reference extends that mechanism; its diagrams, snippets, and projected numbers are not a new execution result or a replacement for the notebook.
+
 ## 1 · Problem statement
 
 Traditional software testing is comfortable: deterministic input, deterministic output, one
@@ -518,3 +522,5 @@ interview signals judgment, not just knowledge of the full stack.
   decisions that trajectory/policy-compliance checks are validated against
 - [06 — Non-Determinism, Loops & Termination](06-non-determinism-loops-and-termination.md) —
   loop/budget behavior that recovery-quality evaluation is checking for
+
+**Handoff to a falsifiable check:** Can the same evidence prove that an unauthorized action never ran? Take that question to the [06-safety-human-control-and-governance notebook](../06-safety-human-control-and-governance/06-safety-human-control-and-governance.ipynb); retain the run, inputs, environment, and limitations before upgrading a design claim to observed behavior.

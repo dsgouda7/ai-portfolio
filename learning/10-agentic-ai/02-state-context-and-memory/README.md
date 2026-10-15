@@ -1,8 +1,14 @@
 # Chapter 02 — State, Context, and Memory
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Failure being repaired:** Prompt history overflows context, leaks facts across threads, and cannot restore a trustworthy run after restart.
 
 **Prerequisites:** [Chapter 01](../01-reasoning-planning-and-control/README.md), explicit terminal states, and basic serialization.
+
+**Before the notebook notation:** keep OrderFlow's current shopping list separate from its archive. **Working memory** is the temporary information for this step. **Episodic memory** records earlier purchase events. **Semantic memory** stores reusable facts. **Procedural memory** stores how to perform a task; a supplier email cannot grant itself that status. State is the authoritative purchase record, while context is the selected material shown on one model call.
+
+**Canonical handoff:** after proving recall, namespace isolation, and restart, continue through [Chapter 02a — Skills](../02a-skills-discovery-composition-and-versioning/README.md). The notebook's retained direct link to Chapter 03 is an older short route; it does not waive the versioned know-how, dependency, and authority checks owned by Chapter 02a.
 
 ## Local Learning Contract
 

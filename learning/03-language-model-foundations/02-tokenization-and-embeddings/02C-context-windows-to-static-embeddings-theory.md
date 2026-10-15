@@ -86,6 +86,8 @@ direction:
 **Complaint:** flipping the arrow changes which co-occurrences shape a row, but it still learns
 static token vectors rather than an ordered state for every occurrence.
 
+When the job changes from predicting one center word to writing several ordered answer tokens, the model needs a sequence of outputs, not another static-vector objective. The source is the input sequence; the target is the answer sequence.
+
 ## 4. A sequence target changes the output rank
 
 One-token objectives cannot express “produce these next tokens in this order.” The notebook
@@ -102,6 +104,8 @@ target position.
 An encoder GRU reads the source in order and compresses it into a hidden state. A decoder GRU
 starts from that state. During training it receives the correct previous target token and predicts
 the next one. This is **teacher forcing**.
+
+In plain English: during practice, give the writer the correct previous target token before asking it to predict the next one. At generation time there is no answer key, so it must feed its own previous guess instead.
 
 The generic training contract needs only one adjustment: ignore the target's start marker when
 forming loss labels. Decoder inputs omit the final token; expected outputs omit the start token.
@@ -130,6 +134,8 @@ retrieve whichever earlier source position it needs.
 Attention will answer that complaint by keeping source states addressable. A Transformer goes
 further by constructing one contextual state per token position and routing information between
 positions.
+
+The fixed-summary handoff is the next complaint: the decoder receives one learned note, not direct access to every source position. [The recurrent encoder-decoder-to-attention notebook](../model-evolution/03-recurrent-encoder-decoder-to-attention.ipynb) compares those two access patterns on the same task.
 
 ## 6. Practical failure modes
 

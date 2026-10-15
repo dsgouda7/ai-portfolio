@@ -4,6 +4,8 @@ An AI Engineer owns the path from a user need to an operated AI capability. The 
 
 This route trains a different habit. You expose the failure, run the cheapest test that separates plausible causes, change the owning layer, and retain evidence for the decision.
 
+**Keep the foundation gate when specializing.** A route may omit agent integration from a particular application because a deterministic workflow is sufficient. That scope choice does not make Stage 10 learning optional or waive Stage 11 infrastructure evidence. Follow the [canonical Stage 12 entry contract](../README.md): demonstrate the Stages 01–11 capabilities, or retain reviewed equivalent evidence for each missing owner before using this route as synthesis.
+
 ## Role Outcome
 
 When you complete the route, you can:

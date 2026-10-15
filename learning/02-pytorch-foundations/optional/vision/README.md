@@ -1,5 +1,9 @@
 # Optional Vision
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
+
+
 Vision is useful revision, but it is not a prerequisite for the LLM route.
 
 1. [PyTorch CNNs](01-pytorch-cnns.ipynb) preserves convolution, Sobel filters, stride/pooling, feature maps, receptive fields, trained-filter specialization, and the ResNet gradient proof.
@@ -11,3 +15,6 @@ Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS. The script creates or r
 
 This branch moved intact from the former `learning/genai-prerequisites/optional-vision`
 location. The notebooks remain optional; they are not the next required step after Stage 02.
+
+
+After reconstruction, return to [Sequence Memory](../../../03-language-model-foundations/01-sequence-memory/README.md) if you are following the language route. The unresolved complaint is ordered history, not another image architecture: a frame's compact code does not by itself remember earlier frames.

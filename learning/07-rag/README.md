@@ -1,5 +1,7 @@
 # Stage 07: Retrieval-Augmented Generation
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Previous:** [Stage 06 · LLM Fine-Tuning](../06-llm-finetuning/README.md)
 
 **Current:** Stage 07 · RAG

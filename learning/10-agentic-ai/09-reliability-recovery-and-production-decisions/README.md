@@ -1,8 +1,12 @@
 # Chapter 09 — Reliability, Recovery, and Production Decisions
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Failure being repaired:** Retrying an ambiguous financial action can duplicate a commitment, while partial failure leaves no trustworthy resume or compensation path.
 
 **Prerequisites:** [Chapter 08](../08-multi-agent-communication-and-coordination/README.md), durable checkpoints/events, idempotent tool surfaces, and trajectory evaluation.
+
+**Before the recovery terms:** a missing receipt does not tell OrderFlow whether the supplier created the order. **Idempotency** means repeating one identified business operation does not create another commitment. **Compensation** is a separately authorized corrective action for a committed step; it does not erase history. Chapter 02 owns saved state, Chapter 03 owns graph resume, and this chapter owns reconciling the external side effect.
 
 ## Local Learning Contract
 

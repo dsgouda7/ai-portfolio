@@ -1,5 +1,7 @@
 # Stage 06: LLM Fine-Tuning
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Previous:** [Stage 05 · LLM Training](../05-llm-training/README.md)
 
 **Current:** Stage 06 · LLM Fine-Tuning

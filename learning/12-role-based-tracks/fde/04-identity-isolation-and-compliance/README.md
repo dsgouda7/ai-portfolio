@@ -1,5 +1,7 @@
 # Identity, Isolation, and Compliance
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 An EU editor asks Riverside's assistant for a manuscript. The sign-in is valid,
 but the request says `TEN-RIV-US`, asks for an editor role the caller does not
 have, and names a US title. Should the assistant trust the request because the
@@ -10,6 +12,14 @@ This chapter makes that decision path visible. You will work with synthetic
 Riverside identities and resources, predict each decision, run the local checks,
 and explain where the request stopped. Nothing here contacts Azure, an identity
 provider, a model, a vector store, or a customer system.
+
+## Chapter boundary: enter, challenge out, hand off
+
+**Enter with:** Chapter 03 current source, access, deletion, and lineage decisions. This is role synthesis, not a replacement for Stages 01–11; retain the [role-baseline evidence gate](../00-role-baseline-and-engagement-lifecycle.md).
+
+**Challenge out of this chapter only when you can show:** trusted-context positive and negative cases across gateway, retrieval, tools, and audit, with false allows treated as blockers. Retain evidence location, scope/environment, date, reviewer, limitations, and revalidation trigger. Source files and expected results alone do not waive a demonstrated-skill gate. Missing or stale proof sends you back to the owner above, not forward by job title.
+
+**Hand off to** [05-sla-capacity-and-commercials](../05-sla-capacity-and-commercials/README.md): carry the allowed service boundary and remaining target-environment validation; sign-in alone is not authorization.
 
 ## What you will build
 

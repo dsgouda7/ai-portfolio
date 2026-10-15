@@ -1,5 +1,7 @@
 # Stage 04: Transformers
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Previous:** [Stage 03 · Language-Model Foundations](../03-language-model-foundations/README.md)
 
 **Current:** Stage 04 · Transformers
@@ -9,6 +11,37 @@
 This track follows one idea all the way through a Transformer: turn text into token IDs, turn IDs into vectors, expose the need for position, let attention exchange information, let feed-forward layers refine each token, turn final vectors into vocabulary scores, and use prediction error to improve every learned step.
 
 The first chapters use small sentences such as `the cat sat on the mat` because the mechanism should be understandable without a fictional business wrapper. Later chapters use the repository's local text corpus only when real data artifacts are necessary to build and train a small base model.
+
+## Reader map: what changes in each Part
+
+**Coming from Stage 03:** If you already know how one component reads a source and another writes a target, the [model-evolution route](../03-language-model-foundations/model-evolution/README.md) is your bridge into this track. Keep those reader/writer roles; Part 5 opens their insides and replaces recurrent updates with Transformer blocks. Standalone readers still get the complete explanation here.
+
+| Part | The question it answers | Familiarity signpost |
+|---|---|---|
+| 1 | How does `cat` become a reusable piece, an ID, and a trainable row? | **Recap** of Stage 03 foundations; standalone readers start here. |
+| 2 | How can `cat` retrieve useful information and distinguish position? | **New mechanism:** attention and position; embedding rows are deliberate reuse. |
+| 3 | How do several lookups and private token refinements become one trainable block? | **New mechanism:** complete block; attention is deliberate reuse. |
+| 4A | How can a model practise next-token prediction without reading the answer? | **New mechanism:** future-blind visibility; shifting and training/generation are deliberate reuse. |
+| 4B | How do those rules survive batching, generation, and saved attention history? | **Deliberate reuse:** implement and check Part 4A's contracts. |
+| 5A | How can a writer look back at a separate source whenever it needs a detail? | **Deliberate reuse:** reader/writer roles; **new mechanism:** Transformer source memory and cross-attention. |
+| 5B | Can a learned writer reverse `[3, 1, 4, 1]` without being given its earlier answers? | **Deliberate reuse:** implement and measure Part 5A's source-to-target route. |
+| 6 | What changes inside a modern block while next-token prediction stays the same? | **New refinements** plus **deliberate reuse** of Part 2 position and Part 4 generation. |
+
+**Image pending:** `images/04-reader-map.png`
+*What this will show:* You can distinguish familiar foundations from each new Transformer mechanism.
+
+> **Copilot image prompt**
+> - **Target file:** `images/04-reader-map.png`
+> - **Teaches:** You can distinguish familiar foundations from each new Transformer mechanism.
+> - **Aspect ratio:** 16:9
+> - **Prompt:** Draw a left-to-right route of six labelled cards: Part 1 pieces and lookup rows (recap), Part 2 token-to-token lookup and position (new mechanism), Part 3 reusable block (new mechanism), Part 4A/4B one growing tape (new mechanism plus deliberate reuse), Part 5A/5B source reader and target writer (deliberate reuse plus new internals), Part 6 modern block (refinement and deliberate reuse). Put the sentence the cat sat on the mat under Parts 1–3; put aria heard under Part 4; put source [3,1,4,1] and target [1,4,1,3] under Part 5. Arrows show teaching dependencies, not historical chronology. Use a clean hand-drawn whiteboard style, blue inputs, orange new questions, green working components, and a labelled recap/new/reuse legend.
+> - **Must show:** All six Parts; both theory/lab pairs; distinct recap, new mechanism, and deliberate reuse labels; explicit teaching-order label.
+> - **Must not show:** invented numbers, unreadable text, decorative clutter, logos, copyrighted characters
+> - **Alt text:** Six cards show how token foundations lead to attention, blocks, causal writing, separate source memory, and modern refinements. Labels distinguish recap from new work and deliberate reuse.
+
+### History versus why we teach it now
+
+Attention predates Transformers: recurrent reader/writer models already used it to look back at source positions. The original Transformer was encoder-decoder. We teach decoder-only first because one growing sequence makes the visibility rule easier to isolate before adding separate source memory. That is a dependency choice, not a historical timeline. Sequence-to-sequence, or *seq2seq*, names a task family: read one sequence and write another. It is not a synonym for Transformer; recurrent models can perform that task too.
 
 ## The Learning Spine
 
@@ -60,6 +93,30 @@ optimizer responsibilities; the refresher is the quick recovery point for those 
 | Encoder-only | Produces contextual representations of a complete input | Every input token can read every other input token | Classification, tagging, extraction, and retrieval embeddings |
 | Decoder-only | Predicts and appends the next token | Each token can read only the prefix to its left | Continuation, chat, code generation, and general autoregressive tasks |
 | Encoder-decoder | Reads a source, then generates a separate target | A bidirectional reader builds source memory; a causal writer queries it with cross-attention | Translation, summarization, and source-to-target transformation |
+
+### What is inside each block family?
+
+Self-attention means looking among positions in the same stream. Causal means a writing position cannot look into its future. Cross-attention means the writer looks into a separate source memory. A feed-forward network (FFN) then refines each position privately.
+
+| Block family | Main operations in order | Where it can look |
+|---|---|---|
+| Encoder | Self-attention, then FFN | All valid positions in the available source. |
+| Decoder-only | Causal self-attention, then FFN | The current position and earlier positions on one growing tape. |
+| Encoder-decoder writer | Causal self-attention, cross-attention, then FFN | Earlier target context first; separate source memory next. |
+
+This table isolates the information-moving steps. The residual paths that carry earlier states onward and normalization steps that control their scale remain part of the full blocks taught below; they are not removed.
+
+**Image pending:** `images/04-block-family-comparison.png`
+*What this will show:* The writer with a separate source has one extra place to look: cross-attention.
+
+> **Copilot image prompt**
+> - **Target file:** `images/04-block-family-comparison.png`
+> - **Teaches:** The writer with a separate source has one extra place to look: cross-attention.
+> - **Aspect ratio:** 16:9
+> - **Prompt:** Draw three side-by-side vertical stacks in a clean hand-drawn whiteboard style. Encoder: source [3,1,4,1] into self-attention (all valid source positions) then FFN (private per-position refinement). Decoder-only: aria heard into causal self-attention (prefix only) then FFN. Encoder-decoder writer: target [BOS,1,4] into causal self-attention then cross-attention then FFN; a separate blue source-memory bank [3,1,4,1] feeds only cross-attention. Use blue input cards, orange visibility boundaries, and green processed states. Label residual paths and normalization omitted from this comparison, not absent.
+> - **Must show:** Exact operation order in all three stacks; fixed source memory enters cross-attention; future target positions blocked; residual/normalization omission caveat.
+> - **Must not show:** invented numbers, unreadable text, decorative clutter, logos, copyrighted characters
+> - **Alt text:** Encoder and decoder-only blocks each have attention then a feed-forward step. A source-conditioned writer adds cross-attention between its causal self-attention and feed-forward step.
 
 Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS. Either script creates or reuses this stage's `.venv`, installs the adjacent `requirements.txt`, registers the stage-unique `learning-04-transformers` Jupyter kernel, and assigns it to every notebook in this directory. Every notebook starts in a fresh kernel.
 

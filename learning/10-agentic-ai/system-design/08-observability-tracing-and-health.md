@@ -19,6 +19,10 @@ tool-using agent instead of a stateless request/response service.
 
 ---
 
+**Before this reference:** One request may cross a model, a tool, and a checkpoint store. A trace ties those events together; a span is one timed piece of that request. An uptime light cannot show whether the purchase followed the correct route.
+
+**Prerequisite evidence:** Use the [05 hands-on owner](../05-agent-evaluation-and-observability/05-agent-evaluation-and-observability.ipynb) to attribute cost and latency to events and localize the two seeded regressions. This optional design reference extends that mechanism; its diagrams, snippets, and projected numbers are not a new execution result or a replacement for the notebook.
+
 ## 1 · Problem statement
 
 For a stateless web service, "observable" mostly means: is it up, how fast does it respond, and
@@ -433,3 +437,5 @@ painful — in practice, that inflection point is usually the first incident whe
   that feed the health score's eval-score-trend signal
 - [11 — Governance, Guardrails & Security](11-governance-guardrails-and-security.md) — the
   policy decisions recorded in `policy.decision` and the policy-denial-rate health signal
+
+**Handoff to a falsifiable check:** After a timeout, does the retained event chain explain what committed? Take that question to the [09-reliability-recovery-and-production-decisions notebook](../09-reliability-recovery-and-production-decisions/09-reliability-recovery-and-production-decisions.ipynb); retain the run, inputs, environment, and limitations before upgrading a design claim to observed behavior.

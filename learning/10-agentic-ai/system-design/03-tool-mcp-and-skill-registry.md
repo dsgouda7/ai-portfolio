@@ -19,6 +19,10 @@ docs — and what that implies for schema design, discovery, versioning, and saf
 
 ---
 
+**Before this reference:** A capability catalog is a menu, not permission to order. A tool performs one action; a skill supplies reusable know-how; MCP carries discovery and calls between a client and a server.
+
+**Prerequisite evidence:** Use the [07 hands-on owner](../07-mcp-and-agent-interoperability/07-mcp-and-agent-interoperability.ipynb) to change a discovered schema and show zero handler executions until the new contract is reviewed. This optional design reference extends that mechanism; its diagrams, snippets, and projected numbers are not a new execution result or a replacement for the notebook.
+
 ## 1 · Problem statement
 
 An agent's capability surface — what it can **do**, not just what it can **say** — comes from
@@ -615,3 +619,5 @@ a new skill version is promoted to production agents.
 - OWASP Top 10 for Large Language Model Applications (prompt injection, excessive agency) — <https://owasp.org/www-project-top-10-for-large-language-model-applications/>
 - gVisor — application kernel for containers (syscall-interception sandboxing) — <https://gvisor.dev/docs/>
 - Firecracker — secure and fast microVMs (AWS Lambda's isolation model) — <https://firecracker-microvm.github.io/>
+
+**Handoff to a falsifiable check:** Does the accepted tool contract also pin the know-how that selected it? Take that question to the [02a-skills-discovery-composition-and-versioning notebook](../02a-skills-discovery-composition-and-versioning/02a-skills-discovery-composition-and-versioning.ipynb); retain the run, inputs, environment, and limitations before upgrading a design claim to observed behavior.

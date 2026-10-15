@@ -1,5 +1,7 @@
 # Chapter 03 — Durable Workflows with LangGraph
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Failure being repaired:** Hidden branches make Finance routing unauditable, and a crash causes completed gathering work to run again.
 
 **Prerequisites:** [Chapter 02a](../02a-skills-discovery-composition-and-versioning/README.md), durable state from [Chapter 02](../02-state-context-and-memory/README.md), and Python graph/state-machine basics.

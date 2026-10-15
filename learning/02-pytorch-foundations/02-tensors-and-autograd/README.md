@@ -1,5 +1,9 @@
 # Part 02: Tensors and Autograd
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
+
+
 - [Notebook](02-tensors-and-autograd.ipynb)
 - [Handwritten theory](02-tensors-and-autograd-theory.md)
 
@@ -16,3 +20,6 @@ Run **“Your turn: change one known axis”** in
 `YOUR_HEADS`, measure the printed before/after shapes, diagnose divisibility failures if any, and
 explain whether the evidence supports the claim that reshaping changes the axis interpretation
 without changing the feature count.
+
+
+The tensor math works, but loose trainable tensors still have no reusable owner. Continue to [the next required chapter](../03-models-and-training-loops/03-models-and-training-loops.ipynb).

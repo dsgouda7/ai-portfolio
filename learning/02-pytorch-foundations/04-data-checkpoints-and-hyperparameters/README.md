@@ -1,5 +1,9 @@
 # Part 04: Data, Checkpoints, and Hyperparameters
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
+
+
 - [Notebook](04-data-checkpoints-and-hyperparameters.ipynb)
 - [Handwritten theory](04-data-checkpoints-and-hyperparameters-theory.md)
 
@@ -16,3 +20,6 @@ Run **“Your turn: change only the batch size”** in
 Predict the batch-count and final-batch shape, change only `YOUR_BATCH_SIZE`, measure the emitted
 batch sizes, diagnose any remainder batch, and explain whether the evidence supports the loader's
 sample-preservation contract.
+
+
+Correct batches and reloadable weights still do not protect validation or choose which epoch to keep. Continue to [the next required chapter](../05-modern-training-lifecycle/05-modern-training-lifecycle.ipynb).

@@ -1,5 +1,9 @@
 # Chapter 01: The Deep-Learning Map
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
+
+
 Start here for the canonical PyTorch code-first route.
 
 - [Notebook](01-deep-learning-map.ipynb)
@@ -24,3 +28,6 @@ Run **“Your turn: change only the epoch budget”** in
 only `YOUR_EPOCHS`, measure the original and trial loss, diagnose under-training versus convergence,
 and explain whether this run supports the bounded claim that more updates helped this fixed tiny
 problem.
+
+
+The loop works, but printed values still hide axis meaning and gradient state. Continue to [the next required chapter](../02-tensors-and-autograd/02-tensors-and-autograd.ipynb).

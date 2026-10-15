@@ -1,5 +1,7 @@
 # The Complete Transformer Block: Handwritten Theory Notes
 
+**Same lookup, a bigger job:** Part 2 let `cat` collect information from other positions. Now each position must also work on what it collected, and a stack must keep an easy route for earlier information and learning signals. Attention below is deliberate reuse; the new job is packaging that lookup and private refinement into a reusable block.
+
 ## 1. Start with the block's job
 
 Attention can retrieve positioned context, but a reusable Transformer block needs more than one routing table.

@@ -5,6 +5,10 @@
 > for the workflow-vs-agent distinction and the control/data plane split this doc assumes.
 > This doc answers the platform's headline capability: **"create and deploy agents."**
 > **Interview prep:** First pass → sections 1–4 (versioning, deployment strategies, push/pull, lease/fencing). Sections 5–7 go deeper. **What interviewers probe:** “How do you roll back a bad *deployment* vs. roll back an *action* the agent already committed?” (different problems, different docs) and “How does a fencing token prevent a crashed worker from overwriting newer state?” **Opening narrative:** versioning pipeline → canary/blue-green/shadow strategies → lease + fencing token → the two rollbacks are different things.
+**Before this reference:** A saved checkpoint is a bookmark for work already completed. A runtime also has to decide which worker may continue from it; that is not permission to repeat a purchase.
+
+**Prerequisite evidence:** Use the [03 hands-on owner](../03-durable-workflows-with-langgraph/03-durable-workflows-with-langgraph.ipynb) to resume the OrderFlow graph without gathering the completed quote twice. This optional design reference extends that mechanism; its diagrams, snippets, and projected numbers are not a new execution result or a replacement for the notebook.
+
 ## 1 · Problem statement
 
 Runtime design is where every other plane's guarantees either hold up or fall apart under load.
@@ -429,3 +433,5 @@ the queue-worker model can't satisfy.
 - Back to [01 — Foundations of Agentic Systems](01-foundations-of-agentic-systems.md)
 - Back to the [Agentic AI Platform — System Design](system-design.md) uber doc
 - Next: [03 — Tool, MCP & Skill Registry](03-tool-mcp-and-skill-registry.md)
+
+**Handoff to a falsifiable check:** Which committed actions need reconciliation even after a deployment is restored? Take that question to the [09-reliability-recovery-and-production-decisions notebook](../09-reliability-recovery-and-production-decisions/09-reliability-recovery-and-production-decisions.ipynb); retain the run, inputs, environment, and limitations before upgrading a design claim to observed behavior.

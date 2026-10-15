@@ -1,5 +1,7 @@
 # Decoder-Only Language Models: Handwritten Theory Notes
 
+**Plain-English starting point:** After `aria heard`, ask the model for the next word without showing it `the signal` first. A *causal* rule means hiding later words from the position making that prediction. If you already shifted inputs and answers in Stage 03, that alignment is deliberate reuse here; the new question is how attention obeys the same no-peeking rule.
+
 ## 1. Start with the job: continue one growing tape
 
 A decoder-only language model uses one sequence for both the prompt and its continuation. Think of it as a **reader and writer sharing one growing tape**. It reads the tokens already present, predicts one next token, appends that token, and repeats.

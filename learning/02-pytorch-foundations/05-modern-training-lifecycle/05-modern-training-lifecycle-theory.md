@@ -59,6 +59,8 @@ A scheduler changes the learning rate according to measured progress. In the not
 validation loss drives a plateau scheduler. The recorded learning-rate history is evidence of
 its decisions.
 
+If suitable GPU operations use fewer digits while other operations retain more, that is **mixed precision**. A **scaler** temporarily enlarges the loss and compensates before updating, helping very small gradients remain representable. This is an implementation option, not a new learning objective.
+
 Mixed precision can improve accelerator throughput and memory use. It is enabled only on CUDA in
 this teaching run. That boundary is honest: CPU execution does not pretend to demonstrate an
 accelerator payoff.
@@ -105,6 +107,8 @@ A resumable checkpoint supports continuation. It additionally needs:
 The notebook writes separate files so the distinction remains visible. It reloads the best model
 for test inference and checks that the resumable file contains every declared continuation field.
 
+**What the recovery evidence actually checks:** the best-model file is loaded into a fresh model for test inference. The resume file is checked for a declared set of keys only. No interrupted-versus-uninterrupted update comparison is run. The resume bundle omits the mixed-precision scaler state, shuffled-loader state, random-number state used by dropout, and preprocessing statistics. Exact continuation, especially on CUDA, is therefore not established by the field-presence assertion. A real recovery test must restore all state that affects the next batch and update, then compare that update.
+
 ## 7. Return predictions to original units
 
 Training on normalized targets can improve optimization, but stakeholders do not consume
@@ -145,3 +149,6 @@ correct graph. These tools reduce boilerplate; they do not remove the need to un
 
 **Durable summary:** a modern trainer automates lifecycle code, but correctness still depends on
 visible evidence boundaries, mode boundaries, and state boundaries.
+
+
+**Next complaint:** the fuel model sees independent rows, not an ordered history. [Sequence Memory](../../03-language-model-foundations/01-sequence-memory/README.md) reuses this training lifecycle while adding a state that carries information from earlier steps. No fuel artifact is needed there; carry the contracts, not the dataset.

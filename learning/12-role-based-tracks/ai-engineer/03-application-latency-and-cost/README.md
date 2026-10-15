@@ -1,5 +1,7 @@
 # Application Latency and Cost
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 > **Evidence banner:** `FIXTURE` inputs, `VALIDATED` deterministic outcomes,
 > `OUTPUTS CLEARED`, `UNVALIDATED` production behavior.
 
@@ -12,6 +14,14 @@ effects, normalize cost by successful work, and only then choose the next test.
 
 The notebook reads the shared fixtures directly. It makes no provider call,
 loads no model, and requires no credential.
+
+## Chapter boundary: enter, challenge out, hand off
+
+**Enter with:** the Chapter 02 immutable bundle and Stage 09/11 request and serving boundaries. This is role synthesis, not a replacement for Stages 01–11; retain the [role-baseline evidence gate](../00-role-baseline-and-route.md).
+
+**Challenge out of this chapter only when you can show:** a zero-error serial trace reconciliation, named percentile populations, retry and cache accounting, and a falsifiable bottleneck diagnosis. Retain evidence location, scope/environment, date, reviewer, limitations, and revalidation trigger. Source files and expected results alone do not waive a demonstrated-skill gate. Missing or stale proof sends you back to the owner above, not forward by job title.
+
+**Hand off to** [04-release-registry-and-lineage](../04-release-registry-and-lineage/README.md): carry the release-scoped latency/cost report; fixture arithmetic is not a production SLO.
 
 ## Start Here
 

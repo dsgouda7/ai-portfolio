@@ -20,6 +20,10 @@ exist in ordinary distributed systems.
 
 ---
 
+**Before this reference:** A supplier email may describe a price; it may not grant permission to buy. Treat its words as evidence, evaluate the proposed action in code, and bind human approval to the exact arguments rather than a vague yes.
+
+**Prerequisite evidence:** Use the [06 hands-on owner](../06-safety-human-control-and-governance/06-safety-human-control-and-governance.ipynb) to run the attack fixture and verify denied tool scopes, payload-bound approval, and complete audit fields. This optional design reference extends that mechanism; its diagrams, snippets, and projected numbers are not a new execution result or a replacement for the notebook.
+
 ## 1 · Problem statement
 
 Enterprises cannot hand an autonomous model unrestricted credentials to their CRM, ticketing
@@ -592,3 +596,5 @@ Recoverability, Rollbacks & Saga](10-recoverability-rollbacks-and-saga.md) for c
 semantics referenced in §5 and §10, [06 — Non-Determinism, Loops & Termination](06-non-determinism-loops-and-termination.md)
 for token/budget guardrails, and [12 — Production Scale & Capacity](12-production-scale-and-capacity.md)
 for how governance behaves under load.
+
+**Handoff to a falsifiable check:** Do retries and compensation preserve the same authority boundary? Take that question to the [09-reliability-recovery-and-production-decisions notebook](../09-reliability-recovery-and-production-decisions/09-reliability-recovery-and-production-decisions.ipynb); retain the run, inputs, environment, and limitations before upgrading a design claim to observed behavior.

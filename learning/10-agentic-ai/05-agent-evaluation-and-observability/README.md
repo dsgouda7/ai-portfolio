@@ -1,5 +1,7 @@
 # Chapter 05 — Agent Evaluation and Observability
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Failure being repaired:** A successful final status hides a wrong route, a wrong tool argument, and where cost or latency accumulated.
 
 **Prerequisites:** [Chapter 04](../04-agentic-rag-and-self-correction/README.md), Stage 08 evaluation concepts, and the Stage 10 trace vocabulary.

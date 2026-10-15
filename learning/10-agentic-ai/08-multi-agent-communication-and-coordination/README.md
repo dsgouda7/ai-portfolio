@@ -1,5 +1,7 @@
 # Chapter 08 — Multi-Agent Communication and Coordination
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Failure being repaired:** One generalist owns every fact and action, overflows context, blocks parallel work, and obscures responsibility.
 
 **Prerequisites:** [Chapter 07](../07-mcp-and-agent-interoperability/README.md), typed envelopes, bounded controllers, and namespace isolation.

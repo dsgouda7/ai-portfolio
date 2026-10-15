@@ -1,5 +1,7 @@
 # AI Engineer Learning Route
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 > **Track intent:** This is a role-based practice track, not a standalone subject area or a replacement for the chapters under `learning/`. Use it alongside GenAI, agentic AI, and infrastructure content to practice connecting those concepts into an observable production loop.
 
 For the canonical first-time route, complete Stages 01-11 before using this track for synthesis.

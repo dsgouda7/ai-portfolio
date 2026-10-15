@@ -1,5 +1,7 @@
 # Chapter 01 — Reasoning, Planning, and Bounded Control
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Failure being repaired:** A plausible controller repeats an unchanged action because nothing checks progress or forces a terminal state.
 
 **Prerequisites:** [Chapter 00](../00-agent-foundations-and-tool-contracts/README.md), especially typed tools, retry categories, and fail-closed execution.

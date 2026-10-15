@@ -1,5 +1,9 @@
 # PyTorch Training Skeleton: Quick Refresher
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
+
+
 [Open the refresher notebook](pytorch-training-skeleton.ipynb) when you already know PyTorch but
 need the complete training skeleton back in working memory. Its readiness table routes uncertain
 topics to the matching full chapter in Stage 02.

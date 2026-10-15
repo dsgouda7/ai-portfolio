@@ -1,5 +1,7 @@
 # Release Registry and Lineage
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 An artifact directory can exist while the application release is unknown, incompatible, or impossible to roll back. This chapter turns that operational gap into a local, inspectable release registry for the Riverside House system.
 
 Open [release-registry-and-lineage.ipynb](release-registry-and-lineage.ipynb) to work through the failure chain:
@@ -12,6 +14,14 @@ Open [release-registry-and-lineage.ipynb](release-registry-and-lineage.ipynb) to
 6. schema and semantic compatibility gates produce an auditable decision.
 
 The notebook reads the shared synthetic fixtures in `../shared/release-lineage/` unchanged. It also reads selected Riverside platform contracts and fine-tuning provenance as reference surfaces. It writes no registry records or artifacts.
+
+## Chapter boundary: enter, challenge out, hand off
+
+**Enter with:** the Chapters 01–03 data, prompt, and operational report identities. This is role synthesis, not a replacement for Stages 01–11; retain the [role-baseline evidence gate](../00-role-baseline-and-route.md).
+
+**Challenge out of this chapter only when you can show:** an exact release lookup, an incompatible-candidate rejection, request attribution, and a valid accepted rollback edge. Retain evidence location, scope/environment, date, reviewer, limitations, and revalidation trigger. Source files and expected results alone do not waive a demonstrated-skill gate. Missing or stale proof sends you back to the owner above, not forward by job title.
+
+**Hand off to** [05-production-feedback-and-drift](../05-production-feedback-and-drift/README.md): carry the immutable release and rollback graph, with cloud mapping still separate from execution.
 
 ## Learning Contract
 

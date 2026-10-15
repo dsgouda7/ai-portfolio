@@ -1,5 +1,7 @@
 # Architecture Translation
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 > **Evidence banner:** `FROZEN FIXTURE`, `HEURISTIC OPTION SCORES`,
 > `EXECUTION VERIFIED THEN CLEARED`, `UNVALIDATED PRODUCTION DESIGN`.
 
@@ -8,6 +10,14 @@ defensible system design. You will compare no AI, deterministic software,
 search, RAG, a prompt call, fine-tuning, a deterministic workflow, one agent,
 and multiple agents. Each option must fail on a named Riverside requirement
 before a more complex mechanism is allowed into the design.
+
+## Chapter boundary: enter, challenge out, hand off
+
+**Enter with:** Chapter 01 workflow, non-goals, success criteria, and unresolved decisions. This is role synthesis, not a replacement for Stages 01–11; retain the [role-baseline evidence gate](../00-role-baseline-and-engagement-lifecycle.md).
+
+**Challenge out of this chapter only when you can show:** a smallest-option comparison, authority boundaries, safe fallback, and proposed architecture decision with revisit triggers. Retain evidence location, scope/environment, date, reviewer, limitations, and revalidation trigger. Source files and expected results alone do not waive a demonstrated-skill gate. Missing or stale proof sends you back to the owner above, not forward by job title.
+
+**Hand off to** [03-data-onboarding-and-contracts](../03-data-onboarding-and-contracts/README.md): carry the proposed source and action boundaries; an ADR is not implementation or customer approval.
 
 ## Architecture Translation
 

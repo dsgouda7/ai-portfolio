@@ -1,5 +1,7 @@
 # SLA, Capacity, and Commercials
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 Riverside expects 620 sessions on a business day and gives you a peak of 90
 requests per hour. A quick spreadsheet divides 620 by ten covered hours and gets
 62. It looks precise, but it compares sessions with requests and says nothing
@@ -9,6 +11,14 @@ This chapter turns conflicting Riverside inputs into a planning range that a
 customer, engineer, finance reviewer, and service owner can challenge. You will
 predict which constraint fails, run the model, and keep every estimate visibly
 separate from measurements and contractual commitments.
+
+## Chapter boundary: enter, challenge out, hand off
+
+**Enter with:** Chapter 04 permitted regions/actions and the discovery workload and staffing uncertainties. This is role synthesis, not a replacement for Stages 01–11; retain the [role-baseline evidence gate](../00-role-baseline-and-engagement-lifecycle.md).
+
+**Challenge out of this chapter only when you can show:** unit-consistent low/expected/high and stress cases, dated cost assumptions, separate quota/concurrency checks, and commitment blockers. Retain evidence location, scope/environment, date, reviewer, limitations, and revalidation trigger. Source files and expected results alone do not waive a demonstrated-skill gate. Missing or stale proof sends you back to the owner above, not forward by job title.
+
+**Hand off to** [06-rollout-and-change-management](../06-rollout-and-change-management/README.md): carry the modeled service envelope and funded support boundary; calculation is not a quote or achieved SLA.
 
 ## The decision you are preparing
 

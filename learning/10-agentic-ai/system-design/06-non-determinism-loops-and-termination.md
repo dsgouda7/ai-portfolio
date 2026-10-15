@@ -17,6 +17,10 @@ breakers) are assumed background; this doc focuses on what's specific to boundin
 
 ---
 
+**Before this reference:** An agent can keep rephrasing the same unsuccessful plan. Record what action and observation repeat, and spend a finite allowance of steps, time, tokens, and money; a more persuasive prompt is not a stop switch.
+
+**Prerequisite evidence:** Use the [01 hands-on owner](../01-reasoning-planning-and-control/01-reasoning-planning-and-control.ipynb) to force a cycle and budget exhaustion and inspect the terminal reason. This optional design reference extends that mechanism; its diagrams, snippets, and projected numbers are not a new execution result or a replacement for the notebook.
+
 ## 1 · Problem statement
 
 Agents loop for reasons a traditional retry loop doesn't have to consider:
@@ -385,3 +389,5 @@ than reaching for supervisor confidence scoring on day one.
 - Related: [05 — State Management & Memory](05-state-management-and-memory.md),
   [09 — Multi-Agent Communication Patterns](09-multi-agent-communication-patterns.md),
   [11 — Governance, Guardrails & Security](11-governance-guardrails-and-security.md)
+
+**Handoff to a falsifiable check:** Does the trace reveal where the bounded controller first made a bad decision? Take that question to the [05-agent-evaluation-and-observability notebook](../05-agent-evaluation-and-observability/05-agent-evaluation-and-observability.ipynb); retain the run, inputs, environment, and limitations before upgrading a design claim to observed behavior.

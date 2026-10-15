@@ -1,5 +1,7 @@
 # Chapter 04 — Agentic RAG and Bounded Self-Correction
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Failure being repaired:** Retrieval returns a superseded policy, while an unconstrained rewrite loop can spend forever polishing the wrong evidence.
 
 **Prerequisites:** [Chapter 03](../03-durable-workflows-with-langgraph/README.md) and [Stage 07 RAG](../../07-rag/README.md), especially retrieval metadata and citation grounding.

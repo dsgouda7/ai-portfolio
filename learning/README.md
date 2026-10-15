@@ -1,5 +1,7 @@
 # Learn AI Systems: Zero to Hero
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 The numbered directories under `learning/` are the active curriculum. Follow them in order when
 starting from first principles; enter a later stage only when its prerequisite contracts are
 already routine.
@@ -53,6 +55,8 @@ When every check passes, continue at [Stage 03](03-language-model-foundations/RE
 
 ## Curriculum Boundaries
 
+- The improvement plan for this curriculum is [plan.md](plan.md); the per-notebook
+  pedagogy evaluation is [eval.md](eval.md).
 - Numbered directories are required stages in pedagogical order.
 - Unnumbered directories inside a stage are shortcuts or optional branches.
 - Reusable Riverside House teaching data lives in the

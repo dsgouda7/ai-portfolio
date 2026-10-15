@@ -1,5 +1,7 @@
 # Forward Deployed Engineer Learning Route
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 > **Track intent:** This is a role-based practice track, not a standalone subject area or a replacement for the chapters under `learning/`. Use it alongside the technical chapters needed by the customer problem, then practice applying them through Riverside discovery, design, rollout, incident, and handoff decisions.
 
 This route is for engineers who must turn an ambiguous customer workflow into a bounded AI system proposal, define what evidence would prove it, and route implementation and operating decisions to named owners. It reuses the repository's AI Engineer technical core and adds the engagement work that begins before implementation and continues through handoff planning.

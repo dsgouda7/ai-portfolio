@@ -1,5 +1,9 @@
 # Mathematical Foundations for ML
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
+
+
 This chapter keeps the free-kick visual story as the conceptual owner of vectors, local change,
 accumulation, matrix state updates, repeated updates, and uncertainty.
 

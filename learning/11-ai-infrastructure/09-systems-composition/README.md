@@ -1,5 +1,7 @@
 # Systems Composition: From Model Server to Reliable Service
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Previous:** [Inference Systems](../07-inference-systems/inference-systems.ipynb) and [LLM Gateway](../../09-llm-gateway/README.md)  
 **Current:** Required systems-composition bridge  
 **Next:** [Azure Operational LLM Serving](../10-azure-operational-llm-serving/README.md)

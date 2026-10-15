@@ -1,5 +1,7 @@
 # Rollout and Change Management
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 This chapter teaches you to turn release evidence into bounded customer exposure.
 You establish the historical human baseline, replay a candidate in shadow mode,
 review disagreements by slice, select a canary cohort, hold an observation window,
@@ -8,6 +10,14 @@ and record a go, hold, abort, or rollback decision with named owners.
 The running case is the frozen synthetic [Riverside FDE engagement](../shared/README.md).
 The notebook does not call a model, cloud service, customer system, or paid API.
 Its calculations read committed JSON fixtures and are deterministic.
+
+## Chapter boundary: enter, challenge out, hand off
+
+**Enter with:** Chapters 01–05 acceptance criteria, control evidence, service envelope, and exact release scope. This is role synthesis, not a replacement for Stages 01–11; retain the [role-baseline evidence gate](../00-role-baseline-and-engagement-lifecycle.md).
+
+**Challenge out of this chapter only when you can show:** a predeclared cohort/window gate, disagreement review, abort decision, communications owner, and separate rollback/committed-action drill. Retain evidence location, scope/environment, date, reviewer, limitations, and revalidation trigger. Source files and expected results alone do not waive a demonstrated-skill gate. Missing or stale proof sends you back to the owner above, not forward by job title.
+
+**Hand off to** [07-incident-response-and-recovery](../07-incident-response-and-recovery/README.md): carry the scoped rollout decision, stop conditions, and unresolved committed outcomes.
 
 ## Learning outcomes
 

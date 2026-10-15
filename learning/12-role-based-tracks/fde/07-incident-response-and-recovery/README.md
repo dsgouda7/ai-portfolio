@@ -1,5 +1,7 @@
 # Incident Response and Recovery
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 This chapter teaches the customer-facing recovery work that begins when a
 Riverside alert, disagreement, or negative test suggests the system may be
 unsafe. The order is deliberate: contain the narrow unsafe path, preserve
@@ -9,6 +11,14 @@ causes, remediate, rerun gates, obtain re-enablement approval, and then learn.
 The chapter is a synthetic exercise package. It does not activate paging,
 authorize a production change, satisfy a notification duty, create legal
 privilege, or prove that any organization can recover a real service.
+
+## Chapter boundary: enter, challenge out, hand off
+
+**Enter with:** Chapter 06 cohort/abort record, known-good release, and named incident authorities. This is role synthesis, not a replacement for Stages 01–11; retain the [role-baseline evidence gate](../00-role-baseline-and-engagement-lifecycle.md).
+
+**Challenge out of this chapter only when you can show:** containment, protected evidence, competing causal checks, regression gates, approved re-enablement, and verifiable postmortem actions. Retain evidence location, scope/environment, date, reviewer, limitations, and revalidation trigger. Source files and expected results alone do not waive a demonstrated-skill gate. Missing or stale proof sends you back to the owner above, not forward by job title.
+
+**Hand off to** [08-handoff-and-customer-success](../08-handoff-and-customer-success/README.md): carry the incident decision and recovery limits; a synthetic run is not an operator recovery drill.
 
 ## Learning contract
 

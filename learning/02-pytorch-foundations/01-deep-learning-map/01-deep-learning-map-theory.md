@@ -45,6 +45,8 @@ Backward does not update the weight. The notebook proves this by cloning a weigh
 backward, checking that it is unchanged afterward, and then measuring a change only after
 `optimizer.step()`.
 
+The simplest updater subtracts a small multiple of the current gradient from each parameter. This is **stochastic gradient descent (SGD)**; this notebook uses the whole dataset together rather than a small random batch. **Adam** also remembers recent gradients and their squared sizes to adapt its updates.
+
 This distinction matters because different optimizers can interpret the same gradient differently.
 SGD uses the current gradient directly. Adam also keeps moving averages. The gradient belongs to
 the model parameter; the update policy and its extra state belong to the optimizer.
@@ -116,3 +118,6 @@ The number of parameters, axes, devices, and updates grows. The responsibilities
 
 **Durable summary:** deep learning is not one opaque operation; it is a loop of prediction,
 measurement, responsibility, and update.
+
+
+**Next complaint:** the workshop works, but a number's printed value still hides its role and storage. [Tensors and Autograd](../02-tensors-and-autograd/02-tensors-and-autograd.ipynb) opens those shapes and checks the automatic responsibility report. In the language preview above, a token is a text piece, a logit is a raw answer score, and a Transformer is a later model built from attention-based layers. Their text meaning belongs to Stage 03 and their architecture to Stage 04.

@@ -1,7 +1,17 @@
 # FDE Capstone: Riverside Engagement Package
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 > **Evidence banner:** `FROZEN SYNTHETIC CASE`, `EXECUTION VERIFIED THEN CLEARED`,
 > `NO CUSTOMER OR CLOUD VALIDATION`, `NO PRODUCTION-READINESS CLAIM`.
+
+## Chapter boundary: enter, challenge out, hand off
+
+**Enter with:** the bounded evidence chain from Chapters 01–08 and the canonical foundation gates. This is role synthesis, not a replacement for Stages 01–11; retain the [role-baseline evidence gate](../00-role-baseline-and-engagement-lifecycle.md).
+
+**Challenge out of this chapter only when you can show:** one conflict-to-criterion-to-architecture-to-test-to-owner thread, then the full indexed package, weakest-gate experiment, and transfer review. Retain evidence location, scope/environment, date, reviewer, limitations, and revalidation trigger. Source files and expected results alone do not waive a demonstrated-skill gate. Missing or stale proof sends you back to the owner above, not forward by job title.
+
+**Hand off to** [graduation and practicum handoff](../../graduation-and-practicum-handoff.md): carry the scoped recommendation and unresolved authority or live-validation work into the supervised practicum.
 
 ## Turn Ambiguity into a Reviewable Decision
 

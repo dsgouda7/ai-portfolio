@@ -1,5 +1,7 @@
 # Stage 05: LLM Training
 
+**Contents:** [one-line map of this directory](CONTENTS.md)
+
 **Previous:** [Stage 04 · Transformers](../04-transformers/README.md)
 
 **Current:** Stage 05 · LLM Training

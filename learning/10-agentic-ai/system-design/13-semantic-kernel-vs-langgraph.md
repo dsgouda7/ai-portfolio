@@ -11,6 +11,10 @@
 
 ---
 
+**Before this reference:** A framework can supply a ready-made coordination pattern or let you draw each state transition explicitly. Neither choice owns your business permissions, proves recovery, or turns example code into a production service.
+
+**Prerequisite evidence:** Use the [03 hands-on owner](../03-durable-workflows-with-langgraph/03-durable-workflows-with-langgraph.ipynb) to trace the Finance route and resume without repeating completed gathering. This optional design reference extends that mechanism; its diagrams, snippets, and projected numbers are not a new execution result or a replacement for the notebook.
+
 ## 1 · Problem framing
 
 Say this out loud before anything else, because it's the single most common thing people get
@@ -530,3 +534,5 @@ Concrete, opinionated guidance — pick based on what you're optimizing for, not
 - Back to the uber doc — [system-design.md](system-design.md)
 - Loop/termination budgets in depth — [06 — Non-Determinism, Loops & Termination](06-non-determinism-loops-and-termination.md)
 - Agent lifecycle, leases, and runtime execution frames — [02 — Agent Lifecycle & Runtime](02-agent-lifecycle-and-runtime.md)
+
+**Handoff to a falsifiable check:** Does the task need another reasoning owner, or only explicit workflow routing? Take that question to the [08-multi-agent-communication-and-coordination notebook](../08-multi-agent-communication-and-coordination/08-multi-agent-communication-and-coordination.ipynb); retain the run, inputs, environment, and limitations before upgrading a design claim to observed behavior.
