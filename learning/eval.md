@@ -1,6 +1,6 @@
 # Curriculum Evaluation
 
-**Contents:** [one-line map of this directory](CONTENTS.md) · **Plan:** [plan.md](plan.md)
+**Contents:** [one-line map of this directory](CONTENTS.md)
 
 This is a read-only pedagogy audit of every learning notebook. Nine reviewers ran in parallel, one per stage group, after commit `802533a` (additive bridges, model-evolution track, focused Transformer copy, contents maps) and `844461c` (generated images). Reviewers parsed notebook sources, theory notes, READMEs, and `CONTENTS.md`; they did not execute notebooks or edit files.
 
@@ -9,7 +9,7 @@ Each notebook gets two scores out of 5:
 - **Novice:** can someone new to the concept follow it in plain English?
 - **Flow:** does each concept feel necessary before it is named, and do the handoffs hold together?
 
-Every fix proposed here is additive, in keeping with [plan.md](plan.md). None asks to remove content from the Stage 04 gold standard.
+Every fix proposed here is additive. None asks to remove content from the Stage 04 gold standard.
 
 ## 1. Headline
 
@@ -855,7 +855,7 @@ The reviewers' unedited findings follow. Paths are relative to each stage direct
 
 - **Challenge-out integration:** the role-specific `Enter with` / `Challenge out` / `Hand off` blocks are additive and generally personalized to actual evidence (digest, release identity, bounded service envelope, receiving-owner drills). They feel integrated rather than bolted on. Repeated prerequisite language is slightly boilerplate, but useful at independent chapter boundaries.
 - **Required versus optional Stage 10:** Stage 12's entry contract requires Stage 10/11 completion or equivalent evidence, while `ai-engineer/00-role-baseline-and-route.md` calls the full Agentic AI branch optional when agents are out of scope. Clarify that “optional” means role-specific agent depth, not waiving the common Stage 10 challenge-out gate.
-- **Contents coverage:** links checked all resolve, but FDE chapter CONTENTS maps generally list only README and notebook while the directories also contain `templates/`, `cases/`, or `examples/`; AI Engineer capstone CONTENTS likewise omits `templates/`. This falls short of `learning/plan.md` §10.3's child-subdirectory map and hides useful handoff artifacts. The root maps and one-line chapter descriptions are otherwise clear.
+- **Contents coverage:** links checked all resolve, but FDE chapter CONTENTS maps generally list only README and notebook while the directories also contain `templates/`, `cases/`, or `examples/`; AI Engineer capstone CONTENTS likewise omits `templates/`. This falls short of the curriculum's child-subdirectory map convention and hides useful handoff artifacts. The root maps and one-line chapter descriptions are otherwise clear.
 - **Route distinction:** AI Engineer's data chapter audits training-corpus quality; FDE's data chapter governs customer-source onboarding, authority, refresh, and deletion. AI Engineer release/feedback and FDE rollout/incident/handoff overlap in vocabulary but not in role decisions; the shared Riverside setting makes that distinction legible.
 - No authored `-theory.md` companions were found. README links to concept-owning earlier stages instead, which is appropriate for these applied synthesis tracks.
 

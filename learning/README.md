@@ -55,8 +55,7 @@ When every check passes, continue at [Stage 03](03-language-model-foundations/RE
 
 ## Curriculum Boundaries
 
-- The improvement plan for this curriculum is [plan.md](plan.md); the per-notebook
-  pedagogy evaluation is [eval.md](eval.md).
+- The per-notebook pedagogy evaluation is [eval.md](eval.md).
 - Numbered directories are required stages in pedagogical order.
 - Unnumbered directories inside a stage are shortcuts or optional branches.
 - Reusable Riverside House teaching data lives in the
