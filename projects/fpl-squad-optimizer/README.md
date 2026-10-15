@@ -39,12 +39,23 @@ The average FPL manager scores roughly 50–55 points per game week. The best ma
 #    both model families from the same completed-Gameweek cutoff
 python train/train.py --model all
 
-# 3. run the web app
+# 3. start the web app and open it in your browser
+./start.ps1
+
+# or start it without automatically opening a browser
 python fpl-generator/web.py    # → http://localhost:5000
 
 # optional: walk-forward out-of-sample evaluation
 python simulations/simulate_season.py --test-from 15 --test-to 37
 ```
+
+`start.ps1` is the recurring one-command launcher. All account input and team
+generation remain in the web interface: enter your FPL entry ID under **Load
+Public FPL Squad** and press **Import squad and analyze**. The app estimates the
+available free transfers from published history and generates that many
+beneficial transfer recommendations when possible. Current-Gameweek ownership
+remains private until the deadline, so recommendations use the latest public
+squad.
 
 > **Update cadence:** data and checkpoints are not refreshed on a timer. Live
 > eligibility is fetched whenever a team is generated, while persisted player
@@ -71,29 +82,34 @@ python simulations/simulate_season.py --test-from 15 --test-to 37
   squad plus starting XI. It maximizes combined-model XI points, uses bench
   quality as a deterministic tiebreaker, and assigns captain and vice-captain
   to the two highest ensemble projections in that XI.
-2. Start `python fpl-generator/web.py` and open `/generate-team`. The app loads
-  the selected checkpoint (XGBoost by default), validates its cutoff, loads the
-  model-ready SQLite cache, scores the next fixture snapshot, and applies live
-  availability rules from the public FPL API.
+2. Run `./start.ps1` to start the server and open `/generate-team` in your
+  browser. The app loads the selected checkpoint (XGBoost by default), validates
+  its cutoff, loads the model-ready SQLite cache, scores the next fixture
+  snapshot, and applies live availability rules from the public FPL API.
 3. If a local draft or committed squad already exists, the app opens the newest
   revision and rolls it into the target Gameweek. It refreshes prices,
   predictions, injuries, suspensions, bank calculations, and transfer advice
   without changing the committed historical revision.
-4. Enter the FPL **entry ID** in Squad Management and optionally enter the
-  exact current free-transfer count shown in the official app. Press **Import
-  FPL squad** for the latest public picks. To import private pre-deadline picks,
-  optionally provide a temporary FPL OAuth access token; it is used for one
-  read-only request and is not persisted.
+4. Enter the FPL **entry ID** under **Load Public FPL Squad** and press **Import
+  squad and analyze**.
   Completed public Gameweeks, picks, transfers, chip use, points, ranks, bank,
   and squad value are refreshed in SQLite. The latest permanent 15-player squad
-  becomes a local draft and is re-scored for the next Gameweek. Free Hit picks
-  are retained for history but do not replace permanent ownership.
-5. Review the suggested transfer, edit the owned squad, choose the next XI and
-  bench order, set captain/vice-captain, and optionally select a remaining chip.
-6. Press **Save locally**. This appends a committed local revision but does not
-  change the official account. Use **Copy FPL plan**, open **FPL My Team**, and
-  confirm the lineup manually on the official site; this project does not submit
-  private account changes.
+  becomes a local draft and is re-scored for the next Gameweek. The app estimates
+  the free-transfer allowance from public history and produces a sequential list
+  of beneficial legal moves up to that allowance. Free Hit picks are retained
+  for history but do not replace permanent ownership.
+5. Review the complete recommendation list and the read-only next-Gameweek
+  lineup beneath it. The lineup applies the recommended transfers first, then
+  selects the best legal starting XI, captain, vice-captain, and ordered bench.
+  To explore a different move, use **Find a Replacement** to select any player
+  from the current locally recorded squad and see the three highest-projected
+  legal same-position alternatives within the available bank and club limit.
+  If you already made a transfer in the official portal before the deadline,
+  use **Record Portal Transfer Locally** because FPL does not publish that
+  current-Gameweek change yet. The local draft, remaining transfer allowance,
+  recommendations, and lineup are recalculated after the update.
+6. Reproduce the transfers and lineup in **FPL My Team**. This project does not
+  submit private account changes.
 7. After the next deadline, sync the same public entry ID again. The official
   public picks become the new ownership baseline, and `/performance-review`
   compares committed recommendations with actual points, the official average,
@@ -180,6 +196,11 @@ All three sources are free and require no authentication. The vaastav archive up
 ## How it works
 
 **Selection target:** predict each player's points in the *next* game week, rank the full pool by predicted points, then apply FPL squad constraints (£100M budget, 2GK+5DEF+5MID+3FWD squad, max 3 players per club) to pick the best 15. Starting XI is chosen by FPL formation rules (1GK, 3+ DEF, 2+ MID, 1+ FWD); the unconstrained flex slot is filled by the highest-scoring player regardless of position.
+
+Upcoming fixtures are scored individually and then summed into each player's
+Gameweek projection. A player scheduled twice therefore receives both fixture
+opportunities, while a player whose club has no fixture receives zero projected
+points. The pitch marks multi-fixture players with a **DGW ×2** badge.
 
 **Models** — choose XGBoost, CatBoost, calibrated pairwise LambdaRank, a deep GRU,
 or their inverse-RMSE ensemble in the team-page dropdown. XGBoost and CatBoost
@@ -574,7 +595,7 @@ The per-GW breakdown and interactive per-position RMSE are in the `/validation-r
 | `GET /generate-team` | Recommended FPL squad for the current GW on an interactive pitch with predicted scores, confidence margins, and player health cards |
 | `GET /api/squad` | Latest committed and draft squad states loaded from SQLite |
 | `GET /api/squad/history` | Append-only season/Gameweek revision ledger; accepts an optional `season` query parameter |
-| `POST /api/fpl-entry/sync` | Localhost-only synchronization of public history and the latest squad using `entry_id`, `model`, optional `free_transfers`, and an optional one-use `access_token` for private pre-deadline picks |
+| `POST /api/fpl-entry/sync` | Localhost-only synchronization of public history and the latest publicly visible squad using only `entry_id` and `model` |
 | `POST /api/training/start` | Locally start one background latest-data refresh and all-model training job; accepts an empty JSON object |
 | `GET /api/training/status` | Poll current refresh/training state and the latest bounded progress log |
 | `POST /api/squad/draft` | Validate and append a draft revision |
@@ -587,40 +608,41 @@ The per-GW breakdown and interactive per-position RMSE are in the `/validation-r
 
 This project does **not** collect an email, password, MFA secret, refresh token,
 or session cookie, and it does not submit changes to the official FPL website.
-There is no documented public FPL write API. The optional private-squad import
-accepts a temporary OAuth access token and uses it once with FPL's read-only
-`my-team` endpoint. The browser clears the field immediately; the endpoint is
-localhost-only; and the token is never returned, logged by the app, written to
-SQLite, exported to JSON, or retained in application state.
+There is no documented public FPL write API. The application deliberately uses
+only public entry endpoints and does not accept access tokens or other private
+credentials.
 
 More importantly, the 2026/27 FPL Terms state that players must keep account
 credentials confidential and must not use automated systems to access the Game;
 a breach can result in suspension, deletion, or disqualification. The supported
-workflow is therefore human-in-the-loop: review and persist the recommendation
+workflow is therefore human-in-the-loop: review the recommendation
 locally, then reproduce the confirmed transfers, lineup, captaincy, and chip in
-the official FPL app or website. Authenticated endpoints are unofficial contracts
-that can change without notice, and automated access may be restricted by FPL's
-current terms. Use the private import only if you accept that risk. Do not store
-passwords, MFA secrets, access tokens, refresh tokens, or Premier League cookies.
+the official FPL app or website. Do not provide passwords, MFA secrets, access
+tokens, refresh tokens, or Premier League cookies to this project.
 
-The Squad Management panel accepts a public numeric FPL entry ID. After each
+The **Load Public FPL Squad** panel accepts a public numeric FPL entry ID. After each
 deadline it downloads the public entry history, transfers, and all published
 Gameweek picks; stores normalized records in `fpl_entry_gameweeks`,
 `fpl_entry_picks`, and `fpl_entry_transfers`; imports the latest permanent squad
 as a model-rescored local draft; and preserves official XI, bench order,
-captaincy, bank, and public chip history in the sync tables. The next local XI,
-bench order, captain, and vice-captain are selected from current model scores. If
-the latest event used Free Hit, ownership comes from the preceding non-Free-Hit
-event.
+captaincy, bank, and public chip history in the sync tables. It estimates the
+next free-transfer allowance from that history, then generates sequential
+beneficial transfers under the budget and three-per-club constraints. Those
+transfers are applied to a projected squad before the app selects and displays
+the next legal XI, ordered bench, captain, and vice-captain from current model
+scores. If the latest event used Free Hit, ownership comes from the preceding
+non-Free-Hit event.
 
 FPL does not publicly expose pre-deadline picks or the exact private live free-
-transfer balance. Without a token, the app labels the imported pitch as the last
-public squad and its free-transfer count as an estimate. With a temporary token,
-the current private picks, current purchase prices, bank, and transfer allowance
-are loaded without persisting the credential. Personal profile names, email,
-password, cookies, and MFA data are never requested or persisted. The sync
-endpoint rejects email/password fields, non-local and cross-origin requests, and
-requests repeated within a short cooldown.
+transfer balance. The app therefore labels the imported pitch as the last public
+squad and the free-transfer count as an estimate. Portal transfers made after
+that public Gameweek can be recorded explicitly in the local draft without
+altering the last-public-squad view; this consumes one estimated transfer and
+recalculates advice, but does not claim that FPL confirmed the private change.
+Personal profile names, email, password, tokens, cookies, and MFA data are never
+requested or persisted. The sync endpoint rejects private credential fields,
+non-local and cross-origin requests, and requests repeated within a short
+cooldown.
 
 The validation report page shows:
 - Interactive GW selector (prev/next buttons or click any GW badge)
@@ -738,4 +760,3 @@ This project was co-authored with AI (GitHub Copilot / Claude).
 - Building the validation report web UI (`/validation-report`)
 
 We also considered linear regression and neural networks before settling on XGBoost. Linear regression underfit the non-linear scoring surface; neural networks showed marginal gains at 10–15× compute cost on a dataset too small (~9K rows per position) to avoid overfitting. XGBoost gave the best accuracy / compute-cost / interpretability trade-off for this problem.
-

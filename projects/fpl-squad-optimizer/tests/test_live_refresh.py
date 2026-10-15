@@ -36,9 +36,16 @@ class LiveRefreshTests(unittest.TestCase):
         }]}
         fixtures_response = Mock()
         fixtures_response.raise_for_status.return_value = None
-        fixtures_response.json.return_value = [{
-            'team_h': 1, 'team_a': 2, 'kickoff_time': '2026-08-29T12:30:00Z'
-        }]
+        fixtures_response.json.return_value = [
+            {
+                'id': 101, 'team_h': 1, 'team_a': 2,
+                'kickoff_time': '2026-08-29T12:30:00Z',
+            },
+            {
+                'id': 102, 'team_h': 3, 'team_a': 1,
+                'kickoff_time': '2026-09-01T19:30:00Z',
+            },
+        ]
         get.side_effect = [history_response, fixtures_response]
 
         with tempfile.TemporaryDirectory() as directory:
@@ -68,16 +75,24 @@ class LiveRefreshTests(unittest.TestCase):
             context = get_runtime_context(database)
             with closing(sqlite3.connect(database)) as connection:
                 rows = pd.read_sql(
-                    'SELECT Game_Week, round, total_points FROM player_gw '
-                    'ORDER BY Game_Week', connection
+                    'SELECT Game_Week, round, total_points, opponent_team, '
+                    'was_home, scheduled_fixture, fixture_count FROM player_gw '
+                    'ORDER BY Game_Week, kickoff_time', connection
                 )
 
         self.assertEqual(result['latest_completed_game_week'], 1)
         self.assertEqual(context['completed_internal_index'], 1)
         self.assertEqual(context['snapshot_game_week'], 2)
-        self.assertEqual(rows['Game_Week'].tolist(), [0, 1, 2])
+        self.assertEqual(rows['Game_Week'].tolist(), [0, 1, 2, 2])
         self.assertEqual(rows.iloc[1]['total_points'], 8)
         self.assertEqual(rows.iloc[2]['total_points'], 0)
+        snapshot = rows[rows['Game_Week'] == 2]
+        self.assertEqual(snapshot['opponent_team'].tolist(), [2, 3])
+        self.assertEqual(snapshot['was_home'].astype(bool).tolist(), [True, False])
+        self.assertEqual(snapshot['scheduled_fixture'].tolist(), [101, 102])
+        self.assertEqual(snapshot['fixture_count'].tolist(), [2, 2])
+        self.assertEqual(result['snapshot_players'], 1)
+        self.assertEqual(result['snapshot_fixtures'], 2)
 
     @patch('utils.requests.get')
     def test_refresh_rejects_incomplete_player_history(self, get):

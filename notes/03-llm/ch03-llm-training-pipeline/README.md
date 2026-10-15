@@ -13,7 +13,7 @@ How raw internet text becomes GPT-4 or Claude: the three-stage pipeline (pretrai
   - RLHF vs DPO: when to use each
   - LoRA and prefix tuning: adapting without full retraining
 
-> **From-scratch companion:** [`learning/genai/01-transformers/08b-pretrain-a-base-model-lab.ipynb`](../../../learning/genai/01-transformers/08b-pretrain-a-base-model-lab.ipynb) — it runs the manual training, validation, checkpoint, reload, and resume lifecycle before this chapter generalizes the pipeline.
+> **From-scratch companion:** [`learning/05-llm-training/03-pretrain-a-base-model-lab.ipynb`](../../../learning/05-llm-training/03-pretrain-a-base-model-lab.ipynb) — it runs the manual training, validation, checkpoint, reload, and resume lifecycle before this chapter generalizes the pipeline.
 
 ## Learning Objectives
 

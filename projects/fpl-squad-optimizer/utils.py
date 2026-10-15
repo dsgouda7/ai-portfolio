@@ -374,6 +374,32 @@ def ingest(players_dir, raw_data_path, db_file, epl_members=None):
     conn.close()
 
 
+def _fixtures_by_team(fixtures: list[dict]) -> dict[int, list[dict]]:
+    by_team: dict[int, list[dict]] = {}
+    for fixture in fixtures:
+        home = int(fixture['team_h'])
+        away = int(fixture['team_a'])
+        fixture_id = int(fixture.get('id') or 0)
+        kickoff = fixture.get('kickoff_time')
+        by_team.setdefault(home, []).append({
+            'id': fixture_id,
+            'opponent': away,
+            'was_home': True,
+            'kickoff_time': kickoff,
+        })
+        by_team.setdefault(away, []).append({
+            'id': fixture_id,
+            'opponent': home,
+            'was_home': False,
+            'kickoff_time': kickoff,
+        })
+    for team_fixtures in by_team.values():
+        team_fixtures.sort(
+            key=lambda row: (str(row.get('kickoff_time') or ''), int(row['id']))
+        )
+    return by_team
+
+
 def refresh_current_roster(db_file: str, bootstrap: dict = None, fixtures: list = None) -> dict:
     """Create a preseason inference snapshot from the current official FPL roster."""
     if bootstrap is None:
@@ -410,12 +436,7 @@ def refresh_current_roster(db_file: str, bootstrap: dict = None, fixtures: list 
         response.raise_for_status()
         fixtures = response.json()
 
-    fixture_by_team = {}
-    for fixture in fixtures:
-        home = int(fixture['team_h'])
-        away = int(fixture['team_a'])
-        fixture_by_team[home] = (away, True, fixture.get('kickoff_time'))
-        fixture_by_team[away] = (home, False, fixture.get('kickoff_time'))
+    fixtures_by_team = _fixtures_by_team(fixtures)
 
     with closing(sqlite3.connect(db_file)) as conn:
         old_raw = pd.read_sql('SELECT * FROM players_raw', conn)
@@ -446,28 +467,48 @@ def refresh_current_roster(db_file: str, bootstrap: dict = None, fixtures: list 
         historical_gw['player_id'] = historical_gw['player_id'].map(old_to_current_id)
         snapshot_index = int(historical_gw['Game_Week'].max()) + 1
 
+        columns = list(old_gw.columns)
+        for column in ('scheduled_fixture', 'fixture_count'):
+            if column not in columns:
+                columns.append(column)
         snapshot_rows = []
         for player in current.to_dict('records'):
-            row = {column: 0 for column in old_gw.columns}
-            opponent, was_home, kickoff = fixture_by_team.get(
-                int(player['team']), (0, False, target_event.get('deadline_time'))
-            )
-            row.update({
-                'element': int(player['id']),
-                'player_id': int(player['id']),
-                'Game_Week': snapshot_index,
-                'round': int(target_event['id']),
-                'fixture': 0,
-                'kickoff_time': kickoff,
-                'opponent_team': opponent,
-                'was_home': was_home,
-                'value': int(player.get('now_cost') or 0),
-                'modified': False,
-            })
-            snapshot_rows.append(row)
+            team_fixtures = fixtures_by_team.get(int(player['team']), [])
+            scheduled = team_fixtures or [{
+                'id': 0,
+                'opponent': 0,
+                'was_home': False,
+                'kickoff_time': target_event.get('deadline_time'),
+            }]
+            for fixture in scheduled:
+                row = {column: 0 for column in columns}
+                row.update({
+                    'element': int(player['id']),
+                    'player_id': int(player['id']),
+                    'Game_Week': snapshot_index,
+                    'round': int(target_event['id']),
+                    'fixture': 0,
+                    'scheduled_fixture': int(fixture['id']),
+                    'fixture_count': len(team_fixtures),
+                    'kickoff_time': fixture['kickoff_time'],
+                    'opponent_team': int(fixture['opponent']),
+                    'was_home': bool(fixture['was_home']),
+                    'value': int(player.get('now_cost') or 0),
+                    'modified': False,
+                })
+                snapshot_rows.append(row)
 
-        current_gw = pd.DataFrame(snapshot_rows, columns=old_gw.columns)
-        pd.concat([historical_gw, current_gw], ignore_index=True).to_sql(
+        current_gw = pd.DataFrame(snapshot_rows, columns=columns)
+        combined_gw = pd.concat([historical_gw, current_gw], ignore_index=True)
+        if 'was_home' in combined_gw:
+            combined_gw['was_home'] = (
+                combined_gw['was_home']
+                .replace({True: 1, False: 0, 'True': 1, 'False': 0})
+                .pipe(pd.to_numeric, errors='coerce')
+                .fillna(0)
+                .astype(int)
+            )
+        combined_gw.to_sql(
             'player_gw', conn, if_exists='replace', index=False
         )
         current.to_sql('players_raw', conn, if_exists='replace', index=False)
@@ -656,14 +697,13 @@ def refresh_live_season_data(
         f"{FPL_API_BASE}/fixtures/?event={int(target_event['id'])}", timeout=30
     )
     fixture_response.raise_for_status()
-    fixture_by_team = {}
-    for fixture in fixture_response.json():
-        home, away = int(fixture['team_h']), int(fixture['team_a'])
-        fixture_by_team[home] = (away, True, fixture.get('kickoff_time'))
-        fixture_by_team[away] = (home, False, fixture.get('kickoff_time'))
+    fixtures_by_team = _fixtures_by_team(fixture_response.json())
 
     columns = list(old_gw.columns)
     for column in live_history.columns:
+        if column not in columns:
+            columns.append(column)
+    for column in ('scheduled_fixture', 'fixture_count'):
         if column not in columns:
             columns.append(column)
     active = current[
@@ -673,37 +713,55 @@ def refresh_live_season_data(
     snapshot_rows = []
     total_players = int(bootstrap.get('total_players') or 0)
     for player in active.to_dict('records'):
-        row = {column: 0 for column in columns}
-        opponent, was_home, kickoff = fixture_by_team.get(
-            int(player['team']), (0, False, target_event.get('deadline_time'))
-        )
-        row.update({
-            'element': int(player['id']),
-            'player_id': int(player['id']),
-            'Game_Week': snapshot_index,
-            'round': int(target_event['id']),
-            'fixture': 0,
-            'kickoff_time': kickoff or target_event.get('deadline_time'),
-            'opponent_team': opponent,
-            'was_home': was_home,
-            'value': int(player.get('now_cost') or 0),
-            'selected': round(
-                float(player.get('selected_by_percent') or 0) * total_players / 100
-            ),
-            'transfers_in': int(player.get('transfers_in_event') or 0),
-            'transfers_out': int(player.get('transfers_out_event') or 0),
-            'transfers_balance': (
-                int(player.get('transfers_in_event') or 0)
-                - int(player.get('transfers_out_event') or 0)
-            ),
-            'modified': False,
-        })
-        snapshot_rows.append(row)
+        team_fixtures = fixtures_by_team.get(int(player['team']), [])
+        scheduled = team_fixtures or [{
+            'id': 0,
+            'opponent': 0,
+            'was_home': False,
+            'kickoff_time': target_event.get('deadline_time'),
+        }]
+        for fixture in scheduled:
+            row = {column: 0 for column in columns}
+            row.update({
+                'element': int(player['id']),
+                'player_id': int(player['id']),
+                'Game_Week': snapshot_index,
+                'round': int(target_event['id']),
+                'fixture': 0,
+                'scheduled_fixture': int(fixture['id']),
+                'fixture_count': len(team_fixtures),
+                'kickoff_time': (
+                    fixture['kickoff_time'] or target_event.get('deadline_time')
+                ),
+                'opponent_team': int(fixture['opponent']),
+                'was_home': bool(fixture['was_home']),
+                'value': int(player.get('now_cost') or 0),
+                'selected': round(
+                    float(player.get('selected_by_percent') or 0)
+                    * total_players / 100
+                ),
+                'transfers_in': int(player.get('transfers_in_event') or 0),
+                'transfers_out': int(player.get('transfers_out_event') or 0),
+                'transfers_balance': (
+                    int(player.get('transfers_in_event') or 0)
+                    - int(player.get('transfers_out_event') or 0)
+                ),
+                'modified': False,
+            })
+            snapshot_rows.append(row)
     snapshot = pd.DataFrame(snapshot_rows, columns=columns)
 
     combined = pd.concat(
         [historical, live_history, snapshot], ignore_index=True, sort=False
     ).reindex(columns=columns)
+    if 'was_home' in combined:
+        combined['was_home'] = (
+            combined['was_home']
+            .replace({True: 1, False: 0, 'True': 1, 'False': 0})
+            .pipe(pd.to_numeric, errors='coerce')
+            .fillna(0)
+            .astype(int)
+        )
     for column in current.columns:
         if column not in old_raw.columns:
             old_raw[column] = None
@@ -735,6 +793,7 @@ def refresh_live_season_data(
         'snapshot_game_week': snapshot_index,
         'players': len(current),
         'snapshot_players': len(active),
+        'snapshot_fixtures': len(snapshot),
         'live_rows': len(live_history),
     }
 
@@ -841,17 +900,20 @@ def build_features(db_file):
     raw['element_type'] = raw['element_type'].map({1: 'GK', 2: 'DEF', 3: 'MID', 4: 'FWD'})
 
     df = raw.merge(all_gw, left_on='id', right_on='player_id', how='inner')
-    df = df.sort_values(['id', 'Game_Week']).reset_index(drop=True)
-    df['_prior_pl_rows'] = df.groupby('id').cumcount()
+    sort_columns = ['id', 'Game_Week']
+    if 'kickoff_time' in df.columns:
+        sort_columns.append('kickoff_time')
+    if 'scheduled_fixture' in df.columns:
+        sort_columns.append('scheduled_fixture')
+    df = df.sort_values(sort_columns).reset_index(drop=True)
+    df['_prior_pl_rows'] = (
+        df.groupby('id')['Game_Week'].rank(method='dense').sub(1)
+    )
 
     df = _add_temporal_context_features(df)
     df = _add_fixture_strength_features(df)
 
-    for col in ROLL_COLS:
-        df[f'roll5_{col}'] = (
-            df.groupby('id')[col]
-            .transform(lambda x: x.shift(1).rolling(FORM_WINDOW, min_periods=1).mean())
-        )
+    df = _add_rolling_form_features(df)
 
     # Rolling form is already shifted one row, while fixture, opponent and
     # price belong to this row. The prediction target is therefore this GW's
@@ -970,6 +1032,25 @@ def build_features(db_file):
     return df
 
 
+def _add_rolling_form_features(df: pd.DataFrame) -> pd.DataFrame:
+    enriched = df.copy()
+    columns = [column for column in ROLL_COLS if column in enriched]
+    player_gameweeks = enriched.groupby(
+        ['id', 'Game_Week'], sort=True
+    )[columns].sum(min_count=1)
+    rolling_form = player_gameweeks.groupby(level=0).transform(
+        lambda values: values.shift(1).rolling(
+            FORM_WINDOW, min_periods=1
+        ).mean()
+    )
+    row_keys = pd.MultiIndex.from_frame(enriched[['id', 'Game_Week']])
+    for column in columns:
+        enriched[f'roll5_{column}'] = (
+            rolling_form[column].reindex(row_keys).to_numpy()
+        )
+    return enriched
+
+
 def _signed_log1p(values: pd.Series) -> pd.Series:
     numeric = pd.to_numeric(values, errors='coerce').fillna(0.0)
     return np.sign(numeric) * np.log1p(numeric.abs())
@@ -984,9 +1065,16 @@ def _add_temporal_context_features(df: pd.DataFrame) -> pd.DataFrame:
         enriched[column] = pd.to_numeric(enriched[column], errors='coerce').fillna(0.0)
 
     enriched['ownership_log'] = np.log1p(enriched['selected'].clip(lower=0))
-    previous_selected = enriched.groupby('id')['selected'].shift(1)
+    row_keys = pd.MultiIndex.from_frame(enriched[['id', 'Game_Week']])
+    gameweek_market = enriched.groupby(['id', 'Game_Week'], sort=True)[
+        ['selected', 'value']
+    ].first()
+    previous_selected = (
+        gameweek_market.groupby(level=0)['selected'].shift(1).reindex(row_keys)
+    )
     enriched['ownership_change_log'] = _signed_log1p(
-        enriched['selected'] - previous_selected
+        enriched['selected']
+        - pd.Series(previous_selected.to_numpy(), index=enriched.index)
     )
     enriched['transfers_in_log'] = np.log1p(enriched['transfers_in'].clip(lower=0))
     enriched['transfers_out_log'] = np.log1p(enriched['transfers_out'].clip(lower=0))
@@ -994,12 +1082,21 @@ def _add_temporal_context_features(df: pd.DataFrame) -> pd.DataFrame:
     enriched['transfer_momentum_per_owner'] = (
         enriched['transfers_balance'] / enriched['selected'].clip(lower=1)
     ).clip(-5.0, 5.0)
+    previous_value = (
+        gameweek_market.groupby(level=0)['value'].shift(1).reindex(row_keys)
+    )
+    previous_value_three = (
+        gameweek_market.groupby(level=0)['value'].shift(3).reindex(row_keys)
+    )
     enriched['price_change_1'] = (
-        enriched['value'] - enriched.groupby('id')['value'].shift(1)
-    ).fillna(0.0)
+        enriched['value'].to_numpy() - previous_value.to_numpy()
+    )
     enriched['price_change_3'] = (
-        enriched['value'] - enriched.groupby('id')['value'].shift(3)
-    ).fillna(0.0)
+        enriched['value'].to_numpy() - previous_value_three.to_numpy()
+    )
+    enriched[['price_change_1', 'price_change_3']] = enriched[
+        ['price_change_1', 'price_change_3']
+    ].fillna(0.0)
 
     kickoff = pd.to_datetime(enriched.get('kickoff_time'), errors='coerce', utc=True)
     previous_kickoff = kickoff.groupby(enriched['id']).shift(1)
@@ -1400,54 +1497,139 @@ def pick_starting_xi(squad: pd.DataFrame) -> tuple:
     return starters, bench, formation
 
 
+def suggest_replacements(
+    scored_squad: pd.DataFrame,
+    eligible_pool: pd.DataFrame,
+    outgoing_id: int,
+    limit: int = 3,
+    max_per_team: int = MAX_PLAYERS_PER_TEAM,
+    max_spend: int = 1000,
+    excluded_in_ids: set[int] | None = None,
+) -> list[dict]:
+    """Rank legal same-position replacements for one owned player."""
+    matching = scored_squad[
+        scored_squad['id'].astype(int) == int(outgoing_id)
+    ]
+    if len(matching) != 1:
+        raise ValueError(
+            f'Expected one owned player with ID {int(outgoing_id)}, found {len(matching)}.'
+        )
+
+    out_p = matching.iloc[0]
+    squad_ids = set(scored_squad['id'].astype(int))
+    squad_spend = int(scored_squad['value'].sum())
+    team_counts = Counter(scored_squad['team'].astype(int))
+    excluded_in_ids = excluded_in_ids or set()
+    budget = max_spend - squad_spend + int(out_p['value'])
+    team_counts[int(out_p['team'])] -= 1
+
+    candidates = eligible_pool[
+        (eligible_pool['element_type'] == out_p['element_type'])
+        & (~eligible_pool['id'].astype(int).isin(squad_ids))
+        & (~eligible_pool['id'].astype(int).isin(excluded_in_ids))
+        & (eligible_pool['value'].astype(int) <= budget)
+    ].copy()
+    candidates = candidates[
+        candidates['team'].astype(int).map(team_counts).fillna(0) < max_per_team
+    ].sort_values(
+        ['predicted_points', 'value', 'id'],
+        ascending=[False, True, True],
+    )
+
+    results = []
+    for _, in_p in candidates.head(max(0, int(limit))).iterrows():
+        new_spend = squad_spend - int(out_p['value']) + int(in_p['value'])
+        results.append({
+            'out': out_p.to_dict(),
+            'in_': in_p.to_dict(),
+            'gain': round(
+                float(in_p['predicted_points']) - float(out_p['predicted_points']),
+                2,
+            ),
+            'new_spend': new_spend,
+            'bank_after': max_spend - new_spend,
+        })
+    return results
+
+
 def suggest_transfer(
     scored_squad: pd.DataFrame,
     eligible_pool: pd.DataFrame,
     max_per_team: int = MAX_PLAYERS_PER_TEAM,
     max_spend: int = 1000,
+    excluded_out_ids: set[int] | None = None,
+    excluded_in_ids: set[int] | None = None,
 ):
     """
     Find the single best transfer (one OUT → one IN) that maximises
     predicted-points gain, subject to budget and per-club cap.
     Returns dict { 'out', 'in_', 'gain', 'new_spend' } or None.
     """
-    squad_ids   = set(scored_squad['id'].astype(int))
-    squad_spend = int(scored_squad['value'].sum())
-    team_counts = Counter(scored_squad['team'].astype(int))
+    excluded_out_ids = excluded_out_ids or set()
+    best = None
 
-    best_gain, best_out, best_in_ = float('-inf'), None, None
+    for outgoing_id in scored_squad['id'].astype(int):
+        if outgoing_id in excluded_out_ids:
+            continue
+        replacements = suggest_replacements(
+            scored_squad,
+            eligible_pool,
+            outgoing_id,
+            limit=1,
+            max_per_team=max_per_team,
+            max_spend=max_spend,
+            excluded_in_ids=excluded_in_ids,
+        )
+        if not replacements:
+            continue
+        recommendation = replacements[0]
+        if best is None or float(recommendation['gain']) > float(best['gain']):
+            best = recommendation
 
-    for _, out_p in scored_squad.iterrows():
-        freed    = int(out_p['value'])
-        budget   = max_spend - squad_spend + freed
-        tc_after = Counter(team_counts)
-        tc_after[int(out_p['team'])] -= 1
+    return best
 
-        cands = eligible_pool[
-            (eligible_pool['element_type'] == out_p['element_type'])
-            & (~eligible_pool['id'].astype(int).isin(squad_ids - {int(out_p['id'])}))
-        ].sort_values('predicted_points', ascending=False)
 
-        for _, in_p in cands.iterrows():
-            if int(in_p['id']) == int(out_p['id']):
-                continue
-            if int(in_p['value']) > budget:
-                continue
-            if tc_after.get(int(in_p['team']), 0) >= max_per_team:
-                continue
-            gain = float(in_p['predicted_points']) - float(out_p['predicted_points'])
-            if gain > best_gain:
-                best_gain, best_out, best_in_ = gain, out_p.copy(), in_p.copy()
-            break  # sorted desc — first valid = best for this out_p
+def suggest_transfers(
+    scored_squad: pd.DataFrame,
+    eligible_pool: pd.DataFrame,
+    transfer_limit: int,
+    max_per_team: int = MAX_PLAYERS_PER_TEAM,
+    max_spend: int = 1000,
+) -> list[dict]:
+    """Return sequential beneficial transfers up to the free-transfer allowance."""
+    working = scored_squad.copy()
+    recommendations = []
+    bought_ids: set[int] = set()
+    sold_ids: set[int] = set()
 
-    if best_out is None:
-        return None
-    return {
-        'out':       best_out.to_dict(),
-        'in_':       best_in_.to_dict(),
-        'gain':      round(best_gain, 2),
-        'new_spend': squad_spend - int(best_out['value']) + int(best_in_['value']),
-    }
+    for _ in range(max(0, int(transfer_limit))):
+        recommendation = suggest_transfer(
+            working,
+            eligible_pool,
+            max_per_team,
+            max_spend,
+            excluded_out_ids=bought_ids,
+            excluded_in_ids=sold_ids,
+        )
+        if recommendation is None or float(recommendation['gain']) <= 0:
+            break
+
+        out_id = int(recommendation['out']['id'])
+        in_id = int(recommendation['in_']['id'])
+        recommendation['bank_after'] = (
+            max_spend - int(recommendation['new_spend'])
+        )
+        recommendations.append(recommendation)
+        sold_ids.add(out_id)
+        bought_ids.add(in_id)
+
+        working = working[working['id'].astype(int) != out_id].copy()
+        incoming = eligible_pool[
+            eligible_pool['id'].astype(int) == in_id
+        ].iloc[[0]].copy()
+        working = pd.concat([working, incoming], ignore_index=True)
+
+    return recommendations
 
 
 def find_ineligible_replacements(

@@ -1,0 +1,9 @@
+# Packages required to run Stage 04 Transformer notebooks
+numpy
+matplotlib
+seaborn
+torch
+ipython
+ipykernel
+nbclient
+nbconvert

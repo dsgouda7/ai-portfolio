@@ -66,7 +66,7 @@
       margin: 0 auto;
       padding: 0.6rem 1rem;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 260px;
+      grid-template-columns: minmax(0, 1fr) 310px;
       gap: 1rem;
       flex: 1 1 0;
       min-height: 0;
@@ -227,6 +227,15 @@
       white-space: nowrap;
     }
     .player-score-pair .last-score { color: rgba(255,255,255,0.58); }
+    .dgw-badge {
+      color: #0a0f1a;
+      background: #e8fa45;
+      border-radius: 999px;
+      padding: 0.02rem 0.22rem;
+      font-size: 0.43rem;
+      font-weight: 900;
+      text-shadow: none;
+    }
 
     /* ── BENCH ──────────────────────────────────────────────────── */
     .bench-section { margin-top: 0; }
@@ -446,15 +455,148 @@
     .tt-ep span { color: var(--text); font-variant-numeric: tabular-nums; }
 
     /* ── TRANSFER CARD ──────────────────────────────────────────── */
-    .transfer-card { border-color: rgba(56,189,248,0.3); }
-    .transfer-out  { color: #ff5757; font-weight: 700; }
-    .transfer-in   { color: #70e85a; font-weight: 700; }
-    .transfer-gain { font-size: 1.1rem; font-weight: 800; color: var(--accent); }
-    .transfer-arrow {
-      text-align: center; color: var(--muted); font-size: 0.9rem;
-      margin: 0.2rem 0;
+    .transfer-card {
+      border-color: rgba(56,189,248,0.5);
+      background: linear-gradient(145deg, rgba(56,189,248,0.1), var(--surface) 55%);
     }
-    .transfer-sub  { font-weight: 400; color: var(--muted); font-size: 0.65rem; }
+    .transfer-card h3 { color: var(--text); }
+    .transfer-action {
+      padding: 0.65rem 0.7rem;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: rgba(0,0,0,0.16);
+    }
+    .transfer-action-label {
+      display: block;
+      margin-bottom: 0.16rem;
+      font-size: 0.57rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+    }
+    .transfer-action strong {
+      display: block;
+      font-size: 0.92rem;
+      line-height: 1.25;
+    }
+    .transfer-out .transfer-action-label, .transfer-out strong { color: #ff7777; }
+    .transfer-in .transfer-action-label, .transfer-in strong { color: #70e85a; }
+    .transfer-sub {
+      display: block;
+      margin-top: 0.22rem;
+      color: var(--muted);
+      font-size: 0.61rem;
+      line-height: 1.35;
+    }
+    .transfer-arrow {
+      padding: 0.3rem 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .transfer-impact {
+      margin: 0.7rem 0;
+      padding-top: 0.65rem;
+      border-top: 1px solid var(--border);
+    }
+    .transfer-gain {
+      display: block;
+      color: var(--accent);
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+    .transfer-bank {
+      display: block;
+      margin-top: 0.14rem;
+      color: var(--muted);
+      font-size: 0.62rem;
+    }
+    .transfer-empty {
+      color: var(--text);
+      font-size: 0.72rem;
+      line-height: 1.5;
+    }
+    .transfer-empty strong {
+      display: block;
+      margin-bottom: 0.25rem;
+      color: #70e85a;
+      font-size: 0.84rem;
+    }
+    .transfer-plan-summary {
+      margin-bottom: 0.65rem;
+      color: var(--muted);
+      font-size: 0.65rem;
+      line-height: 1.45;
+    }
+    .transfer-plan-summary strong { color: var(--text); }
+    .transfer-step {
+      margin-top: 0.65rem;
+      padding-top: 0.65rem;
+      border-top: 1px solid var(--border);
+    }
+    .transfer-step:first-of-type { margin-top: 0; }
+    .transfer-step-number {
+      margin-bottom: 0.42rem;
+      color: var(--accent);
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .transfer-step-impact {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-top: 0.42rem;
+      color: var(--muted);
+      font-size: 0.59rem;
+    }
+    .transfer-step-impact strong { color: var(--accent); }
+
+    /* ── PLAYER REPLACEMENT FINDER ─────────────────────────────── */
+    .replacement-card { border-color: rgba(255,210,122,0.35); }
+    .replacement-note {
+      margin: 0.4rem 0 0.6rem; color: var(--muted);
+      font-size: 0.63rem; line-height: 1.45;
+    }
+    .replacement-controls {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.4rem; align-items: center;
+    }
+    .replacement-controls select { min-width: 0; width: 100%; }
+    .replacement-results { margin-top: 0.7rem; }
+    .replacement-for {
+      margin-bottom: 0.45rem; color: var(--muted);
+      font-size: 0.61rem; line-height: 1.4;
+    }
+    .replacement-for strong { color: var(--text); }
+    .replacement-option {
+      display: grid; grid-template-columns: 24px minmax(0, 1fr) auto;
+      gap: 0.45rem; align-items: start;
+      padding: 0.55rem 0; border-top: 1px solid var(--border);
+    }
+    .replacement-rank {
+      display: grid; place-items: center; width: 22px; height: 22px;
+      border-radius: 50%; background: rgba(255,210,122,0.12);
+      color: #ffd27a; font-size: 0.58rem; font-weight: 900;
+    }
+    .replacement-name {
+      font-size: 0.72rem; font-weight: 800; line-height: 1.3;
+    }
+    .replacement-meta {
+      margin-top: 0.15rem; color: var(--muted);
+      font-size: 0.58rem; line-height: 1.4;
+    }
+    .replacement-impact { text-align: right; white-space: nowrap; }
+    .replacement-gain { font-size: 0.68rem; font-weight: 800; }
+    .replacement-gain.positive { color: #70e85a; }
+    .replacement-gain.negative { color: #ff7777; }
+    .replacement-bank {
+      display: block; margin-top: 0.12rem;
+      color: var(--muted); font-size: 0.55rem;
+    }
 
     /* ── SQUAD HEALTH CARD ──────────────────────────────────────── */
     .health-row {
@@ -476,16 +618,55 @@
     .mode-new   { background: rgba(112,232,90,0.15); color: #70e85a;
                   border: 1px solid rgba(112,232,90,0.35); }
 
-    /* ── SQUAD MANAGEMENT ──────────────────────────────────────── */
-    .manager-card { border-color: rgba(112,232,90,0.3); }
-    .manager-group { margin-bottom: 0.75rem; }
-    .manager-group:last-child { margin-bottom: 0; }
-    .manager-label {
-      display: block; color: var(--muted); font-size: 0.62rem;
-      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem;
+    /* ── NEXT GAMEWEEK LINEUP ──────────────────────────────────── */
+    .lineup-card { border-color: rgba(112,232,90,0.3); }
+    .lineup-note {
+      color: var(--muted); font-size: 0.63rem; line-height: 1.45;
+      margin: 0.4rem 0 0.65rem;
     }
-    .manager-row { display: flex; gap: 0.35rem; margin-bottom: 0.35rem; }
-    .manager-row select, .manager-row input { min-width: 0; flex: 1; }
+    .lineup-overview {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.35rem;
+      margin-bottom: 0.7rem;
+    }
+    .lineup-overview-item {
+      padding: 0.45rem 0.5rem; border: 1px solid var(--border);
+      border-radius: 6px; color: var(--muted); font-size: 0.58rem;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .lineup-overview-item strong {
+      display: block; margin-top: 0.12rem; color: var(--text);
+      font-size: 0.78rem; letter-spacing: normal; text-transform: none;
+    }
+    .lineup-section + .lineup-section { margin-top: 0.8rem; }
+    .lineup-section h4 {
+      margin-bottom: 0.3rem; color: var(--muted); font-size: 0.6rem;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .lineup-row {
+      display: grid; grid-template-columns: 30px minmax(0, 1fr) auto;
+      align-items: center; gap: 0.4rem; min-height: 30px;
+      padding: 0.28rem 0; border-bottom: 1px solid var(--border);
+      font-size: 0.67rem;
+    }
+    .lineup-row:last-child { border-bottom: none; }
+    .lineup-position {
+      color: var(--accent); font-size: 0.56rem; font-weight: 800;
+      text-transform: uppercase;
+    }
+    .lineup-player-name {
+      min-width: 0; overflow-wrap: anywhere; line-height: 1.25;
+      font-weight: 700;
+    }
+    .lineup-points { color: #70e85a; font-size: 0.6rem; white-space: nowrap; }
+    .lineup-captain {
+      display: inline-grid; place-items: center; width: 16px; height: 16px;
+      margin-left: 0.25rem; border-radius: 50%; background: var(--accent);
+      color: #08111c; font-size: 0.5rem; font-weight: 900;
+    }
+    .lineup-captain.vice { background: rgba(255,255,255,0.2); color: var(--text); }
+    .lineup-bench-note {
+      margin: -0.1rem 0 0.25rem; color: var(--muted); font-size: 0.56rem;
+    }
     select, input, .manager-button {
       background: #101827; color: var(--text); border: 1px solid var(--border);
       border-radius: 6px; min-height: 30px; padding: 0.25rem 0.4rem;
@@ -496,18 +677,6 @@
     .manager-button.primary { background: #70e85a; color: #08120a; border-color: #70e85a; }
     .manager-button.full { width: 100%; }
     .manager-button:disabled { cursor: not-allowed; opacity: 0.45; }
-    .official-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; }
-    .official-link {
-      display: inline-flex; align-items: center; justify-content: center;
-      text-decoration: none;
-    }
-    .manager-meta {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.3rem;
-      border-bottom: 1px solid var(--border); padding-bottom: 0.65rem;
-      margin-bottom: 0.7rem;
-    }
-    .manager-stat { font-size: 0.6rem; color: var(--muted); }
-    .manager-stat strong { display: block; color: var(--text); font-size: 0.77rem; }
     .free-transfer-summary {
       display: flex;
       align-items: center;
@@ -525,7 +694,44 @@
     .manager-status { min-height: 1.2rem; color: var(--muted); font-size: 0.64rem; line-height: 1.4; }
     .manager-status.error { color: #ff7777; }
     .manager-status.success { color: #70e85a; }
-    .dirty-dot { color: #ffd700; }
+    .import-note {
+      margin: 0.45rem 0 0.7rem;
+      color: var(--muted);
+      font-size: 0.65rem;
+      line-height: 1.5;
+    }
+    .import-summary {
+      display: none;
+      margin-top: 0.7rem;
+      padding: 0.55rem 0.65rem;
+      border: 1px solid rgba(112,232,90,0.25);
+      border-radius: 6px;
+      background: rgba(112,232,90,0.06);
+      font-size: 0.63rem;
+      line-height: 1.55;
+    }
+    .import-summary strong { color: #70e85a; }
+    .public-delay-note {
+      display: block; margin-top: 0.35rem; color: #ffd27a;
+      font-size: 0.6rem; line-height: 1.4;
+    }
+    .local-transfer-card { border-color: rgba(255,210,122,0.4); }
+    .local-transfer-note {
+      margin: 0.4rem 0 0.65rem; color: var(--muted);
+      font-size: 0.63rem; line-height: 1.45;
+    }
+    .local-transfer-note strong { color: #ffd27a; }
+    .local-transfer-field { margin-bottom: 0.5rem; }
+    .local-transfer-field label {
+      display: block; margin-bottom: 0.2rem; color: var(--muted);
+      font-size: 0.57rem; letter-spacing: 0.07em; text-transform: uppercase;
+    }
+    .local-transfer-field select { width: 100%; }
+    .local-transfer-status {
+      min-height: 1rem; margin-top: 0.4rem; color: var(--muted);
+      font-size: 0.6rem; line-height: 1.35;
+    }
+    .local-transfer-status.error { color: #ff7777; }
     .model-control {
       display: flex; align-items: center; gap: 0.35rem; color: var(--muted);
       font-size: 0.65rem; white-space: nowrap;
@@ -745,81 +951,84 @@
 
   <!-- right side panel -->
   <div class="side-panel">
-    <div class="panel-card manager-card">
-      <h3>Squad Management <span class="dirty-dot" id="dirty-dot" style="display:none">●</span></h3>
-      <div class="manager-meta">
-        <div class="manager-stat">Bank<strong id="bank-value"></strong></div>
-        <div class="manager-stat">Hit<strong id="hit-value"></strong></div>
-        <div class="manager-stat">Revision<strong id="revision-value"></strong></div>
+    <div class="panel-card import-card">
+      <h3>Load Public FPL Squad</h3>
+      <p class="import-note">
+        Enter your numeric FPL entry ID. The app imports the latest public squad,
+        estimates free transfers from public history, and generates the full transfer plan.
+      </p>
+      <input id="fpl-entry-id" inputmode="numeric" pattern="[0-9]*"
+             placeholder="FPL entry ID" title="Public FPL entry ID"
+             style="width:100%;margin-bottom:0.4rem">
+      <button class="manager-button primary full" id="sync-fpl-entry" type="button">
+        Import squad and analyze
+      </button>
+      <div id="manager-status" class="manager-status"></div>
+      <div class="import-summary" id="import-summary">
+        Public squad through <strong id="import-source-gw"></strong><br>
+        <strong id="import-transfer-count"></strong>
+        <span class="public-delay-note" id="public-delay-note"></span>
       </div>
+    </div>
 
-      <div class="manager-group">
-        <label class="manager-label" for="fpl-entry-id">Public FPL entry (read-only)</label>
-        <div class="manager-row">
-          <input id="fpl-entry-id" inputmode="numeric" pattern="[0-9]*"
-                 placeholder="Entry ID" title="Public FPL entry ID">
-          <select id="fpl-free-transfers" title="Optional current free-transfer count">
-            <option value="">Estimate free transfers</option>
-            <option value="1">1 free transfer</option>
-            <option value="2">2 free transfers</option>
-            <option value="3">3 free transfers</option>
-            <option value="4">4 free transfers</option>
-            <option value="5">5 free transfers</option>
-          </select>
+    <div class="panel-card local-transfer-card" id="local-transfer-card" style="display:none">
+      <h3>Record Portal Transfer Locally</h3>
+      <p class="local-transfer-note" id="local-transfer-note"></p>
+      <div class="local-transfer-field">
+        <label for="local-transfer-out">Player sold</label>
+        <select id="local-transfer-out"></select>
+      </div>
+      <div class="local-transfer-field">
+        <label for="local-transfer-in">Player bought</label>
+        <select id="local-transfer-in"></select>
+      </div>
+      <button class="manager-button primary full" id="record-local-transfer" type="button">
+        Update local squad
+      </button>
+      <div class="local-transfer-status" id="local-transfer-status"></div>
+    </div>
+
+    <div class="panel-card transfer-card" id="transfer-card" style="display:none">
+      <h3 id="transfer-title">Transfer Recommendations</h3>
+      <div id="transfer-body"></div>
+    </div>
+
+    <div class="panel-card replacement-card" id="replacement-card" style="display:none">
+      <h3>Find a Replacement</h3>
+      <p class="replacement-note">
+        Choose anyone from the imported squad to see the three best legal
+        alternatives using the current locally recorded squad and bank.
+      </p>
+      <div class="replacement-controls">
+        <select id="replacement-player" title="Player to replace"></select>
+        <button class="manager-button primary" id="find-replacements" type="button">
+          Find
+        </button>
+      </div>
+      <div class="replacement-results" id="replacement-results"></div>
+    </div>
+
+    <div class="panel-card lineup-card" id="next-lineup-card">
+      <h3 id="next-lineup-title">Next Gameweek Lineup</h3>
+      <p class="lineup-note" id="next-lineup-note"></p>
+      <div class="lineup-overview">
+        <div class="lineup-overview-item">
+          Formation
+          <strong id="lineup-formation"></strong>
         </div>
-        <input id="fpl-access-token" type="password" autocomplete="new-password"
-               spellcheck="false" style="width:100%;margin-bottom:0.35rem"
-               placeholder="Temporary FPL access token"
-               title="Used once to import current private picks; never saved">
-        <button class="manager-button full" id="sync-fpl-entry" type="button">Import FPL squad</button>
-        <div id="manager-status" class="manager-status"></div>
-      </div>
-
-      <div class="manager-group">
-        <label class="manager-label" for="transfer-out">Transfer</label>
-        <div class="manager-row">
-          <select id="transfer-out" title="Player to sell"></select>
-          <select id="transfer-in" title="Player to buy"></select>
-        </div>
-        <button class="manager-button full" id="apply-transfer" type="button">Apply transfer</button>
-      </div>
-
-      <div class="manager-group">
-        <label class="manager-label" for="starter-swap">Starting XI and bench</label>
-        <div class="manager-row">
-          <select id="starter-swap" title="Starter to bench"></select>
-          <select id="bench-swap" title="Substitute to start"></select>
-        </div>
-        <button class="manager-button full" id="apply-swap" type="button">Swap</button>
-      </div>
-
-      <div class="manager-group">
-        <label class="manager-label" for="bench-priority">Bench priority</label>
-        <div class="manager-row">
-          <select id="bench-priority"></select>
-          <button class="manager-button" id="bench-up" type="button" title="Move substitute up">↑</button>
-          <button class="manager-button" id="bench-down" type="button" title="Move substitute down">↓</button>
+        <div class="lineup-overview-item">
+          XI projection
+          <strong id="lineup-projection"></strong>
         </div>
       </div>
-
-      <div class="manager-group">
-        <label class="manager-label" for="captain-select">Captaincy</label>
-        <div class="manager-row">
-          <select id="captain-select" title="Captain"></select>
-          <select id="vice-select" title="Vice-captain"></select>
-        </div>
+      <div class="lineup-section">
+        <h4>Starting XI</h4>
+        <div id="lineup-starters"></div>
       </div>
-
-      <div class="manager-group">
-        <label class="manager-label" for="chip-select">Chip</label>
-        <select id="chip-select" style="width:100%"></select>
-      </div>
-
-      <button class="manager-button primary full" id="save-squad" type="button">Save locally</button>
-      <div class="official-actions">
-        <button class="manager-button" id="copy-fpl-plan" type="button">Copy FPL plan</button>
-        <a class="manager-button official-link" href="https://fantasy.premierleague.com/en/my-team"
-           target="_blank" rel="noopener">Open FPL My Team</a>
+      <div class="lineup-section">
+        <h4>Bench order</h4>
+        <p class="lineup-bench-note">Goalkeeper first, then outfield substitution priority.</p>
+        <div id="lineup-bench"></div>
       </div>
     </div>
 
@@ -836,11 +1045,6 @@
     <div class="panel-card" id="excl-card" style="display:none">
       <h3>Excluded by eligibility</h3>
       <div id="excl-rows"></div>
-    </div>
-
-    <div class="panel-card transfer-card" id="transfer-card" style="display:none">
-      <h3>Suggested Transfer <span style="font-size:0.58rem;opacity:.5">GW <span id="gw-label"></span></span></h3>
-      <div id="transfer-body"></div>
     </div>
 
     <div class="panel-card" id="health-card" style="display:none">
@@ -861,7 +1065,6 @@
 <script>
 const D = {{ data|safe }};
 let squadState = structuredClone(D.state);
-let dirty = false;
 
 const modelLabels = {
   xgboost: 'XGBoost',
@@ -945,7 +1148,6 @@ function beginTrainingPoll() {
 }
 
 async function startTraining(advisorRun = false) {
-  if (dirty && !window.confirm('Discard unsaved squad changes and run all model advisors?')) return;
   refreshModelsButton.disabled = true;
   advisorRunButton.disabled = true;
   renderTrainingStatus({status: 'running', phase: 'Starting', progress: 1, log: []});
@@ -1012,39 +1214,19 @@ function lastGameweekLabel() {
 function scorePair(player) {
   const previous = player.last_gameweek_points;
   const previousValue = previous === null || previous === undefined ? '—' : Number(previous).toFixed(0);
+  const fixtureCount = +(player.fixture_count || 0);
   return `
     <div class="player-score-pair">
       <span>Pred ${(+player.predicted_points || 0).toFixed(1)}</span>
+      ${fixtureCount > 1 ? `<span class="dgw-badge">DGW ×${fixtureCount}</span>` : ''}
       <span class="last-score">${lastGameweekLabel()} ${previousValue}</span>
     </div>
   `;
-}
-function statePlayer(playerId) {
-  return squadState.players.find(player => +player.id === +playerId);
-}
-function money(tenths) {
-  return `£${(+tenths / 10).toFixed(1)}M`;
-}
-function salePrice(player) {
-  if (+player.current_price <= +player.purchase_price) return +player.current_price;
-  return +player.purchase_price + Math.floor((+player.current_price - +player.purchase_price) / 2);
-}
-function setDirty(message) {
-  dirty = true;
-  document.getElementById('dirty-dot').style.display = '';
-  setManagerStatus(message || 'Unsaved changes');
-  renderManager();
-  renderSquad();
 }
 function setManagerStatus(message, kind='') {
   const status = document.getElementById('manager-status');
   status.textContent = message;
   status.className = `manager-status ${kind}`;
-}
-function fillSelect(element, rows, selected, label) {
-  element.innerHTML = rows.map(row =>
-    `<option value="${row.id}" ${+row.id === +selected ? 'selected' : ''}>${label(row)}</option>`
-  ).join('');
 }
 
 function renderOfficialSquad() {
@@ -1083,244 +1265,314 @@ function renderOfficialSquad() {
   );
 }
 
-function renderManager() {
-  const lineup = squadState.lineup;
-  const starters = lineup.starters.map(statePlayer);
-  const bench = lineup.bench.map(statePlayer);
-  const outSelect = document.getElementById('transfer-out');
-  const priorOut = +outSelect.value || squadState.players[0].id;
-
-  fillSelect(outSelect, squadState.players, priorOut,
-    player => `${player.position} ${playerName(player)} ${money(player.selling_price)}`);
-  renderTransferCandidates();
-  fillSelect(document.getElementById('starter-swap'), starters, starters[0]?.id,
-    player => `${player.position} ${playerName(player)}`);
-  fillSelect(document.getElementById('bench-swap'), bench, bench[0]?.id,
-    player => `${player.position} ${playerName(player)}`);
-  const outfieldBench = bench.filter(player => player.position !== 'GK');
-  fillSelect(document.getElementById('bench-priority'), outfieldBench, outfieldBench[0]?.id,
-    (player, index) => `${player.position} ${playerName(player)}`);
-  fillSelect(document.getElementById('captain-select'), starters, lineup.captain,
-    player => `C ${playerName(player)}`);
-  fillSelect(document.getElementById('vice-select'), starters, lineup.vice_captain,
-    player => `V ${playerName(player)}`);
-
-  const chips = [
-    [null, 'No chip'],
-    ['wildcard', 'Wildcard'],
-    ['free_hit', 'Free Hit'],
-    ['bench_boost', 'Bench Boost'],
-    ['triple_captain', 'Triple Captain'],
-  ];
-  document.getElementById('chip-select').innerHTML = chips.map(([value, label]) => {
-    const remaining = value ? squadState.chips[value].remaining : '';
-    const disabled = value && remaining < 1 ? 'disabled' : '';
-    const selected = (squadState.active_chip || '') === (value || '') ? 'selected' : '';
-    return `<option value="${value || ''}" ${disabled} ${selected}>${label}${value ? ` (${remaining})` : ''}</option>`;
-  }).join('');
-
-  document.getElementById('bank-value').textContent = money(squadState.bank);
-  document.getElementById('free-transfer-value').textContent = squadState.free_transfers;
-  document.getElementById('hit-value').textContent = `-${squadState.transfer_points_cost} pts`;
-  document.getElementById('revision-value').textContent = squadState.revision || 'Draft';
-  renderOfficialSquad();
+function lineupRow(player, label) {
+  const captaincy = player.is_captain
+    ? '<span class="lineup-captain">C</span>'
+    : player.is_vice_captain
+    ? '<span class="lineup-captain vice">V</span>'
+    : '';
+  const fixtureCount = +(player.fixture_count || 0);
+  const doubleGameweek = fixtureCount > 1
+    ? `<span class="dgw-badge">DGW ×${fixtureCount}</span>`
+    : '';
+  return `
+    <div class="lineup-row">
+      <span class="lineup-position">${label}</span>
+      <span class="lineup-player-name">${playerName(player)}${captaincy} ${doubleGameweek}</span>
+      <span class="lineup-points">${(+player.predicted_points || 0).toFixed(1)} pts</span>
+    </div>
+  `;
 }
 
-function renderTransferCandidates() {
-  const outgoing = statePlayer(+document.getElementById('transfer-out').value);
-  if (!outgoing) return;
+function renderLineupSummary() {
+  const card = document.getElementById('next-lineup-card');
+  card.style.display = D.transfer_advice_ready ? '' : 'none';
+  if (!D.transfer_advice_ready) return;
+
+  const transferCount = (D.transfers || []).length;
+  document.getElementById('next-lineup-title').textContent =
+    `GW${D.game_week} Lineup`;
+  document.getElementById('next-lineup-note').textContent = transferCount
+    ? `Use this team after making the ${transferCount} recommended transfer${transferCount === 1 ? '' : 's'}.`
+    : 'No beneficial transfer is recommended, so use the current public squad.';
+  document.getElementById('lineup-formation').textContent = D.formation;
+  document.getElementById('lineup-projection').textContent =
+    `${(+D.total_predicted).toFixed(1)} pts`;
+
+  const positionOrder = {GK: 0, DEF: 1, MID: 2, FWD: 3};
+  const starters = [...D.players].sort((left, right) =>
+    positionOrder[left.element_type] - positionOrder[right.element_type]
+    || right.predicted_points - left.predicted_points
+  );
+  document.getElementById('lineup-starters').innerHTML = starters
+    .map(player => lineupRow(player, player.element_type))
+    .join('');
+
+  let outfieldPriority = 0;
+  document.getElementById('lineup-bench').innerHTML = D.bench
+    .map(player => {
+      const label = player.element_type === 'GK' ? 'GK' : `B${++outfieldPriority}`;
+      return lineupRow(player, label);
+    })
+    .join('');
+}
+
+function formatPrice(tenths) {
+  return `£${(+tenths / 10).toFixed(1)}M`;
+}
+
+function renderLocalTransferCandidates() {
+  const outgoingId = +document.getElementById('local-transfer-out').value;
+  const outgoing = squadState.players.find(player => +player.id === outgoingId);
+  const incomingSelect = document.getElementById('local-transfer-in');
+  if (!outgoing) {
+    incomingSelect.innerHTML = '';
+    return;
+  }
+
   const squadIds = new Set(squadState.players.map(player => +player.id));
-  const available = +squadState.bank + salePrice(outgoing);
   const clubCounts = squadState.players.reduce((counts, player) => {
-    if (+player.id !== +outgoing.id) counts[player.team] = (counts[player.team] || 0) + 1;
+    if (+player.id !== outgoingId) {
+      counts[+player.team] = (counts[+player.team] || 0) + 1;
+    }
     return counts;
   }, {});
-  const candidates = D.candidates
+  const available = +squadState.bank + +outgoing.selling_price;
+  const candidates = (D.candidates || [])
     .filter(player => player.position === outgoing.position)
-    .filter(player => !squadIds.has(+player.id) && +player.current_price <= available)
-    .filter(player => (clubCounts[player.team] || 0) < 3)
-    .sort((left, right) => right.predicted_points - left.predicted_points);
-  fillSelect(document.getElementById('transfer-in'), candidates, candidates[0]?.id,
-    player => `${playerName(player)} ${money(player.current_price)} · ${(+player.predicted_points).toFixed(1)}`);
+    .filter(player => !squadIds.has(+player.id))
+    .filter(player => +player.current_price <= available)
+    .filter(player => (clubCounts[+player.team] || 0) < 3)
+    .sort((left, right) =>
+      right.predicted_points - left.predicted_points
+      || left.current_price - right.current_price
+      || playerName(left).localeCompare(playerName(right))
+    );
+
+  incomingSelect.innerHTML = candidates
+    .map(player => `
+      <option value="${player.id}">
+        ${playerName(player)} · ${formatPrice(player.current_price)} ·
+        ${(+player.predicted_points).toFixed(1)} pts
+      </option>
+    `)
+    .join('');
+  document.getElementById('record-local-transfer').disabled = !candidates.length;
+  document.getElementById('local-transfer-status').textContent = candidates.length
+    ? ''
+    : `No legal ${outgoing.position} replacement fits the current bank and club limit.`;
 }
 
-function formationIsValid(starterIds) {
-  const counts = {GK: 0, DEF: 0, MID: 0, FWD: 0};
-  starterIds.map(statePlayer).forEach(player => counts[player.position]++);
-  return counts.GK === 1 && counts.DEF >= 3 && counts.MID >= 2 && counts.FWD >= 1;
+function renderLocalTransferControls() {
+  const officialEntry = squadState.official_entry;
+  const sourceGameweek = +(officialEntry?.squad_source_event || 0);
+  const publicDataDelayed = Boolean(
+    officialEntry && sourceGameweek && sourceGameweek < +D.game_week
+  );
+  const card = document.getElementById('local-transfer-card');
+  card.style.display = publicDataDelayed ? '' : 'none';
+  if (!publicDataDelayed) return;
+
+  document.getElementById('local-transfer-note').innerHTML =
+    `FPL still exposes only GW${sourceGameweek}. If you made a GW${D.game_week} ` +
+    '<strong>transfer</strong> in the portal, record it here so recommendations ' +
+    'and the lineup use the updated squad.';
+  const positionOrder = {GK: 0, DEF: 1, MID: 2, FWD: 3};
+  const players = [...squadState.players].sort((left, right) =>
+    positionOrder[left.position] - positionOrder[right.position]
+    || playerName(left).localeCompare(playerName(right))
+  );
+  document.getElementById('local-transfer-out').innerHTML = players
+    .map(player =>
+      `<option value="${player.id}">${player.position} · ${playerName(player)}</option>`
+    )
+    .join('');
+  renderLocalTransferCandidates();
 }
 
-document.getElementById('transfer-out').addEventListener('change', renderTransferCandidates);
-document.getElementById('apply-transfer').addEventListener('click', () => {
-  const outgoingId = +document.getElementById('transfer-out').value;
-  const incomingId = +document.getElementById('transfer-in').value;
-  const outgoing = statePlayer(outgoingId);
-  const candidate = D.candidates.find(player => +player.id === incomingId);
-  if (!outgoing || !candidate) return setManagerStatus('Choose a valid transfer.', 'error');
+async function recordLocalTransfer() {
+  const button = document.getElementById('record-local-transfer');
+  const status = document.getElementById('local-transfer-status');
+  const outgoingId = +document.getElementById('local-transfer-out').value;
+  const incomingId = +document.getElementById('local-transfer-in').value;
+  const outgoing = squadState.players.find(player => +player.id === outgoingId);
+  const candidate = (D.candidates || []).find(player => +player.id === incomingId);
+  if (!outgoing || !candidate) {
+    status.textContent = 'Choose a valid outgoing and incoming player.';
+    status.className = 'local-transfer-status error';
+    return;
+  }
 
-  const sale = salePrice(outgoing);
-  const next = {
+  button.disabled = true;
+  status.textContent = 'Updating the local squad…';
+  status.className = 'local-transfer-status';
+  const incoming = {
     ...candidate,
     purchase_price: candidate.current_price,
     selling_price: candidate.current_price,
     status: 'a',
     news: '',
   };
-  squadState.players = squadState.players.map(player => +player.id === outgoingId ? next : player);
-  squadState.bank = +squadState.bank + sale - +candidate.current_price;
+  const updated = structuredClone(squadState);
+  updated.players = updated.players.map(
+    player => +player.id === outgoingId ? incoming : player
+  );
+  updated.bank =
+    +updated.bank + +outgoing.selling_price - +candidate.current_price;
   ['starters', 'bench'].forEach(key => {
-    squadState.lineup[key] = squadState.lineup[key].map(id => +id === outgoingId ? incomingId : id);
+    updated.lineup[key] = updated.lineup[key].map(
+      playerId => +playerId === outgoingId ? incomingId : playerId
+    );
   });
-  if (+squadState.lineup.captain === outgoingId) squadState.lineup.captain = incomingId;
-  if (+squadState.lineup.vice_captain === outgoingId) squadState.lineup.vice_captain = incomingId;
-  squadState.transfers.push({
+  if (+updated.lineup.captain === outgoingId) updated.lineup.captain = incomingId;
+  if (+updated.lineup.vice_captain === outgoingId) {
+    updated.lineup.vice_captain = incomingId;
+  }
+  updated.transfers = [...(updated.transfers || []), {
     out: {id: outgoingId, name: playerName(outgoing)},
     in: {id: incomingId, name: playerName(candidate)},
     made_at: new Date().toISOString(),
-  });
-  squadState.transfer_points_cost = ['wildcard', 'free_hit'].includes(squadState.active_chip)
-    ? 0 : Math.max(0, squadState.transfers.length - squadState.free_transfers) * 4;
-  setDirty(`${playerName(outgoing)} → ${playerName(candidate)}`);
-});
+  }];
+  updated.transfer_points_cost = ['wildcard', 'free_hit'].includes(updated.active_chip)
+    ? 0
+    : Math.max(0, updated.transfers.length - +updated.free_transfers) * 4;
+  updated.source = 'manual_portal_transfer';
 
-document.getElementById('apply-swap').addEventListener('click', () => {
-  const starterId = +document.getElementById('starter-swap').value;
-  const benchId = +document.getElementById('bench-swap').value;
-  const nextStarters = squadState.lineup.starters.map(id => +id === starterId ? benchId : id);
-  if (!formationIsValid(nextStarters)) {
-    return setManagerStatus('That swap would create an illegal FPL formation.', 'error');
-  }
-  squadState.lineup.starters = nextStarters;
-  squadState.lineup.bench = squadState.lineup.bench.map(id => +id === benchId ? starterId : id);
-  if (+squadState.lineup.captain === starterId) squadState.lineup.captain = benchId;
-  if (+squadState.lineup.vice_captain === starterId) squadState.lineup.vice_captain = benchId;
-  setDirty('Starting XI updated.');
-});
-
-function moveBench(delta) {
-  const playerId = +document.getElementById('bench-priority').value;
-  const outfield = squadState.lineup.bench.filter(id => statePlayer(id).position !== 'GK');
-  const current = outfield.indexOf(playerId);
-  const target = current + delta;
-  if (current < 0 || target < 0 || target >= outfield.length) return;
-  [outfield[current], outfield[target]] = [outfield[target], outfield[current]];
-  const goalkeeper = squadState.lineup.bench.find(id => statePlayer(id).position === 'GK');
-  squadState.lineup.bench = [goalkeeper, ...outfield];
-  setDirty('Bench priority updated.');
-  document.getElementById('bench-priority').value = playerId;
-}
-document.getElementById('bench-up').addEventListener('click', () => moveBench(-1));
-document.getElementById('bench-down').addEventListener('click', () => moveBench(1));
-document.getElementById('captain-select').addEventListener('change', event => {
-  if (+event.target.value === +squadState.lineup.vice_captain) {
-    renderManager();
-    return setManagerStatus('Captain and vice-captain must be different.', 'error');
-  }
-  squadState.lineup.captain = +event.target.value;
-  setDirty('Captain updated.');
-});
-document.getElementById('vice-select').addEventListener('change', event => {
-  if (+event.target.value === +squadState.lineup.captain) {
-    renderManager();
-    return setManagerStatus('Captain and vice-captain must be different.', 'error');
-  }
-  squadState.lineup.vice_captain = +event.target.value;
-  setDirty('Vice-captain updated.');
-});
-document.getElementById('chip-select').addEventListener('change', event => {
-  squadState.active_chip = event.target.value || null;
-  squadState.transfer_points_cost = ['wildcard', 'free_hit'].includes(squadState.active_chip)
-    ? 0 : Math.max(0, squadState.transfers.length - squadState.free_transfers) * 4;
-  setDirty(squadState.active_chip ? 'Chip selected.' : 'Chip cleared.');
-});
-
-document.getElementById('save-squad').addEventListener('click', async () => {
-  const button = document.getElementById('save-squad');
-  button.disabled = true;
-  setManagerStatus('Saving…');
-  squadState.lineup.captain = +document.getElementById('captain-select').value;
-  squadState.lineup.vice_captain = +document.getElementById('vice-select').value;
   try {
-    const response = await fetch('/api/squad/commit', {
+    const response = await fetch('/api/squad/draft', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(squadState),
+      body: JSON.stringify(updated),
     });
     const result = await response.json();
-    if (!response.ok) throw new Error(result.error || 'Unable to save squad.');
-    squadState = result.state;
-    dirty = false;
-    document.getElementById('dirty-dot').style.display = 'none';
-    setManagerStatus(
-      `Saved locally as GW${squadState.game_week} revision ${squadState.revision}. Official FPL is unchanged.`,
-      'success'
+    if (!response.ok) throw new Error(result.error || 'Unable to update the local squad.');
+    sessionStorage.setItem(
+      'fpl-sync-message',
+      `Recorded ${playerName(outgoing)} → ${playerName(candidate)} locally. ` +
+      `FPL still publishes only through GW${squadState.official_entry.squad_source_event}.`
     );
-    renderManager();
+    window.location.assign(
+      `/generate-team?model=${encodeURIComponent(D.model_type)}`
+    );
   } catch (error) {
-    setManagerStatus(error.message, 'error');
-  } finally {
+    status.textContent = error.message;
+    status.className = 'local-transfer-status error';
     button.disabled = false;
   }
-});
+}
 
-document.getElementById('copy-fpl-plan').addEventListener('click', async () => {
-  const byId = new Map(squadState.players.map(player => [+player.id, player]));
-  const formatPlayer = playerId => {
-    const player = byId.get(+playerId);
-    return `${player.position}: ${playerName(player)}`;
-  };
-  const starters = squadState.lineup.starters.map(formatPlayer);
-  const bench = squadState.lineup.bench.map(formatPlayer);
-  const captain = playerName(byId.get(+squadState.lineup.captain));
-  const viceCaptain = playerName(byId.get(+squadState.lineup.vice_captain));
-  const plan = [
-    `FPL GW${squadState.game_week} plan`,
-    '',
-    'Starting XI',
-    ...starters,
-    '',
-    'Bench order',
-    ...bench,
-    '',
-    `Captain: ${captain}`,
-    `Vice-captain: ${viceCaptain}`,
-    `Chip: ${squadState.active_chip || 'None'}`,
-  ].join('\n');
-  try {
-    await navigator.clipboard.writeText(plan);
-    setManagerStatus('FPL plan copied. Official FPL is unchanged.', 'success');
-  } catch (error) {
-    setManagerStatus('Unable to copy the plan from this browser.', 'error');
+function renderReplacementFinder() {
+  const replacements = D.replacement_options || [];
+  const card = document.getElementById('replacement-card');
+  card.style.display = D.transfer_advice_ready && replacements.length ? '' : 'none';
+  if (!D.transfer_advice_ready || !replacements.length) return;
+
+  document.getElementById('replacement-player').innerHTML = replacements
+    .map(player =>
+      `<option value="${player.out_id}">${player.out_pos} · ${player.out_name}</option>`
+    )
+    .join('');
+}
+
+function renderReplacementResults() {
+  const playerId = +document.getElementById('replacement-player').value;
+  const selected = (D.replacement_options || [])
+    .find(player => +player.out_id === playerId);
+  const results = document.getElementById('replacement-results');
+  if (!selected) {
+    results.innerHTML = '';
+    return;
   }
-});
+  if (!selected.options.length) {
+    results.innerHTML = `
+      <div class="transfer-empty">
+        <strong>No legal replacement found</strong>
+        No available ${selected.out_pos} fits the budget and club constraints.
+      </div>
+    `;
+    return;
+  }
 
-const freeTransfersSelect = document.getElementById('fpl-free-transfers');
-freeTransfersSelect.addEventListener('change', event => {
-  const selected = event.target.value;
-  setManagerStatus(
-    selected
-      ? `${selected} free transfer${selected === '1' ? '' : 's'} selected for the next public-picks import.`
-      : 'Free transfers will be estimated on the next public-picks import.'
-  );
+  results.innerHTML = `
+    <div class="replacement-for">
+      Replacing <strong>${selected.out_name}</strong> ·
+      ${formatPrice(selected.out_val)} · ${(+selected.out_pts).toFixed(1)} projected pts
+    </div>
+    ${selected.options.map(option => {
+      const gain = +option.gain;
+      const gainLabel = `${gain >= 0 ? '+' : ''}${gain.toFixed(1)} pts`;
+      const fixtureCount = +option.in_fixtures;
+      return `
+        <div class="replacement-option">
+          <span class="replacement-rank">${option.rank}</span>
+          <div>
+            <div class="replacement-name">${option.in_name}</div>
+            <div class="replacement-meta">
+              ${option.in_pos} · ${formatPrice(option.in_val)} ·
+              ${(+option.in_pts).toFixed(1)} projected pts ·
+              ${fixtureCount} fixture${fixtureCount === 1 ? '' : 's'}
+            </div>
+          </div>
+          <div class="replacement-impact">
+            <span class="replacement-gain ${gain >= 0 ? 'positive' : 'negative'}">
+              ${gainLabel}
+            </span>
+            <span class="replacement-bank">${formatPrice(option.bank_after)} bank</span>
+          </div>
+        </div>
+      `;
+    }).join('')}
+  `;
+}
+
+function renderPageState() {
+  document.getElementById('free-transfer-value').textContent = D.transfer_allowance;
+  const importSummary = document.getElementById('import-summary');
+  const officialEntry = squadState.official_entry;
+  importSummary.style.display = officialEntry ? 'block' : 'none';
+  if (officialEntry) {
+    document.getElementById('import-source-gw').textContent =
+      `GW${officialEntry.squad_source_event ?? '?'}`;
+    document.getElementById('import-transfer-count').textContent =
+      `${D.transfer_allowance} estimated free transfer` +
+      `${D.transfer_allowance === 1 ? '' : 's'} remaining`;
+    const sourceGameweek = +officialEntry.squad_source_event;
+    document.getElementById('public-delay-note').textContent =
+      sourceGameweek < +D.game_week
+        ? `GW${D.game_week} portal changes remain private until the deadline.`
+        : '';
+  }
+  renderOfficialSquad();
+  renderLocalTransferControls();
+  renderReplacementFinder();
+  renderLineupSummary();
+}
+
+document.getElementById('find-replacements').addEventListener(
+  'click',
+  renderReplacementResults,
+);
+document.getElementById('replacement-player').addEventListener('change', () => {
+  document.getElementById('replacement-results').innerHTML = '';
 });
+document.getElementById('local-transfer-out').addEventListener(
+  'change',
+  renderLocalTransferCandidates,
+);
+document.getElementById('record-local-transfer').addEventListener(
+  'click',
+  recordLocalTransfer,
+);
 
 document.getElementById('sync-fpl-entry').addEventListener('click', async event => {
   const button = event.currentTarget;
   const entryId = document.getElementById('fpl-entry-id').value.trim();
-  const freeTransfers = freeTransfersSelect.value;
-  const accessTokenInput = document.getElementById('fpl-access-token');
-  const accessToken = accessTokenInput.value.trim();
   if (!/^\d+$/.test(entryId)) {
     return setManagerStatus('Enter the numeric public FPL entry ID.', 'error');
   }
   localStorage.setItem('fpl-public-entry-id', entryId);
-  accessTokenInput.value = '';
   button.disabled = true;
-  setManagerStatus(
-    accessToken
-      ? 'Importing current private squad…'
-      : 'Synchronizing completed public Gameweeks…'
-  );
+  setManagerStatus('Importing public squad and generating recommendations…');
   try {
     const response = await fetch('/api/fpl-entry/sync', {
       method: 'POST',
@@ -1328,22 +1580,14 @@ document.getElementById('sync-fpl-entry').addEventListener('click', async event 
       body: JSON.stringify({
         entry_id: Number(entryId),
         model: D.model_type,
-        free_transfers: freeTransfers ? Number(freeTransfers) : null,
-        access_token: accessToken || null,
       }),
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Unable to synchronize entry.');
-    squadState = result.state;
-    dirty = false;
-    document.getElementById('dirty-dot').style.display = 'none';
-    freeTransfersSelect.value =
-      squadState.official_entry?.free_transfers_estimated
-        ? ''
-        : String(squadState.free_transfers);
-    renderManager();
-    renderSquad();
-    setManagerStatus(result.message, 'success');
+    sessionStorage.setItem('fpl-sync-message', result.message);
+    window.location.assign(
+      `/generate-team?model=${encodeURIComponent(D.model_type)}`
+    );
   } catch (error) {
     setManagerStatus(error.message, 'error');
   } finally {
@@ -1356,9 +1600,6 @@ const syncedEntryId = squadState.official_entry?.entry_id;
 const initialEntryId = syncedEntryId || savedEntryId;
 if (initialEntryId && /^\d+$/.test(String(initialEntryId))) {
   document.getElementById('fpl-entry-id').value = String(initialEntryId);
-}
-if (squadState.official_entry && !squadState.official_entry?.free_transfers_estimated) {
-  freeTransfersSelect.value = String(squadState.free_transfers);
 }
 
 // ── squad mode badge ───────────────────────────────────────────────────────
@@ -1464,15 +1705,11 @@ const layer = document.getElementById('players-layer');
 const benchEl = document.getElementById('bench-strip');
 const displayPlayers = new Map([...D.players, ...D.bench].map(player => [+player.id, player]));
 
-function displayPlayer(playerId) {
-  const state = statePlayer(playerId);
-  const enriched = displayPlayers.get(+playerId) || {};
+function displayRecommendedPlayer(player) {
   return {
-    ...enriched,
-    ...state,
-    element_type: state.position,
-    value: state.current_price,
-    color: POS_COLOR[state.position] || '#aaa',
+    ...player,
+    position: player.element_type,
+    color: POS_COLOR[player.element_type] || '#aaa',
   };
 }
 
@@ -1546,12 +1783,7 @@ function renderBenchPlayers(benchElement, players, roleLabel) {
 }
 
 function renderSquad() {
-  const lineup = squadState.lineup;
-  const starters = lineup.starters.map(playerId => ({
-    ...displayPlayer(playerId),
-    is_captain: +playerId === +lineup.captain,
-    is_vice_captain: +playerId === +lineup.vice_captain,
-  }));
+  const starters = D.players.map(displayRecommendedPlayer);
   renderPitchPlayers(
     layer,
     starters,
@@ -1559,13 +1791,18 @@ function renderSquad() {
   );
   renderBenchPlayers(
     benchEl,
-    lineup.bench.map(displayPlayer),
+    D.bench.map(displayRecommendedPlayer),
     (player, index) => index ? `${index}.` : 'GK',
   );
 }
 
-renderManager();
+renderPageState();
 renderSquad();
+const syncMessage = sessionStorage.getItem('fpl-sync-message');
+if (syncMessage) {
+  sessionStorage.removeItem('fpl-sync-message');
+  setManagerStatus(syncMessage, 'success');
+}
 
 // ── excluded players panel ────────────────────────────────────────────────
 
@@ -1592,39 +1829,65 @@ if (D.excluded && D.excluded.length) {
   });
 }
 
-// ── transfer suggestion ───────────────────────────────────────────────────
+// ── transfer recommendations ─────────────────────────────────────────────
 
-document.getElementById('gw-label').textContent = D.game_week;
 const transferCard = document.getElementById('transfer-card');
 const transferBody = document.getElementById('transfer-body');
-if (D.transfer) {
-  const t = D.transfer;
-  const gainStr = (t.gain >= 0 ? '+' : '') + t.gain.toFixed(2);
+if (D.transfer_advice_ready) {
+  const recommendations = D.transfers || [];
+  const totalGain = recommendations.reduce((total, item) => total + Number(item.gain), 0);
+  document.getElementById('transfer-title').textContent =
+    `Transfer Recommendations · GW ${D.game_week}`;
   transferCard.style.display = '';
-  transferBody.innerHTML = `
-    <div style="margin-bottom:0.5rem">
-      <div style="font-size:0.62rem;color:var(--muted);margin-bottom:0.15rem">OUT</div>
-      <div class="transfer-out">${t.out_name}
-        <span class="transfer-sub">${t.out_pos} · £${(t.out_val/10).toFixed(1)}M ·
-          ${(+t.out_pts).toFixed(2)} pts</span>
+  if (recommendations.length) {
+    const unusedTransfers = Math.max(0, D.transfer_allowance - recommendations.length);
+    transferBody.innerHTML = `
+      <div class="transfer-plan-summary">
+        <strong>${D.transfer_allowance} estimated free transfer${D.transfer_allowance === 1 ? '' : 's'}</strong><br>
+        ${recommendations.length} beneficial move${recommendations.length === 1 ? '' : 's'} found ·
+        +${totalGain.toFixed(2)} combined projected points
+        ${unusedTransfers ? `<br>Bank ${unusedTransfers} unused free transfer${unusedTransfers === 1 ? '' : 's'}.` : ''}
       </div>
-    </div>
-    <div class="transfer-arrow">↕</div>
-    <div style="margin-top:0.5rem;margin-bottom:0.75rem">
-      <div style="font-size:0.62rem;color:var(--muted);margin-bottom:0.15rem">IN</div>
-      <div class="transfer-in">${t.in_name}
-        <span class="transfer-sub">${t.in_pos} · £${(t.in_val/10).toFixed(1)}M ·
-          ${(+t.in_pts).toFixed(2)} pts</span>
-      </div>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;
-                border-top:1px solid var(--border);padding-top:0.5rem">
-      <span class="transfer-gain">${gainStr} pts</span>
-      <span style="font-size:0.65rem;color:var(--muted)">
-        Bank after: £${(t.bank_after/10).toFixed(1)}M
-      </span>
-    </div>
-  `;
+      ${recommendations.map(t => `
+        <div class="transfer-step">
+          <div class="transfer-step-number">Transfer ${t.number}</div>
+          <div class="transfer-action transfer-out">
+            <span class="transfer-action-label">SELL</span>
+            <strong>${t.out_name}</strong>
+            <span class="transfer-sub">${t.out_pos} · £${(t.out_val/10).toFixed(1)}M ·
+              ${(+t.out_pts).toFixed(2)} projected pts ·
+              ${t.out_fixtures} fixture${t.out_fixtures === 1 ? '' : 's'}</span>
+          </div>
+          <div class="transfer-arrow">then</div>
+          <div class="transfer-action transfer-in">
+            <span class="transfer-action-label">BUY</span>
+            <strong>${t.in_name}</strong>
+            <span class="transfer-sub">${t.in_pos} · £${(t.in_val/10).toFixed(1)}M ·
+              ${(+t.in_pts).toFixed(2)} projected pts ·
+              ${t.in_fixtures} fixture${t.in_fixtures === 1 ? '' : 's'}</span>
+          </div>
+          <div class="transfer-step-impact">
+            <strong>+${(+t.gain).toFixed(2)} projected pts</strong>
+            <span>£${(t.bank_after/10).toFixed(1)}M bank after</span>
+          </div>
+        </div>
+      `).join('')}
+    `;
+  } else {
+    transferBody.innerHTML = D.transfer_allowance === 0
+      ? `
+        <div class="transfer-empty">
+          <strong>No estimated free transfers remaining</strong>
+          The locally recorded portal transfers already use the estimated allowance.
+        </div>
+      `
+      : `
+        <div class="transfer-empty">
+          <strong>Keep your current public squad</strong>
+          The model found no beneficial legal transfer. Bank the estimated free transfer.
+        </div>
+      `;
+  }
 }
 
 // ── squad health / ineligible replacements ────────────────────────────────

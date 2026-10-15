@@ -13,7 +13,7 @@ The engineering vocabulary for deployment decisions: parameter counting, VRAM bu
   - Mixture of Experts: routing and active-parameter economics
   - Grouped Query Attention (GQA): memory bandwidth optimization
 
-> **From-scratch companion:** [`learning/genai/01-transformers/04b-decoder-only-language-model-lab.ipynb`](../../../learning/genai/01-transformers/04b-decoder-only-language-model-lab.ipynb) — it makes causal masks, aligned targets, token loss, and generation executable before this chapter examines larger model internals.
+> **From-scratch companion:** [`learning/04-transformers/04b-decoder-only-language-model-lab.ipynb`](../../../learning/04-transformers/04b-decoder-only-language-model-lab.ipynb) — it makes causal masks, aligned targets, token loss, and generation executable before this chapter examines larger model internals.
 
 ## Learning Objectives
 

@@ -54,6 +54,45 @@ class ModelRegistryTests(unittest.TestCase):
             result = score_checkpoint_snapshot(pd.DataFrame(), checkpoint, 2)
         self.assertEqual(result['predicted_points'].tolist(), [3.5, 5.5])
 
+    def test_snapshot_sums_double_gameweek_fixture_predictions(self):
+        class FixtureModel:
+            @staticmethod
+            def predict(rows):
+                return rows['fixture_score'].to_numpy()
+
+        rows = pd.DataFrame({
+            'id': [1, 1, 2, 3],
+            'element_type': ['MID'] * 4,
+            'Game_Week': [2] * 4,
+            'fixture_score': [3.0, 4.0, 5.0, 9.0],
+            'opponent_team': [2, 3, 4, 0],
+            'kickoff_time': [
+                '2026-12-26T12:00:00Z',
+                '2026-12-29T19:30:00Z',
+                '2026-12-27T14:00:00Z',
+                '2026-12-27T14:00:00Z',
+            ],
+            'tm_market_value': [None] * 4,
+        })
+        checkpoint = {
+            'model_type': 'xgboost',
+            'models': {'MID': FixtureModel()},
+            'pos_features': {'MID': ['fixture_score']},
+            'training_manifest': {
+                'completed_internal_index': 1,
+                'max_training_internal_index': 1,
+            },
+        }
+
+        result = score_checkpoint_snapshot(rows, checkpoint, 2).set_index('id')
+
+        self.assertEqual(result.loc[1, 'fixture_count'], 2)
+        self.assertEqual(result.loc[1, 'predicted_points'], 7.0)
+        self.assertEqual(result.loc[2, 'fixture_count'], 1)
+        self.assertEqual(result.loc[2, 'predicted_points'], 5.0)
+        self.assertEqual(result.loc[3, 'fixture_count'], 0)
+        self.assertEqual(result.loc[3, 'predicted_points'], 0.0)
+
     def test_manifest_stops_at_completed_cutoff(self):
         rows = pd.DataFrame({
             'Game_Week': [0, 1, 2],

@@ -38,7 +38,7 @@ Editing client -> APIM -> FastAPI RAG host -> Databricks AI Search
 
 Conceptual and data-plane owners:
 
-- [Azure operational serving tutorial](../../learning/ai-infrastructure/09-azure-operational-llm-serving/README.md)
+- [Azure operational serving tutorial](../../learning/11-ai-infrastructure/10-azure-operational-llm-serving/README.md)
 - [Databricks RAG knowledge pipeline](../rag-knowledge-pipeline/README.md)
 - [Frozen v1 contracts](contracts/README.md)
 - [Architecture and evidence boundary](docs/architecture.md)

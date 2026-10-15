@@ -15,6 +15,20 @@ Each project has a concrete problem statement with measurable success criteria, 
 
 ---
 
+## [Riverside House Corpus](riverside-house-corpus/)
+
+**Can one repository-authored, copyright-safe fiction corpus support reproducible Transformer,
+pretraining, fine-tuning, retrieval, and evaluation labs without hidden external data?**
+
+Eight original novels spanning science fiction, fantasy, mystery, historical fiction, cyberpunk,
+horror, literary fiction, and noir-historical detective fiction. The project is the canonical
+source for learning-stage data fixtures; chapters may derive bounded artifacts but should not keep
+private manuscript copies.
+
+`Teaching Data` `Provenance` `LLM Training` `RAG` `Evaluation`
+
+---
+
 ## [FPL Squad Optimizer](fpl-squad-optimizer/)
 
 **Can a CPU-only ML model trained on community data assemble an FPL squad that performs in the range of an experienced human manager?**
@@ -45,7 +59,7 @@ The original local path remains the project baseline. Remote Azure Databricks in
 record contracts, job bundles, quality reports, and Direct Vector Access indexing source now also
 exist. The local suite passed 55 tests with 2 expected missing-Delta skips. Workspace RBAC, managed identity, Unity Catalog, Delta merge, vector filtering,
 deletion, performance, and cost behavior are **live-unvalidated**. Learn the concepts in
-[RAG](../learning/genai/03-rag/README.md) and [FDE Data Onboarding](../learning/role-based-tracks/fde/03-data-onboarding-and-contracts/README.md),
+[RAG](../learning/07-rag/README.md) and [FDE Data Onboarding](../learning/12-role-based-tracks/fde/03-data-onboarding-and-contracts/README.md),
 then use the [Databricks operations guide](rag-knowledge-pipeline/databricks/indexing/OPERATIONS.md).
 
 `PySpark` `Delta Lake` `ChromaDB` `FastAPI` `sentence-transformers` `Docker`
@@ -65,9 +79,9 @@ and the offline preflight passed 9 tests. No cloud test or live Azure/Databricks
 deployment, RBAC, networking, quota, service behavior, SLOs, rollback, cost, and production readiness
 are **live-unvalidated**.
 
-Conceptual prerequisites: [AI Engineer route](../learning/role-based-tracks/ai-engineer/README.md),
-[FDE route](../learning/role-based-tracks/fde/README.md), and
-[Azure Operational LLM Serving](../learning/ai-infrastructure/09-azure-operational-llm-serving/README.md).
+Conceptual prerequisites: [AI Engineer route](../learning/12-role-based-tracks/ai-engineer/README.md),
+[FDE route](../learning/12-role-based-tracks/fde/README.md), and
+[Azure Operational LLM Serving](../learning/11-ai-infrastructure/10-azure-operational-llm-serving/README.md).
 The [Riverside project README](riverside-ai-platform/README.md) is the project entry point, with the
 [documentation index](riverside-ai-platform/docs/README.md) as the operational reference.
 

@@ -253,6 +253,8 @@ def list_versions(
 def _player_record(row: dict[str, Any]) -> dict[str, Any]:
     current_price = int(row.get('value', row.get('current_price', 0)))
     purchase_price = int(row.get('purchase_price', current_price))
+    fixture_count = row.get('fixture_count', 1)
+    fixture_count = 1 if pd.isna(fixture_count) else int(fixture_count)
     return {
         'id': int(row['id']),
         'first_name': str(row.get('first_name', '')),
@@ -263,6 +265,7 @@ def _player_record(row: dict[str, Any]) -> dict[str, Any]:
         'current_price': current_price,
         'selling_price': selling_price(purchase_price, current_price),
         'predicted_points': round(float(row.get('predicted_points', 0)), 4),
+        'fixture_count': fixture_count,
         'status': str(row.get('elig_status', row.get('status', 'a'))),
         'news': str(row.get('news', '') or ''),
     }
@@ -558,6 +561,10 @@ def refresh_player_data(
                 player['purchase_price'], player['current_price']
             )
             player['predicted_points'] = round(float(current.get('predicted_points', 0)), 4)
+            fixture_count = current.get('fixture_count', 1)
+            player['fixture_count'] = (
+                1 if pd.isna(fixture_count) else int(fixture_count)
+            )
             key = (
                 str(current.get('first_name', '')).lower(),
                 str(current.get('second_name', '')).lower(),

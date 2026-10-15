@@ -44,18 +44,18 @@ reported as cloud validation or production readiness.
 
 The learning tracks own the concepts and local failure-first experiments:
 
-- [`../../../learning/genai/02-llm-finetuning/`](../../../learning/genai/02-llm-finetuning/)
+- [`../../../learning/06-llm-finetuning/`](../../../learning/06-llm-finetuning/)
   owns adaptation objectives and held-out evidence.
-- [`../../../learning/genai/03-rag/`](../../../learning/genai/03-rag/) owns retrieval,
+- [`../../../learning/07-rag/`](../../../learning/07-rag/) owns retrieval,
   citation, refusal, and authorization evaluation concepts.
-- [`../../../learning/genai/04-llm-evaluation/`](../../../learning/genai/04-llm-evaluation/)
+- [`../../../learning/08-llm-evaluation/`](../../../learning/08-llm-evaluation/)
   owns evaluator design and uncertainty.
-- [`../../../learning/genai/05-llm-gateway/`](../../../learning/genai/05-llm-gateway/)
+- [`../../../learning/09-llm-gateway/`](../../../learning/09-llm-gateway/)
   owns normalization, routing, resilience, caching, cost control, and observability
   concepts through deterministic simulations.
-- [`../../../learning/ai-infrastructure/`](../../../learning/ai-infrastructure/)
+- [`../../../learning/11-ai-infrastructure/`](../../../learning/11-ai-infrastructure/)
   owns model memory, quantization, and inference systems. Its
-  [`09-azure-operational-llm-serving/`](../../../learning/ai-infrastructure/09-azure-operational-llm-serving/)
+  [`10-azure-operational-llm-serving/`](../../../learning/11-ai-infrastructure/10-azure-operational-llm-serving/)
   bridge owns the local, substituted operational experiment and labels Azure
   behavior unvalidated.
 

@@ -629,7 +629,7 @@ The skip connection's value is clearest when you actually *run* the comparison. 
 
 **Exercise 2 — Break the highway intentionally.** In the `TransformerBlock` code in the transformers notebook, remove the `x + mha_out` residual and replace it with `mha_out` alone. Re-run the 24-layer gradient race cell. Does training still converge? Why does the same failure mode appear here that appeared in plain CNNs?
 
-**Exercise 3 — The transformer bridge.** Open `learning/genai/01-transformers/03-transformer-block.ipynb` and find the residual-gradient comparison. Change the block so the attention update replaces `x` instead of being added to it, then rerun the gradient measurement. What happens to the input gradient, and why does that predict training instability?
+**Exercise 3 — The transformer bridge.** Open `learning/04-transformers/03-complete-transformer-block.ipynb` and find the residual-gradient comparison. Change the block so the attention update replaces `x` instead of being added to it, then rerun the gradient measurement. What happens to the input gradient, and why does that predict training instability?
 
 > **Predict before each run, then check.** The goal isn't to finish the exercises — it's to commit to a prediction first. Being wrong is more educational than being right.
 

@@ -1,13 +1,13 @@
 # Authoring Guide — AI Portfolio
 
 > This is the living standard for all authored content under `notes/` and `learning/`.
-> It supersedes both [`learning/genai/authoring-guide.md`](learning/genai/authoring-guide.md) and [`notes/authoring-guidelines.md`](notes/authoring-guidelines.md).
+> It supersedes both the archived [`genai-authoring-guide.md`](archive/learning-migrations/genai-authoring-guide.md) and [`notes/authoring-guidelines.md`](notes/authoring-guidelines.md).
 > Those documents remain as historical reference; this document is the single source of truth going forward.
 >
 > **Gold standards:**
-> - Mechanistic depth — [`learning/genai/01-transformers/02-attention-and-position.ipynb`](learning/genai/01-transformers/02-attention-and-position.ipynb)
-> - Narrative/business framing — [`learning/genai/02-llm-finetuning/01-llm-finetuning-data-techniques.ipynb`](learning/genai/02-llm-finetuning/01-llm-finetuning-data-techniques.ipynb)
-> - Notes chapter — [`notes/03-ai/ch01-transformer-architecture/transformer-architecture.md`](notes/03-ai/ch01-transformer-architecture/transformer-architecture.md)
+> - Mechanistic depth — [`learning/04-transformers/02-attention-and-position.ipynb`](learning/04-transformers/02-attention-and-position.ipynb)
+> - Narrative/business framing — [`learning/06-llm-finetuning/01-llm-finetuning-data-techniques.ipynb`](learning/06-llm-finetuning/01-llm-finetuning-data-techniques.ipynb)
+> - Notes chapter — [`notes/03-llm/ch01-transformer-architecture/README.md`](notes/03-llm/ch01-transformer-architecture/README.md)
 
 ---
 
@@ -242,7 +242,7 @@ The gloss goes in the same cell, within three lines of the LaTeX block. Never le
 Full derivations that break the narrative flow for practitioners:
 ```markdown
 > **Optional depth:** [derivation]
-> See [MathUnderTheHood ch06](../00-math-under-the-hood/ch06) for the rigorous treatment.
+> See [Stage 01 math foundations](learning/01-ml-foundations/01-math-foundations/math-foundations-for-ml.ipynb) for the rigorous treatment.
 ```
 
 **Rule 6: ASCII matrix diagrams for matrix operations.** Aligned brackets, dimension annotations, actual numbers where possible:
@@ -367,8 +367,8 @@ Every new concept links to where it was first introduced and where it will matte
 **Forward link pattern:**
 > "This validation pattern is the template for the PSI/KS drift tests you'll implement in data-prep.py exercises #11–12."
 
-Cross-track links to MathUnderTheHood reference the specific chapter:
-`[MathUnderTheHood ch06 — Gradient & Chain Rule](../00-math-under-the-hood/ch06)`
+Cross-stage links reference the specific canonical chapter:
+`[Stage 01 math foundations](learning/01-ml-foundations/01-math-foundations/math-foundations-for-ml.ipynb)`
 
 ---
 
@@ -512,7 +512,7 @@ When authoring or revising a chapter:
 
 ## 16 · Best-Practice Patterns from Gold Standards
 
-These patterns were extracted from `learning/genai/01-transformers/02-attention-and-position.ipynb` and `learning/genai/02-llm-finetuning/01-llm-finetuning-data-techniques.ipynb`, the two gold-standard chapters. They are not optional decoration — they are the techniques that make those chapters work.
+These patterns were extracted from `learning/04-transformers/02-attention-and-position.ipynb` and `learning/06-llm-finetuning/01-llm-finetuning-data-techniques.ipynb`, the two gold-standard chapters. They are not optional decoration — they are the techniques that make those chapters work.
 
 ### 16.1 The "Complaint Chain" Discovery Build
 
@@ -594,7 +594,7 @@ Before writing a single line of code, every chapter that covers a topic area wit
 | BM25 (lexical) retrieval | Built | The failure that motivates hybrid |
 | Reciprocal Rank Fusion | Built | The actual hybrid combination step |
 | Query expansion | Explained | Requires LLM call; out of scope for this chapter |
-| HNSW approximate indexing | Named only | Requires a vector-DB backend; see 07-ai-infrastructure |
+| HNSW approximate indexing | Named only | Requires a vector-DB backend; see Stage 11 AI Infrastructure |
 ```
 
 This prevents silent gaps: the reader always knows whether a technique was deliberately skipped or accidentally omitted. The table is placed in a `## 0 · Scope` or `## 0 · What We're Building` section, before § 0.
@@ -709,7 +709,7 @@ Parameter-efficient techniques (partial freeze, LoRA, QLoRA) that hit the same a
 
 ## 18 · Primer and Bridge Chapter Conventions
 
-A **primer chapter** teaches prerequisite tooling for a track without yet having a production system to attach it to (e.g., `pytorch-for-llms/00-deep-learning-map`). A **bridge chapter** connects one architecture to the next in a conceptual arc (e.g., `pytorch-for-llms/05-sequence-memory` bridges recurrent memory to attention-ready tensor contracts).
+A **primer chapter** teaches prerequisite tooling for a track without yet having a production system to attach it to (e.g., `learning/02-pytorch-foundations/01-deep-learning-map`). A **bridge chapter** connects one architecture to the next in a conceptual arc (e.g., `learning/03-language-model-foundations/01-sequence-memory` bridges recurrent memory to attention-ready tensor contracts).
 
 These chapters are exempt from the Grand Challenge requirement but must satisfy a narrower version:
 
@@ -730,8 +730,8 @@ All primer and bridge chapters must close with a three-tier coverage table (§ 1
 
 ```markdown
 **Out of scope in this chapter (and where to find them):**
-- Custom `Dataset` subclass — `pytorch-for-llms/05-sequence-memory/` uses this pattern directly
-- `torch.onnx` export — `07-ai-infrastructure/` deployment section
+- Custom `Dataset` subclass — `learning/03-language-model-foundations/01-sequence-memory/` uses this pattern directly
+- `torch.onnx` export — `learning/11-ai-infrastructure/` deployment section
 - Weight initialisation defaults — `notes/00-math-under-the-hood/ch09`
 ```
 
@@ -743,8 +743,8 @@ The final substantive section of any primer or bridge chapter must be a **forwar
 **Forward: what you just built will be used immediately.**
 
 The manual training loop — `zero_grad → forward → backward → step` — is the loop you'll
-unroll into time steps in `pytorch-for-llms/05-sequence-memory/`. The `nn.Module` subclass pattern is the class
+unroll into time steps in `learning/03-language-model-foundations/01-sequence-memory/`. The `nn.Module` subclass pattern is the class
 `LSTMCell` will use. The `state_dict` save pattern is the checkpoint the RNN trainer will write.
 
-> **Next:** `pytorch-for-llms/05-sequence-memory/05B-sequence-memory-pytorch-lab.ipynb`
+> **Next:** `learning/03-language-model-foundations/01-sequence-memory/01B-sequence-memory-pytorch-lab.ipynb`
 ```

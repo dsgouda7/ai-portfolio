@@ -84,14 +84,13 @@ Standalone, production-grade applications demonstrating end-to-end engineering s
 
 In-depth technical tracks: runnable notebooks and architecture reference docs.
 
-| Track or route | What is this? | When should I use it? | Where do I start? |
+| Stage or route | What is this? | When should I use it? | Where do I start? |
 |---|---|---|---|
-| GenAI | A progressive path from PyTorch and sequence models through Transformers, fine-tuning, RAG, evaluation, and gateways. | You want to understand and build modern language-model systems. | [GenAI track](learning/genai/README.md) |
-| Agentic AI | Ten offline-first notebooks that build OrderFlow from tool contracts through planning, workflows, governance, interoperability, coordination, and recovery. | You want hands-on practice building bounded tool-using agents. | [Agentic AI track](learning/agentic-ai/README.md) |
-| Agentic AI System Design | A Staff/Principal-level architecture reference covering the complete agent platform. | You want design-review or interview depth rather than another notebook sequence. | [System-design track](learning/agentic-ai-system-design/system-design.md) |
-| AI Engineer | A role route joining model behavior, data, evaluation, serving, releases, and feedback. | You want to practice operating an AI application as one production loop. | [AI Engineer route](learning/role-based-tracks/ai-engineer/README.md) |
-| Forward Deployed Engineer | A customer-lifecycle route from discovery and architecture translation through rollout, incidents, and handoff. | You want to practice turning an ambiguous customer workflow into bounded delivery decisions. | [FDE route](learning/role-based-tracks/fde/README.md) |
-| Azure Operational LLM Serving | A failure-first bridge from fine-tuned artifacts and gateway concepts to serving mechanics. | You want to connect model and infrastructure concepts to an Azure-shaped local lab. | [Serving tutorial](learning/ai-infrastructure/09-azure-operational-llm-serving/README.md) |
+| Stages 01–09 | One numbered route from ML and PyTorch foundations through Transformers, training, fine-tuning, RAG, evaluation, and gateways. | You want to understand and build modern language-model systems from first principles. | [Zero-to-hero route](learning/README.md) |
+| Stage 10 — Agentic AI | Ten offline-first notebooks that build OrderFlow from tool contracts through planning, workflows, governance, interoperability, coordination, and recovery. | You want hands-on practice building bounded tool-using agents. | [Agentic AI](learning/10-agentic-ai/README.md) |
+| Agentic AI System Design | A Staff/Principal-level architecture reference inside Stage 10. | You want design-review or interview depth rather than another notebook sequence. | [System-design reference](learning/10-agentic-ai/system-design/system-design.md) |
+| Stage 11 — AI Infrastructure | Hardware, profiling, distributed training, quantization, inference systems, kernels, and operational serving. | You want to understand and operate the systems beneath model and agent applications. | [AI Infrastructure](learning/11-ai-infrastructure/README.md) |
+| Stage 12 — Role-Based Tracks | AI Engineer and Forward Deployed Engineer synthesis routes. | You want to practice joining the technical stages into role-shaped decisions and evidence. | [Role-Based Tracks](learning/12-role-based-tracks/README.md) |
 
 → See [learning/README.md](learning/README.md) for full chapter listings and prerequisites.
 
@@ -476,4 +475,3 @@ This curriculum is intentionally scoped to **software engineers becoming AI/ML p
 To request coverage for a gap, open a GitHub Issue describing your use case. See [CONTRIBUTING.md](CONTRIBUTING.md) if you'd like to contribute a draft chapter.
 
 ---
-

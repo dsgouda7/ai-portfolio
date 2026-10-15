@@ -22,6 +22,7 @@ if (-not (Test-Path $datasetPath)) {
 
 Write-Host ""
 Write-Host "Setup complete. Activate with: .venv\Scripts\Activate.ps1"
+Write-Host "Launch web app : .\start.ps1"
 Write-Host "Train models  : python train\train.py"
 Write-Host "Pitch UI      : python fpl-generator\web.py"
 Write-Host "CLI team pick : python fpl-generator\team_generator.py"

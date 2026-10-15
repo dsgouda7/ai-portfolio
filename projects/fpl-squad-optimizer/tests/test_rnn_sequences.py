@@ -89,6 +89,36 @@ class RnnSequenceTests(unittest.TestCase):
         self.assertEqual(sequences.shape, (3, 3, 2))
         self.assertEqual(lengths.tolist(), [1, 2, 3])
 
+    def test_inference_scores_each_double_gameweek_fixture(self):
+        rows = pd.DataFrame([
+            {
+                'id': 9,
+                'element_type': 'FWD',
+                'Game_Week': game_week,
+                'target': target,
+                'value': value,
+                'kickoff_time': kickoff,
+            }
+            for game_week, target, value, kickoff in [
+                (0, 2.0, 50.0, '2026-12-20T12:00:00Z'),
+                (1, 0.0, 51.0, '2026-12-26T12:00:00Z'),
+                (1, 0.0, 52.0, '2026-12-29T19:30:00Z'),
+            ]
+        ])
+
+        sequences, lengths, _, indexes, _ = build_position_sequences(
+            rows,
+            'FWD',
+            cutoff=1,
+            target_game_week=1,
+            features=['value'],
+        )
+
+        self.assertEqual(indexes.tolist(), [1, 2])
+        self.assertEqual(lengths.tolist(), [2, 2])
+        self.assertEqual(sequences.shape, (2, 2, 1))
+        self.assertNotEqual(sequences[0, -1, 0], sequences[1, -1, 0])
+
     def test_inference_rejects_fixed_window_checkpoint(self):
         checkpoint = {
             'training_manifest': {'sequence_policy': 'fixed_window'},

@@ -177,6 +177,41 @@ def build_checkpoint(
     return checkpoint
 
 
+def _aggregate_gameweek_predictions(scored: pd.DataFrame) -> pd.DataFrame:
+    fixture_rows = scored.copy()
+    if 'opponent_team' in fixture_rows:
+        has_fixture = pd.to_numeric(
+            fixture_rows['opponent_team'], errors='coerce'
+        ).fillna(0).gt(0)
+    else:
+        has_fixture = pd.Series(True, index=fixture_rows.index)
+    fixture_rows['_has_fixture'] = has_fixture
+    fixture_rows['_fixture_prediction'] = (
+        fixture_rows['predicted_points'].astype(float) * has_fixture.astype(float)
+    )
+    sort_columns = ['id']
+    if 'kickoff_time' in fixture_rows:
+        sort_columns.append('kickoff_time')
+    if 'scheduled_fixture' in fixture_rows:
+        sort_columns.append('scheduled_fixture')
+    fixture_rows = fixture_rows.sort_values(sort_columns)
+
+    predictions = fixture_rows.groupby('id')['_fixture_prediction'].sum()
+    fixture_counts = fixture_rows.groupby('id')['_has_fixture'].sum().astype(int)
+    aggregated = fixture_rows.drop_duplicates('id', keep='first').copy()
+    aggregated['predicted_points'] = aggregated['id'].map(predictions)
+    aggregated['fixture_count'] = aggregated['id'].map(fixture_counts).astype(int)
+    if 'model_predicted_points' in fixture_rows:
+        raw_predictions = (
+            fixture_rows['model_predicted_points'].astype(float)
+            * fixture_rows['_has_fixture'].astype(float)
+        ).groupby(fixture_rows['id']).sum()
+        aggregated['model_predicted_points'] = aggregated['id'].map(raw_predictions)
+    return aggregated.drop(
+        columns=['_has_fixture', '_fixture_prediction'], errors='ignore'
+    ).reset_index(drop=True)
+
+
 def score_checkpoint_snapshot(
     all_data: pd.DataFrame,
     checkpoint: dict[str, Any],
@@ -253,4 +288,5 @@ def score_checkpoint_snapshot(
     else:
         raise ValueError(f'Checkpoint has unsupported model type: {model_type!r}')
 
-    return normalize_pool_scores(apply_market_value_weighting(scored))
+    weighted = apply_market_value_weighting(scored)
+    return normalize_pool_scores(_aggregate_gameweek_predictions(weighted))

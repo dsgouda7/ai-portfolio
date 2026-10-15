@@ -15,13 +15,13 @@ Create technical learning material that makes each mechanism feel necessary befo
 Read only the references needed for the task:
 
 - Repository standard: [AUTHORING_GUIDE.md](../../../AUTHORING_GUIDE.md)
-- GenAI notebook patterns: [learning/genai/authoring-guide.md](../../../learning/genai/authoring-guide.md)
-- Mechanistic gold standard: [attention, position, and RoPE](../../../learning/genai/01-transformers/02-attention-and-position.ipynb)
-- Complete-block continuation: [the complete Transformer block](../../../learning/genai/01-transformers/03-transformer-block.ipynb)
-- Modern architecture continuation: [modern decoder-only LLM](../../../learning/genai/01-transformers/06-modern-decoder-only-llm.ipynb)
-- Data-lineage continuation: [pretraining data pipeline](../../../learning/genai/01-transformers/07-pretraining-data-pipeline.ipynb)
-- Training-lifecycle continuation: [pretrain a base model](../../../learning/genai/01-transformers/08b-pretrain-a-base-model-lab.ipynb)
-- Theory-note style: [Transformer block theory notes](../../../learning/genai/01-transformers/03-transformer-block-theory.md)
+- Historical GenAI notebook patterns: [archived authoring guide](../../../archive/learning-migrations/genai-authoring-guide.md)
+- Mechanistic gold standard: [attention, position, and RoPE](../../../learning/04-transformers/02-attention-and-position.ipynb)
+- Complete-block continuation: [the complete Transformer block](../../../learning/04-transformers/03-complete-transformer-block.ipynb)
+- Modern architecture continuation: [modern decoder-only LLM](../../../learning/04-transformers/06-modern-decoder-only-llm.ipynb)
+- Data-lineage continuation: [pretraining data pipeline](../../../learning/05-llm-training/01-pretraining-data-pipeline.ipynb)
+- Training-lifecycle continuation: [pretrain a base model](../../../learning/05-llm-training/03-pretrain-a-base-model-lab.ipynb)
+- Theory-note style: [Transformer block theory notes](../../../learning/04-transformers/03-complete-transformer-block-theory.md)
 
 The root guide wins when references conflict.
 

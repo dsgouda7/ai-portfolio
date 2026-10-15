@@ -22,6 +22,7 @@ from squad_state import (
     selling_price,
     set_lineup,
 )
+from utils import suggest_replacements, suggest_transfers
 
 
 def make_squad() -> pd.DataFrame:
@@ -44,6 +45,119 @@ def make_squad() -> pd.DataFrame:
 
 
 class SquadStateTests(unittest.TestCase):
+    def test_replacement_shortlist_respects_budget_club_cap_and_ranking(self):
+        squad = pd.DataFrame([
+            {
+                'id': 1, 'element_type': 'MID', 'team': 1, 'value': 50,
+                'predicted_points': 4.0,
+            },
+            {
+                'id': 2, 'element_type': 'DEF', 'team': 4, 'value': 50,
+                'predicted_points': 2.0,
+            },
+            {
+                'id': 3, 'element_type': 'DEF', 'team': 4, 'value': 50,
+                'predicted_points': 2.0,
+            },
+            {
+                'id': 4, 'element_type': 'FWD', 'team': 4, 'value': 50,
+                'predicted_points': 2.0,
+            },
+        ])
+        pool = pd.DataFrame([
+            {
+                'id': 5, 'element_type': 'MID', 'team': 4, 'value': 50,
+                'predicted_points': 10.0,
+            },
+            {
+                'id': 6, 'element_type': 'MID', 'team': 5, 'value': 61,
+                'predicted_points': 9.0,
+            },
+            {
+                'id': 7, 'element_type': 'MID', 'team': 5, 'value': 60,
+                'predicted_points': 8.0,
+            },
+            {
+                'id': 8, 'element_type': 'MID', 'team': 6, 'value': 55,
+                'predicted_points': 7.0,
+            },
+            {
+                'id': 9, 'element_type': 'MID', 'team': 7, 'value': 50,
+                'predicted_points': 3.0,
+            },
+        ])
+
+        replacements = suggest_replacements(
+            squad,
+            pool,
+            outgoing_id=1,
+            limit=3,
+            max_per_team=3,
+            max_spend=210,
+        )
+
+        self.assertEqual(
+            [int(item['in_']['id']) for item in replacements],
+            [7, 8, 9],
+        )
+        self.assertEqual(
+            [item['gain'] for item in replacements],
+            [4.0, 3.0, -1.0],
+        )
+        self.assertEqual(
+            [item['bank_after'] for item in replacements],
+            [0, 5, 10],
+        )
+
+    def test_transfer_plan_uses_available_free_transfers(self):
+        squad = pd.DataFrame([
+            {
+                'id': 1, 'element_type': 'MID', 'team': 1, 'value': 50,
+                'predicted_points': 1.0,
+            },
+            {
+                'id': 2, 'element_type': 'MID', 'team': 2, 'value': 50,
+                'predicted_points': 2.0,
+            },
+        ])
+        pool = pd.DataFrame([
+            {
+                'id': 3, 'element_type': 'MID', 'team': 3, 'value': 50,
+                'predicted_points': 6.0,
+            },
+            {
+                'id': 4, 'element_type': 'MID', 'team': 4, 'value': 50,
+                'predicted_points': 5.0,
+            },
+        ])
+
+        recommendations = suggest_transfers(
+            squad, pool, transfer_limit=2, max_spend=100
+        )
+
+        self.assertEqual(len(recommendations), 2)
+        self.assertEqual(
+            [(item['out']['id'], item['in_']['id']) for item in recommendations],
+            [(1, 3), (2, 4)],
+        )
+        self.assertEqual([item['gain'] for item in recommendations], [5.0, 3.0])
+
+    def test_transfer_plan_stops_when_no_move_improves_points(self):
+        squad = pd.DataFrame([{
+            'id': 1, 'element_type': 'MID', 'team': 1, 'value': 50,
+            'predicted_points': 5.0,
+        }])
+        pool = pd.DataFrame([{
+            'id': 2, 'element_type': 'MID', 'team': 2, 'value': 50,
+            'predicted_points': 4.0,
+        }])
+
+        recommendations = suggest_transfers(
+            squad, pool, transfer_limit=2, max_spend=50
+        )
+
+        self.assertEqual(recommendations, [])
+
     def test_selling_price_uses_half_of_profit_rounded_down(self):
         self.assertEqual(selling_price(50, 53), 51)
         self.assertEqual(selling_price(50, 48), 48)
@@ -134,10 +248,12 @@ class SquadStateTests(unittest.TestCase):
         refreshed_pool = make_squad()
         refreshed_pool['predicted_points'] = refreshed_pool['predicted_points'].astype(float)
         refreshed_pool.loc[refreshed_pool['id'] == 1, 'predicted_points'] = 9.5
+        refreshed_pool.loc[refreshed_pool['id'] == 1, 'fixture_count'] = 2
 
         updated = refresh_player_data(state, refreshed_pool)
 
         self.assertEqual(updated['players'][0]['predicted_points'], 9.5)
+        self.assertEqual(updated['players'][0]['fixture_count'], 2)
         self.assertEqual(updated['official_squad'][0]['predicted_points'], 9.5)
         self.assertEqual(updated['official_squad'][0]['last_gameweek_points'], 7)
 

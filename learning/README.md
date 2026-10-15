@@ -1,101 +1,98 @@
-# Learning
+# Learn AI Systems: Zero to Hero
 
-Concept-building notebooks and projects for the full GenAI stack.
+The numbered directories under `learning/` are the active curriculum. Follow them in order when
+starting from first principles; enter a later stage only when its prerequisite contracts are
+already routine.
 
-For original engineering work see [projects/](../projects/).
-For exploratory exercises and third-party course material see [playground/](../playground/).
+The role routes in Stage 12 synthesize Stages 01-11; they do not redefine those stages as optional.
+Experienced learners may challenge out of a stage only with the reproducible evidence requested by
+the Stage 12 baseline gates.
 
----
+For original engineering work and reusable data projects, see [projects/](../projects/). For
+historical learning artifacts, see [archive/learning-migrations/](../archive/learning-migrations/).
+For exploratory third-party course material, see [playground/](../playground/).
 
-## PyTorch-to-GenAI Route
+## The Route
 
-The primary route is intentionally split by job:
+| Stage | Focus | Measured outcome | Start |
+|---:|---|---|---|
+| 01 | ML Foundations | Explain optimization, generalization, neural networks, and backpropagation | [Start Stage 01](01-ml-foundations/README.md) |
+| 02 | PyTorch Foundations | Implement the reusable tensor, module, data, training, checkpoint, and inference contracts | [Start Stage 02](02-pytorch-foundations/README.md) |
+| 03 | Language-Model Foundations | Build sequence-memory, tokenization, embedding, Word2Vec, and encoder-decoder intuition | [Start Stage 03](03-language-model-foundations/README.md) |
+| 04 | Transformers | Build attention, position, complete blocks, and language-model architecture families | [Start Stage 04](04-transformers/README.md) |
+| 05 | LLM Training | Build a trustworthy token stream and train a resumable base model | [Start Stage 05](05-llm-training/README.md) |
+| 06 | LLM Fine-Tuning | Adapt pretrained models with objective-aligned evidence | [Start Stage 06](06-llm-finetuning/README.md) |
+| 07 | RAG | Retrieve authorized evidence and localize retrieval versus answer failures | [Start Stage 07](07-rag/README.md) |
+| 08 | LLM Evaluation | Measure model behavior, uncertainty, safety, and release readiness | [Start Stage 08](08-llm-evaluation/README.md) |
+| 09 | LLM Gateway | Control normalization, routing, resilience, budgets, caching, and telemetry | [Start Stage 09](09-llm-gateway/README.md) |
+| 10 | Agentic AI | Build bounded, tool-using, stateful, recoverable agent workflows | [Start Stage 10](10-agentic-ai/README.md) |
+| 11 | AI Infrastructure | Understand and optimize hardware, training, inference, and serving systems | [Start Stage 11](11-ai-infrastructure/README.md) |
+| 12 | Role-Based Tracks | Synthesize the stack in AI Engineer and Forward Deployed Engineer workflows | [Start Stage 12](12-role-based-tracks/README.md) |
 
-1. [GenAI prerequisites](genai-prerequisites/README.md) build mathematical, ML, and
-   backpropagation intuition.
-2. [PyTorch for LLMs](pytorch-for-llms/README.md) makes tensors, autograd, training, data,
-   checkpoints, sequence memory, tokenization, and embeddings executable.
-3. [GenAI](genai/README.md) builds Transformers, pretraining, fine-tuning, RAG, evaluation, and
-   gateways on top of that PyTorch contract.
+```text
+01 ML foundations
+-> 02 PyTorch
+-> 03 language-model foundations
+-> 04 Transformers
+-> 05 base-model training
+-> 06 adaptation
+-> 07 retrieval
+-> 08 evaluation
+-> 09 request control
+-> 10 agents
+-> 11 infrastructure
+-> 12 role synthesis
+```
 
-The required route is PyTorch-first. Keras translation, vision, embedding history, Lightning, and
-full-code revision are optional branches rather than parallel implementations of the same lesson.
+## Returning-Reader Shortcut
 
-Authoring standard: [genai/authoring-guide.md](genai/authoring-guide.md)
+If neural-network mechanics are familiar and only the PyTorch contract is rusty, run
+[PyTorch Training Skeleton: Quick Refresher](02-pytorch-foundations/quick-refresher/pytorch-training-skeleton.ipynb).
+Its closing readiness check links to the exact Stage 02 chapter for any missing responsibility.
+When every check passes, continue at [Stage 03](03-language-model-foundations/README.md).
 
----
+## Curriculum Boundaries
 
-## Role-Based Tracks
+- Numbered directories are required stages in pedagogical order.
+- Unnumbered directories inside a stage are shortcuts or optional branches.
+- Reusable Riverside House teaching data lives in the
+  [Riverside House corpus project](../projects/riverside-house-corpus/README.md).
+- Superseded Keras-first and migration artifacts live outside the active curriculum in the
+  [learning migration archive](../archive/learning-migrations/README.md).
+- The repository-wide authoring standard is [AUTHORING_GUIDE.md](../AUTHORING_GUIDE.md).
 
-These tracks live under [role-based-tracks/](role-based-tracks/README.md) because they combine
-subject chapters into job-shaped practice rather than introduce another top-level subject. Learn
-them alongside the relevant GenAI, agentic AI, and infrastructure chapters.
+## Operational Evidence
 
-| Route | What is this? | When should I use it? | Where do I start? |
-|---|---|---|---|
-| AI Engineer | A role-shaped path through model mechanics, adaptation, retrieval, evaluation, gateways, infrastructure, release lineage, and feedback. | You want to connect technical chapters into an observable AI application lifecycle. | [AI Engineer route and baseline](role-based-tracks/ai-engineer/README.md) |
-| Forward Deployed Engineer | A customer-engagement path through discovery, architecture, scope, data, identity, rollout, incidents, and handoff. | You want to practice making bounded technical and delivery decisions with customer constraints. | [FDE route and engagement baseline](role-based-tracks/fde/README.md) |
+Notebook outputs are cleared in source. A cleared notebook is not automatically validated; each
+stage README states its evidence boundary. Labels such as `HOLD_LOCAL_RELEASE`,
+`HOLD_AZURE_PROMOTION`, and `Live-unvalidated` are deliberate scope gates rather than success-shaped
+fallbacks.
 
-The FDE route builds on the AI Engineer technical core, then adds discovery, architecture translation,
-and evidence discipline.
+Use this evidence ladder across the curriculum:
 
-### Operational Bridges
+| Level | What exists | What it supports |
+|---:|---|---|
+| 1. Implemented source | Inspectable code, configuration, contract, fixture, or planned check | The asset exists; it may not have run |
+| 2. Local fixture | A deterministic local or synthetic fixture ran with retained provenance | The named mechanism worked for that fixture |
+| 3. Local measured | A named local workload ran on recorded hardware and software | The result applies to that workload and environment |
+| 4. Modeled or simulated | A calculation, queue model, or architecture assumption produced a result | Planning and mechanism reasoning, not observed live behavior |
+| 5. Customer-validated | An authorized customer role accepted the named artifact and scope | Acceptance within that authority, scope, and date |
+| 6. Live-cloud validated | An authorized cloud environment produced retained release-scoped evidence | Behavior in that named environment and window |
+| 7. Independently reviewed | A qualified reviewer checked method, provenance, limits, and conclusion | Greater confidence in the bounded claim, not a broader population |
 
-| Surface | What is this? | When should I use it? | Where do I start? |
-|---|---|---|---|
-| Azure Operational LLM Serving | An Azure-shaped local lab joining fine-tuning, gateways, quantization, and inference. | You want to practice bounded serving and release decisions after learning the component concepts. | [Serving tutorial](ai-infrastructure/09-azure-operational-llm-serving/README.md) |
-| Databricks-backed RAG data plane | Remote-ingestion, governed-record, and Direct Vector Access indexing extensions to the local RAG pipeline. | You want to study the data-plane boundary beyond the local RAG chapters. | [RAG data-plane operations](../projects/rag-knowledge-pipeline/databricks/indexing/OPERATIONS.md) |
-| Riverside AI Platform | A production-shaped source implementation joining contracts, Azure ML, APIM, evaluation, telemetry, load testing, and IaC. | You want a larger integration surface for route capstones or architecture review. | [Riverside documentation](../projects/riverside-ai-platform/docs/README.md) |
+Track-specific schemas may split a level more finely—for example, static validation versus fixture
+execution—but they must not promote evidence to a stronger level.
 
-### Validation and Status Transparency
+Compact result labels should make the boundary visible:
 
-These details describe the evidence behind the routes and bridges; they do not change which route a
-learner should choose.
+```text
+Mechanics demonstrated
+Fixture or measured evidence: <named class>
+Capability evidence: available or unavailable
+Live behavior: validated or unvalidated
+Independent review: present or absent
+```
 
-- **Route notebooks:** The AI Engineer notebooks and all nine FDE notebooks were executed successfully
-  against local or synthetic fixtures, then outputs and execution counts were cleared so each learner
-  begins from a clean state. FDE completion supports entry into supervised practice, not independent
-  production execution.
-- **Serving safety gates:** All 13 cells in the Azure Operational LLM Serving tutorial executed locally.
-  Its p95 checks returned `HOLD_LOCAL_RELEASE` and `HOLD_AZURE_PROMOTION`. A `HOLD` is a deliberate
-  safety gate, not an error: release or cloud promotion stays blocked until the required threshold and
-  environment evidence pass.
-- **Cloud scope:** `Live-unvalidated` means source or design assets are present without a retained result
-  from the named cloud or customer environment. This currently applies to the serving tutorial's Azure
-  behavior and the Databricks RAG extensions.
-- **Riverside scope:** Implemented source assets are present. The non-cloud suite passed 142 tests with
-  5 cloud tests deselected, and the offline preflight passed 9 tests. Deployment, live Azure behavior,
-  customer acceptance, and production readiness are not claimed.
-
-`Planned` means the target artifact is not present. These labels preserve evidence boundaries; they
-are not learner-facing error states.
-
----
-
-## Agentic AI — `agentic-ai/`
-
-A hands-on, ten-notebook track that builds **OrderFlow**, an AI-native purchase-order system, from
-typed tool calls through bounded planning, memory, durable LangGraph workflows, agentic RAG,
-evaluation, governance, MCP interoperability, multi-agent coordination, and saga recovery.
-
-The default path is deterministic, CPU-only, and offline. Start with
-[agentic-ai/README.md](agentic-ai/README.md) for setup, fixtures, chapter order, measured unlocks,
-and the rich visual-asset plan.
-
----
-
-## Agentic AI System Design — `agentic-ai-system-design/`
-
-A system-design reference track (plain Markdown, no notebooks) answering the Staff/Principal-level
-interview question *"Design an Agentic AI Platform."* Start at
-[agentic-ai-system-design/system-design.md](agentic-ai-system-design/system-design.md) for the
-master architecture, then drill into the numbered component docs (agent lifecycle, tool/MCP/skill
-registry, model gateway, state & memory, loop/termination control, evaluation, observability,
-multi-agent patterns, recoverability & the Saga pattern, governance, production scale) and the
-dedicated Semantic Kernel vs. LangGraph comparison.
-
----
-
-Note: `data-engineering/` and `ml/` (IBM course artefacts) have been moved to
-[playground/data-engineering/](../playground/data-engineering/) and
-[playground/ml/](../playground/ml/).
+A loss curve, passing test suite, generated sample, or successful simulation can demonstrate a
+mechanism without establishing model quality, user outcomes, cloud behavior, or production
+readiness.

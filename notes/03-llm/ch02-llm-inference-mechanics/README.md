@@ -20,7 +20,7 @@ How LLMs generate text at inference time — sampling, the autoregressive loop, 
 
 - [notebook-solution.ipynb](notebook-solution.ipynb) — Complete implementations
 
-> **From-scratch companion:** [`learning/genai/01-transformers/04b-decoder-only-language-model-lab.ipynb`](../../../learning/genai/01-transformers/04b-decoder-only-language-model-lab.ipynb) — its generation section builds autoregressive decoding and stopping behavior step by step.
+> **From-scratch companion:** [`learning/04-transformers/04b-decoder-only-language-model-lab.ipynb`](../../../learning/04-transformers/04b-decoder-only-language-model-lab.ipynb) — its generation section builds autoregressive decoding and stopping behavior step by step.
 3. **Make production tradeoffs**
  - Balance throughput vs latency requirements
  - Calculate KV cache memory requirements

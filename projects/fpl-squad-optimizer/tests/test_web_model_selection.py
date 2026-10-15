@@ -26,32 +26,115 @@ class WebModelSelectionTests(unittest.TestCase):
             encoding='utf-8'
         )
 
-        self.assertIn('Public FPL entry (read-only)', template)
-        self.assertIn('Import FPL squad', template)
-        self.assertIn('Save locally', template)
-        self.assertIn('Copy FPL plan', template)
-        self.assertIn('Official FPL is unchanged.', template)
+        self.assertIn('Load Public FPL Squad', template)
+        self.assertIn('Import squad and analyze', template)
+        self.assertNotIn('id="fpl-access-token"', template)
+        self.assertNotIn('id="fpl-free-transfers"', template)
+        self.assertIn('Next Gameweek Lineup', template)
+        self.assertIn('Starting XI', template)
+        self.assertIn('Bench order', template)
+        self.assertNotIn('Optional Plan Controls', template)
+        self.assertNotIn('id="save-squad"', template)
+        self.assertNotIn('id="copy-fpl-plan"', template)
+        self.assertIn('Record Portal Transfer Locally', template)
+        self.assertIn('id="local-transfer-out"', template)
+        self.assertIn('id="local-transfer-in"', template)
+        self.assertIn('id="record-local-transfer"', template)
+        self.assertIn("fetch('/api/squad/draft'", template)
+        self.assertIn('GW${D.game_week} portal changes remain private', template)
 
-    def test_public_sync_applies_returned_state_without_hiding_confirmation(self):
+    def test_transfer_recommendation_is_prominent_and_actionable(self):
         template = (ROOT / 'fpl-generator' / 'templates' / 'index.html').read_text(
             encoding='utf-8'
         )
 
-        self.assertIn('squadState = result.state;', template)
-        self.assertIn("setManagerStatus(result.message, 'success');", template)
-        self.assertIn('renderManager();', template)
-        self.assertIn('renderSquad();', template)
-        self.assertIn('squadState.official_entry?.entry_id', template)
-        self.assertIn('squadState.official_entry?.free_transfers_estimated', template)
-        self.assertIn('selected for the next public-picks import.', template)
-        self.assertIn('id="fpl-access-token"', template)
-        self.assertIn('type="password"', template)
-        self.assertIn('access_token: accessToken || null', template)
-        self.assertIn("accessTokenInput.value = '';", template)
-        self.assertNotIn(
-            'window.location.assign(`/generate-team?model=${encodeURIComponent(D.model_type)}`);',
+        self.assertLess(
+            template.index('id="sync-fpl-entry"'),
+            template.index('id="transfer-card"'),
+        )
+        self.assertIn('<span class="transfer-action-label">SELL</span>', template)
+        self.assertIn('<span class="transfer-action-label">BUY</span>', template)
+        self.assertIn('Transfer ${t.number}', template)
+        self.assertIn('D.transfer_allowance', template)
+        self.assertIn('Keep your current public squad', template)
+        self.assertIn('class="dgw-badge"', template)
+        self.assertIn('t.in_fixtures', template)
+        self.assertLess(
+            template.index('id="transfer-card"'),
+            template.index('id="replacement-card"'),
+        )
+        self.assertLess(
+            template.index('id="replacement-card"'),
+            template.index('id="next-lineup-card"'),
+        )
+        self.assertIn('Find a Replacement', template)
+        self.assertIn('id="replacement-player"', template)
+        self.assertIn('id="find-replacements"', template)
+        self.assertIn('D.replacement_options', template)
+        self.assertIn('selected.options.map', template)
+
+    def test_recommended_lineup_uses_the_post_transfer_squad(self):
+        squad = pd.DataFrame([
+            {
+                'id': player_id,
+                'element_type': 'MID',
+                'first_name': f'Player {player_id}',
+                'second_name': 'Owned',
+                'predicted_points': float(player_id),
+            }
+            for player_id in range(1, 16)
+        ])
+        incoming = squad.iloc[0].to_dict()
+        incoming.update({
+            'id': 99,
+            'first_name': 'Recommended',
+            'second_name': 'Signing',
+            'predicted_points': 20.0,
+        })
+
+        planned = web._apply_recommended_transfers(
+            squad,
+            [{'out': squad.iloc[4].to_dict(), 'in_': incoming}],
+        )
+
+        self.assertEqual(len(planned), 15)
+        self.assertNotIn(5, planned['id'].astype(int).tolist())
+        self.assertIn(99, planned['id'].astype(int).tolist())
+        signing = planned.loc[planned['id'].astype(int) == 99].iloc[0]
+        self.assertEqual(signing['first_name'], 'Recommended')
+        self.assertEqual(signing['predicted_points'], 20.0)
+
+    def test_recorded_portal_transfers_reduce_the_remaining_allowance(self):
+        state = {
+            'free_transfers': 3,
+            'transfers': [
+                {'out': {'id': 1}, 'in': {'id': 2}},
+                {'out': {'id': 3}, 'in': {'id': 4}},
+            ],
+        }
+
+        self.assertEqual(web._remaining_transfer_allowance(state), 1)
+        state['transfers'].append({'out': {'id': 5}, 'in': {'id': 6}})
+        self.assertEqual(web._remaining_transfer_allowance(state), 0)
+
+    def test_public_sync_reloads_to_generate_fresh_advice_and_preserves_confirmation(self):
+        template = (ROOT / 'fpl-generator' / 'templates' / 'index.html').read_text(
+            encoding='utf-8'
+        )
+
+        self.assertIn("sessionStorage.setItem('fpl-sync-message', result.message);", template)
+        self.assertIn(
+            'window.location.assign(\n'
+            '      `/generate-team?model=${encodeURIComponent(D.model_type)}`',
             template,
         )
+        self.assertIn("sessionStorage.removeItem('fpl-sync-message');", template)
+        self.assertIn("setManagerStatus(syncMessage, 'success');", template)
+        self.assertIn('squadState.official_entry?.entry_id', template)
+        self.assertIn('estimated free transfer', template)
+        self.assertNotIn('id="fpl-access-token"', template)
+        self.assertNotIn('id="fpl-free-transfers"', template)
+        self.assertNotIn('access_token:', template)
 
     def test_template_separates_imported_squad_from_recommended_xi(self):
         template = (ROOT / 'fpl-generator' / 'templates' / 'index.html').read_text(
@@ -260,7 +343,11 @@ class WebModelSelectionTests(unittest.TestCase):
                 'rnn': Path('models_rnn.joblib'),
             }),
             patch.object(web.joblib, 'load', return_value=checkpoint) as load,
-            patch.object(web, 'build_features', return_value=pd.DataFrame()),
+            patch.object(
+                web,
+                'load_or_build_feature_cache',
+                return_value=(pd.DataFrame(), {}),
+            ),
             patch.object(web, 'score_checkpoint_snapshot', return_value=pool),
             patch.object(web, 'get_runtime_context', return_value={
                 'target_game_week': 6,
@@ -276,14 +363,16 @@ class WebModelSelectionTests(unittest.TestCase):
             patch.object(web, '_lineup_frames', return_value=(
                 pool.iloc[0:0], pool.iloc[0:0], '0-0-0'
             )),
-            patch.object(web, 'suggest_transfer', return_value=None),
+            patch.object(web, 'suggest_transfers', return_value=[]) as suggest_transfers,
             patch.object(web, 'render_template', side_effect=lambda _, data: data),
         ):
             payload = json.loads(web.index())
 
         load.assert_called_once_with(Path('models_rnn.joblib'))
+        suggest_transfers.assert_not_called()
         self.assertEqual(payload['model_type'], 'rnn')
         self.assertEqual(payload['available_models'], ['xgboost', 'rnn'])
+        self.assertFalse(payload['transfer_advice_ready'])
 
     def test_advisor_run_forces_ensemble_checkpoint(self):
         checkpoint = {
@@ -307,7 +396,11 @@ class WebModelSelectionTests(unittest.TestCase):
                 'ensemble': Path('models_ensemble.joblib'),
             }),
             patch.object(web.joblib, 'load', return_value=checkpoint) as load,
-            patch.object(web, 'build_features', return_value=pd.DataFrame()),
+            patch.object(
+                web,
+                'load_or_build_feature_cache',
+                return_value=(pd.DataFrame(), {}),
+            ),
             patch.object(web, 'score_checkpoint_snapshot', return_value=pool),
             patch.object(web, 'get_runtime_context', return_value={
                 'target_game_week': 6,
@@ -386,6 +479,31 @@ class WebModelSelectionTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 409)
         self.assertIn('after it completes', response.get_json()['error'])
+
+    def test_training_subprocess_uses_utf8_output(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            stage = root / 'stage'
+            stage.mkdir()
+            process = MagicMock()
+            process.stdout = iter(())
+            process.wait.return_value = 0
+            web._TRAINING_GUARD.acquire()
+
+            with (
+                patch.object(web, 'DB_FILE', str(root / 'missing.db')),
+                patch.object(web.tempfile, 'mkdtemp', return_value=str(stage)),
+                patch.object(
+                    web,
+                    'model_artifact_path',
+                    side_effect=lambda name: root / f'{name}.joblib',
+                ),
+                patch.object(web.subprocess, 'Popen', return_value=process) as popen,
+                patch.object(web, '_publish_staged_training'),
+            ):
+                web._run_refresh_and_training()
+
+        self.assertEqual(popen.call_args.kwargs['env']['PYTHONIOENCODING'], 'utf-8')
 
     def test_staged_training_publishes_database_and_all_models(self):
         with tempfile.TemporaryDirectory() as directory:

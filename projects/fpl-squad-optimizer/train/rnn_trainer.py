@@ -75,11 +75,19 @@ def build_position_sequences(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, pd.Index, StandardScaler]:
     """Build one canonical sequence from all available Gameweeks per player."""
     features = list(features or POS_FEATURES[position])
-    position_rows = canonical_player_gameweeks(rows[
+    filtered_rows = rows[
         (rows['element_type'] == position) & (rows['Game_Week'] <= cutoff)
-    ])
+    ]
+    position_rows = canonical_player_gameweeks(filtered_rows)
     candidates = (
-        position_rows[position_rows['Game_Week'] == target_game_week]
+        filtered_rows[filtered_rows['Game_Week'] == target_game_week]
+        .sort_values(
+            [
+                column for column in (
+                    'id', 'kickoff_time', 'scheduled_fixture'
+                ) if column in filtered_rows.columns
+            ]
+        )
         if target_game_week is not None
         else position_rows[position_rows['target'].notna()]
     )

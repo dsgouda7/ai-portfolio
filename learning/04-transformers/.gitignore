@@ -1,0 +1,7 @@
+# Local virtual environment created by setup.ps1 / setup.sh
+.venv/
+
+# Temporary execution and schema-validation notebooks
+*.validation.ipynb
+*.execution-temp.ipynb
+*.schema-backup

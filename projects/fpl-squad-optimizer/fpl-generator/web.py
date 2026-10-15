@@ -18,6 +18,7 @@ import subprocess
 import tempfile
 import threading
 import time
+import webbrowser
 from collections import Counter
 from contextlib import closing
 from datetime import datetime, timezone
@@ -34,7 +35,8 @@ from utils import (
     MAX_PLAYERS_PER_TEAM, MAX_SPEND,
     build_features, normalize_pool_scores, apply_market_value_weighting,
     load_squad, score_squad_from_pool, pick_starting_xi,
-    suggest_transfer, find_ineligible_replacements, get_runtime_context,
+    suggest_replacements, suggest_transfers, find_ineligible_replacements,
+    get_runtime_context,
 )
 from model_registry import (
     MODEL_TYPES,
@@ -61,8 +63,6 @@ from squad_state import (
 from performance_reviewer import build_performance_review
 from fpl_account import (
     FplEntrySyncError,
-    load_event_player_points,
-    load_private_team,
     sync_public_entry,
 )
 
@@ -590,6 +590,45 @@ def _lineup_frames(state: dict, squad: pd.DataFrame) -> tuple[pd.DataFrame, pd.D
     return starters, bench, formation
 
 
+def _apply_recommended_transfers(
+    squad: pd.DataFrame,
+    recommendations: list[dict],
+) -> pd.DataFrame:
+    """Return the 15-player squad produced by the sequential transfer plan."""
+    planned = squad.copy()
+    if not recommendations:
+        return planned
+
+    for recommendation in recommendations:
+        outgoing_id = int(recommendation['out']['id'])
+        matching_indexes = planned.index[planned['id'].astype(int) == outgoing_id]
+        if len(matching_indexes) != 1:
+            raise ValueError(
+                f'Transfer plan expected one outgoing player with ID {outgoing_id}.'
+            )
+        outgoing_index = matching_indexes[0]
+        incoming = pd.DataFrame([recommendation['in_']]).reindex(
+            columns=planned.columns
+        )
+        incoming.index = [outgoing_index]
+        planned = pd.concat(
+            [planned.drop(index=outgoing_index), incoming]
+        ).sort_index()
+
+    if len(planned) != 15 or planned['id'].astype(int).nunique() != 15:
+        raise ValueError('Transfer plan did not produce a unique 15-player squad.')
+    return planned
+
+
+def _remaining_transfer_allowance(state: dict) -> int:
+    """Return free transfers not already recorded in the local GW draft."""
+    return max(
+        0,
+        int(state.get('free_transfers', 1))
+        - len(state.get('transfers', [])),
+    )
+
+
 # ---------------------------------------------------------------------------
 # JSON serialisation
 # ---------------------------------------------------------------------------
@@ -757,6 +796,7 @@ def _run_refresh_and_training() -> None:
         for model_type in MODEL_TYPES:
             target = model_artifact_path(model_type)
             env[f'FPL_{model_type.upper()}_MODELS_FILE'] = str(stage_dir / target.name)
+        env['PYTHONIOENCODING'] = 'utf-8'
         command = [sys.executable, '-u', 'train/train.py', '--model', 'all']
         process = subprocess.Popen(
             command,
@@ -934,7 +974,9 @@ def index():
             current_state = commit_draft(current_state)
     state = None
     squad_mode = current_state is not None
-    transfer_payload   = None
+    transfer_advice_ready = False
+    transfer_payloads = []
+    replacement_payloads = []
     ineligible_payload = []
 
     if current_state is not None:
@@ -944,11 +986,11 @@ def index():
         state = refresh_player_data(rolled_state, full_pool, eligibility)
         if int(current_state['game_week']) != int(state['game_week']):
             state = save_draft(state)
+        transfer_advice_ready = bool(state.get('official_entry'))
         scored_squad = score_squad_from_pool(_state_frame(state), full_pool)
         eligible_ids = set(eligible_pool['id'].astype(int))
 
         ineligible_df = scored_squad[~scored_squad['id'].astype(int).isin(eligible_ids)]
-        starters, bench, formation = _lineup_frames(state, scored_squad)
 
         transfer_squad = scored_squad.copy()
         selling_prices = {
@@ -957,26 +999,87 @@ def index():
         }
         transfer_squad['value'] = transfer_squad['id'].astype(int).map(selling_prices)
         transfer_budget = int(transfer_squad['value'].sum()) + int(state['bank'])
-        t = suggest_transfer(
-            transfer_squad, eligible_pool,
-            MAX_PLAYERS_PER_TEAM, transfer_budget,
+        remaining_transfer_allowance = _remaining_transfer_allowance(state)
+        recommendations = (
+            suggest_transfers(
+                transfer_squad, eligible_pool,
+                transfer_limit=remaining_transfer_allowance,
+                max_per_team=MAX_PLAYERS_PER_TEAM,
+                max_spend=transfer_budget,
+            )
+            if transfer_advice_ready
+            else []
         )
-        if t:
-            transfer_payload = {
-                'out_id': int(t['out']['id']),
-                'out_name': f"{t['out']['first_name']} {t['out']['second_name']}",
-                'out_pos':  t['out']['element_type'],
-                'out_val':  t['out']['value'],
-                'out_pts':  t['out']['predicted_points'],
-                'in_id': int(t['in_']['id']),
-                'in_name':  f"{t['in_']['first_name']} {t['in_']['second_name']}",
-                'in_pos':   t['in_']['element_type'],
-                'in_val':   t['in_']['value'],
-                'in_pts':   t['in_']['predicted_points'],
-                'gain':     t['gain'],
-                'new_spend': t['new_spend'],
-                'bank_after': transfer_budget - t['new_spend'],
-            }
+        for recommendation_number, item in enumerate(recommendations, start=1):
+            transfer_payloads.append({
+                'number': recommendation_number,
+                'out_id': int(item['out']['id']),
+                'out_name': (
+                    f"{item['out']['first_name']} {item['out']['second_name']}"
+                ),
+                'out_pos': item['out']['element_type'],
+                'out_val': item['out']['value'],
+                'out_pts': item['out']['predicted_points'],
+                'out_fixtures': int(item['out'].get('fixture_count', 1)),
+                'in_id': int(item['in_']['id']),
+                'in_name': (
+                    f"{item['in_']['first_name']} {item['in_']['second_name']}"
+                ),
+                'in_pos': item['in_']['element_type'],
+                'in_val': item['in_']['value'],
+                'in_pts': item['in_']['predicted_points'],
+                'in_fixtures': int(item['in_'].get('fixture_count', 1)),
+                'gain': item['gain'],
+                'bank_after': item['bank_after'],
+            })
+
+        if transfer_advice_ready:
+            position_order = {'GK': 0, 'DEF': 1, 'MID': 2, 'FWD': 3}
+            owned_players = transfer_squad.to_dict(orient='records')
+            owned_players.sort(key=lambda player: (
+                position_order.get(str(player['element_type']), 99),
+                str(player.get('second_name', '')),
+                str(player.get('first_name', '')),
+            ))
+            for outgoing in owned_players:
+                options = suggest_replacements(
+                    transfer_squad,
+                    eligible_pool,
+                    int(outgoing['id']),
+                    limit=3,
+                    max_per_team=MAX_PLAYERS_PER_TEAM,
+                    max_spend=transfer_budget,
+                )
+                replacement_payloads.append({
+                    'out_id': int(outgoing['id']),
+                    'out_name': (
+                        f"{outgoing['first_name']} {outgoing['second_name']}"
+                    ),
+                    'out_pos': str(outgoing['element_type']),
+                    'out_val': int(outgoing['value']),
+                    'out_pts': round(float(outgoing['predicted_points']), 2),
+                    'options': [
+                        {
+                            'rank': rank,
+                            'in_id': int(option['in_']['id']),
+                            'in_name': (
+                                f"{option['in_']['first_name']} "
+                                f"{option['in_']['second_name']}"
+                            ),
+                            'in_pos': str(option['in_']['element_type']),
+                            'in_val': int(option['in_']['value']),
+                            'in_pts': round(
+                                float(option['in_']['predicted_points']), 2
+                            ),
+                            'in_fixtures': int(
+                                option['in_'].get('fixture_count', 1)
+                            ),
+                            'gain': float(option['gain']),
+                            'bank_after': int(option['bank_after']),
+                        }
+                        for rank, option in enumerate(options, start=1)
+                    ],
+                })
 
         if not ineligible_df.empty:
             for item in find_ineligible_replacements(
@@ -999,7 +1102,11 @@ def index():
                     'gain': item['gain'],
                 })
 
-        squad = scored_squad
+        squad = _apply_recommended_transfers(scored_squad, recommendations)
+        if recommendations:
+            starters, bench, formation = pick_starting_xi(squad)
+        else:
+            starters, bench, formation = _lineup_frames(state, squad)
         gw_saved = int(state['game_week'])
     else:
         if advisor_run:
@@ -1063,10 +1170,21 @@ def index():
         gw_saved = runtime['target_game_week']
 
     # ── Pitch layout ─────────────────────────────────────────────────────────
+    ranked_starters = starters.sort_values('predicted_points', ascending=False)
+    captain_id = (
+        int(ranked_starters.iloc[0]['id']) if len(ranked_starters) >= 1 else None
+    )
+    vice_captain_id = (
+        int(ranked_starters.iloc[1]['id']) if len(ranked_starters) >= 2 else None
+    )
     positioned = assign_positions(starters)
     for p in positioned:
         p['stats'] = player_stats(p, eligible_pool)
         p['color'] = POS_COLORS.get(p['element_type'], '#aaa')
+        p['is_captain'] = captain_id is not None and int(p['id']) == captain_id
+        p['is_vice_captain'] = (
+            vice_captain_id is not None and int(p['id']) == vice_captain_id
+        )
         elig = eligibility.get(_elig_key(p), ELIG_ABSENT)
         p['news']        = elig.news
         p['ep_next']     = elig.ep_next
@@ -1098,7 +1216,10 @@ def index():
         'bench':            bench_list,
         'excluded':         excluded,
         'model_quality':    [{'pos': pos, **m} for pos, m in metrics.items()],
-        'transfer':         transfer_payload,
+        'transfer_advice_ready': transfer_advice_ready,
+        'transfer_allowance': _remaining_transfer_allowance(state),
+        'transfers':        transfer_payloads,
+        'replacement_options': replacement_payloads,
         'ineligible_squad': ineligible_payload,
         'state':             state,
         'candidates': [
@@ -1109,7 +1230,10 @@ def index():
                 'position': str(player.get('element_type', '')),
                 'team': int(player.get('team', 0)),
                 'current_price': int(player.get('value', 0)),
-                'predicted_points': round(float(player.get('predicted_points', 0)), 4),
+                'predicted_points': round(
+                    float(player.get('predicted_points', 0)), 4
+                ),
+                'fixture_count': int(player.get('fixture_count', 1)),
             }
             for player in eligible_pool.to_dict(orient='records')
         ],
@@ -1166,9 +1290,51 @@ def start_training():
     return jsonify({'ok': True, **_training_snapshot()}), 202
 
 
+def import_fpl_entry(
+    entry_id,
+    model_type: str = 'xgboost',
+) -> dict:
+    """Import a public FPL entry and persist its model-scored next-GW draft."""
+    normalized_model = str(model_type or 'xgboost').lower()
+    artifacts = available_model_artifacts()
+    if normalized_model not in artifacts:
+        raise FplEntrySyncError(
+            f'Model artifact is unavailable: {normalized_model}'
+        )
+    checkpoint = joblib.load(artifacts[normalized_model])
+    validate_checkpoint_cutoff(checkpoint)
+    runtime = get_runtime_context(DB_FILE)
+    all_data, _ = load_or_build_feature_cache(DB_FILE, build_features)
+    scored_pool = score_checkpoint_snapshot(
+        all_data, checkpoint, runtime['snapshot_game_week']
+    )
+    synced = sync_public_entry(entry_id, DB_FILE)
+    state = _state_from_synced_entry(
+        synced,
+        scored_pool,
+        runtime,
+        database=DB_FILE,
+    )
+    stored = save_draft(state)
+    message = (
+        f"Imported public picks through GW{synced['latest_event']}. "
+        f"Estimated {stored['free_transfers']} free transfer"
+        f"{'' if stored['free_transfers'] == 1 else 's'} from public history. "
+        f"Current GW{runtime['target_game_week']} picks remain private until "
+        'the deadline. Recommendations use the latest public squad.'
+    )
+    return {
+        'ok': True,
+        'state': stored,
+        'entry_id': synced['entry_id'],
+        'gameweeks_imported': len(synced['gameweeks']),
+        'message': message,
+    }
+
+
 @app.post('/api/fpl-entry/sync')
 def sync_fpl_entry():
-    """Import public history and optionally current private picks with a temporary token."""
+    """Import public FPL history and the latest publicly visible squad."""
     if request.remote_addr not in ('127.0.0.1', '::1'):
         return jsonify({
             'ok': False,
@@ -1184,21 +1350,13 @@ def sync_fpl_entry():
         return jsonify({'ok': False, 'error': 'FPL sync accepts JSON only.'}), 415
     try:
         payload = request.get_json() or {}
-        allowed_fields = {'entry_id', 'model', 'free_transfers', 'access_token'}
+        allowed_fields = {'entry_id', 'model'}
         unexpected_fields = set(payload) - allowed_fields
         if unexpected_fields:
             raise FplEntrySyncError(
-                'Email/password and unknown fields are not accepted. Provide only '
-                'entry_id, model, optional free_transfers, and a temporary access token.'
+                'Private credentials and unknown fields are not accepted. '
+                'Provide only entry_id and model.'
             )
-        access_token = str(payload.get('access_token') or '').strip()
-        free_transfers = payload.get('free_transfers')
-        if free_transfers not in (None, ''):
-            free_transfers = int(free_transfers)
-            if not 1 <= free_transfers <= 5:
-                raise FplEntrySyncError('Free transfers must be between 1 and 5.')
-        else:
-            free_transfers = None
         requester = request.remote_addr or 'local'
         now = time.monotonic()
         last_request = _SYNC_LAST_REQUEST.get(requester, 0.0)
@@ -1208,83 +1366,10 @@ def sync_fpl_entry():
                 'error': 'Please wait a few seconds before synchronizing again.',
             }), 429
         _SYNC_LAST_REQUEST[requester] = now
-        model_type = str(payload.get('model') or 'xgboost').lower()
-        artifacts = available_model_artifacts()
-        if model_type not in artifacts:
-            raise FplEntrySyncError(f'Model artifact is unavailable: {model_type}')
-        checkpoint = joblib.load(artifacts[model_type])
-        validate_checkpoint_cutoff(checkpoint)
-        runtime = get_runtime_context(DB_FILE)
-        all_data, _ = load_or_build_feature_cache(DB_FILE, build_features)
-        scored_pool = score_checkpoint_snapshot(
-            all_data, checkpoint, runtime['snapshot_game_week']
-        )
-        synced = sync_public_entry(payload.get('entry_id'), DB_FILE)
-        if access_token:
-            public_pick_signature = {
-                (
-                    int(pick['player_id']),
-                    int(pick['pick_position']),
-                    bool(pick.get('is_captain')),
-                    bool(pick.get('is_vice_captain')),
-                )
-                for pick in synced.get('picks', [])
-            }
-            private_team = load_private_team(payload.get('entry_id'), access_token)
-            private_ids = [int(pick['player_id']) for pick in private_team['picks']]
-            private_pick_signature = {
-                (
-                    int(pick['player_id']),
-                    int(pick['pick_position']),
-                    bool(pick.get('is_captain')),
-                    bool(pick.get('is_vice_captain')),
-                )
-                for pick in private_team['picks']
-            }
-            synced.update(private_team)
-            synced['squad_event'] = int(runtime['target_game_week'])
-            synced['private'] = True
-            synced['private_matches_public'] = (
-                private_pick_signature == public_pick_signature
-            )
-            synced['last_event_points'] = load_event_player_points(
-                DB_FILE,
-                private_ids,
-                synced.get('latest_event'),
-            )
-        state = _state_from_synced_entry(
-            synced,
-            scored_pool,
-            runtime,
-            free_transfers=free_transfers,
-            database=DB_FILE,
-        )
-        stored = save_draft(state)
-        return jsonify({
-            'ok': True,
-            'state': stored,
-            'entry_id': synced['entry_id'],
-            'gameweeks_imported': len(synced['gameweeks']),
-            'message': (
-                (
-                    f"Imported current private GW{runtime['target_game_week']} picks. "
-                    if synced.get('private')
-                    else f"Imported public picks through GW{synced['latest_event']}. "
-                )
-                + 'Free transfers '
-                + f"are {'user-supplied' if free_transfers is not None else 'estimated'}. "
-                + (
-                    '' if synced.get('private')
-                    else f"Current GW{runtime['target_game_week']} picks remain private until the deadline. "
-                )
-                + (
-                    f"FPL returned the same ownership and lineup as public GW{synced['latest_event']}. "
-                    if synced.get('private_matches_public')
-                    else ''
-                )
-                + 'The next XI and captaincy were selected from current model scores.'
-            ),
-        })
+        return jsonify(import_fpl_entry(
+            payload.get('entry_id'),
+            model_type=payload.get('model') or 'xgboost',
+        ))
     except (FplEntrySyncError, TypeError, KeyError, ValueError) as exc:
         return jsonify({'ok': False, 'error': str(exc)}), 400
 
@@ -1498,8 +1583,27 @@ def validation_report():
     return render_template('validation_report.html', data=json.dumps(_safe(payload)))
 
 
-if __name__ == '__main__':
+def run_web_app() -> None:
+    port = int(os.environ.get('FPL_PORT', '5000'))
+    if os.environ.get('FPL_OPEN_BROWSER', '0') == '1':
+        url = f'http://127.0.0.1:{port}/generate-team'
+        browser_timer = threading.Timer(
+            1.0,
+            webbrowser.open,
+            args=(url,),
+            kwargs={'new': 2},
+        )
+        browser_timer.daemon = True
+        browser_timer.start()
+        print(f'Opening {url}')
+
+    debug = os.environ.get('FLASK_DEBUG', '0') == '1'
     app.run(
-        debug=os.environ.get('FLASK_DEBUG', '0') == '1',
-        port=int(os.environ.get('FPL_PORT', '5000')),
+        debug=debug,
+        port=port,
+        use_reloader=debug and os.environ.get('FPL_OPEN_BROWSER', '0') != '1',
     )
+
+
+if __name__ == '__main__':
+    run_web_app()

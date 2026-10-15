@@ -14,7 +14,7 @@ import pandas as pd
 FEATURE_CACHE_TABLE = 'model_feature_cache'
 FEATURE_CACHE_METADATA_TABLE = 'model_feature_cache_metadata'
 RNN_SEQUENCE_INDEX_TABLE = 'rnn_sequence_index'
-FEATURE_CACHE_SCHEMA_VERSION = 2
+FEATURE_CACHE_SCHEMA_VERSION = 3
 
 
 def canonical_player_gameweeks(rows: pd.DataFrame) -> pd.DataFrame:

@@ -77,12 +77,20 @@ class FplAccountSyncTests(unittest.TestCase):
     def test_sync_route_rejects_credentials(self):
         web.app.config['TESTING'] = True
         with web.app.test_client() as client:
-            response = client.post('/api/fpl-entry/sync', json={
+            password_response = client.post('/api/fpl-entry/sync', json={
                 'entry_id': 123,
                 'password': 'must-not-be-accepted',
             })
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Email/password and unknown fields are not accepted', response.get_json()['error'])
+            token_response = client.post('/api/fpl-entry/sync', json={
+                'entry_id': 123,
+                'access_token': 'must-not-be-accepted',
+            })
+        self.assertEqual(password_response.status_code, 400)
+        self.assertEqual(token_response.status_code, 400)
+        self.assertIn(
+            'Private credentials and unknown fields are not accepted',
+            password_response.get_json()['error'],
+        )
 
     def test_sync_route_rejects_non_json_and_cross_origin_requests(self):
         web.app.config['TESTING'] = True
@@ -103,30 +111,19 @@ class FplAccountSyncTests(unittest.TestCase):
         self.assertEqual(remote.status_code, 403)
         self.assertIn('localhost', remote.get_json()['error'])
 
-    def test_sync_route_uses_private_token_without_persisting_it(self):
+    def test_sync_route_imports_public_squad_and_estimates_free_transfers(self):
         public = {
             'entry_id': 123,
             'latest_event': 3,
             'squad_event': 3,
             'gameweeks': [{'event': 3}],
             'picks': [],
+            'next_free_transfers': 2,
         }
-        private = {
-            'picks': [
-                {
-                    'player_id': player_id,
-                    'pick_position': position,
-                    'is_captain': position == 1,
-                    'is_vice_captain': position == 2,
-                }
-                for position, player_id in enumerate(range(1, 16), start=1)
-            ],
-            'acquisition_costs': {},
-            'bank': 10,
-            'squad_value': 990,
-            'next_free_transfers': 1,
+        stored = {
+            'free_transfers': 2,
+            'official_entry': {'entry_id': 123, 'private': False},
         }
-        stored = {'official_entry': {'entry_id': 123, 'private': True}}
         captured = {}
 
         def build_state(synced, *args, **kwargs):
@@ -147,25 +144,45 @@ class FplAccountSyncTests(unittest.TestCase):
             }),
             patch.object(web, 'load_or_build_feature_cache', return_value=(pd.DataFrame(), {})),
             patch.object(web, 'score_checkpoint_snapshot', return_value=pd.DataFrame()),
-            patch.object(web, 'sync_public_entry', return_value=public),
-            patch.object(web, 'load_private_team', return_value=private) as load_private,
-            patch.object(web, 'load_event_player_points', return_value={}),
+            patch.object(web, 'sync_public_entry', return_value=public) as sync_public,
             patch.object(web, '_state_from_synced_entry', side_effect=build_state),
             patch.object(web, 'save_draft', return_value=stored) as save_draft,
         ):
             response = web.app.test_client().post('/api/fpl-entry/sync', json={
                 'entry_id': 123,
                 'model': 'xgboost',
-                'free_transfers': 1,
-                'access_token': 'temporary-secret-token',
             })
 
         self.assertEqual(response.status_code, 200)
-        load_private.assert_called_once_with(123, 'temporary-secret-token')
+        sync_public.assert_called_once_with(123, web.DB_FILE)
         save_draft.assert_called_once_with(stored)
-        self.assertTrue(captured['synced']['private'])
-        self.assertNotIn('temporary-secret-token', repr(captured['synced']))
-        self.assertNotIn('temporary-secret-token', response.get_data(as_text=True))
+        self.assertFalse(captured['synced'].get('private', False))
+        self.assertIn('Estimated 2 free transfers', response.get_json()['message'])
+
+    def test_web_launcher_opens_browser_and_starts_app(self):
+        with (
+            patch.object(web.threading, 'Timer') as timer,
+            patch.object(web.app, 'run') as app_run,
+            patch.dict(web.os.environ, {
+                'FLASK_DEBUG': '0',
+                'FPL_OPEN_BROWSER': '1',
+                'FPL_PORT': '5123',
+            }),
+        ):
+            web.run_web_app()
+
+        timer.assert_called_once_with(
+            1.0,
+            web.webbrowser.open,
+            args=('http://127.0.0.1:5123/generate-team',),
+            kwargs={'new': 2},
+        )
+        timer.return_value.start.assert_called_once_with()
+        app_run.assert_called_once_with(
+            debug=False,
+            port=5123,
+            use_reloader=False,
+        )
 
     @staticmethod
     def _response(payload):

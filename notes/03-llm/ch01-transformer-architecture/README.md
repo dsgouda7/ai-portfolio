@@ -4,7 +4,7 @@
 
 The foundation for all modern LLMs — from RNNs to transformers, attention mechanics (Q/K/V), positional encoding, and the three architectural families (encoder-only, decoder-only, encoder-decoder).
 
-> **Code companion:** the [three-notebook Transformer Foundations series](../../../learning/genai/01-transformers/README.md) builds the architecture in PyTorch using Riverside's `aria heard the signal aboard meridian` thread. The chapter prose explains *why*; the notebooks demonstrate *how*.
+> **Code companion:** the [Transformer Foundations series](../../../learning/04-transformers/README.md) builds the architecture in PyTorch using Riverside's `aria heard the signal aboard meridian` thread. The chapter prose explains *why*; the notebooks demonstrate *how*.
 
 ## Contents
 
@@ -24,15 +24,15 @@ The foundation for all modern LLMs — from RNNs to transformers, attention mech
 
 ## From-Scratch Code Companion
 
-The [Transformer Foundations series](../../../learning/genai/01-transformers/README.md) is the canonical executable companion. Its current structure is:
+The [Transformer Foundations series](../../../learning/04-transformers/README.md) is the canonical executable companion. Its current structure is:
 
 | Part | What it builds | Key technique |
 |------|---------------|---------------|
-| Substrate | [Tokenization and Embeddings](../../../learning/genai/01-transformers/01-tokenization-and-embeddings.ipynb) | Pieces, IDs, lookup rows, embedding gradients, and the ordering failure |
-| Attention | [Attention, Position, and RoPE](../../../learning/genai/01-transformers/02-attention-and-position.ipynb) | Q/K/V, scaled attention, additive position, RoPE, and routing evidence |
-| Reusable block | [The Complete Transformer Block](../../../learning/genai/01-transformers/03-transformer-block.ipynb) | Multi-head attention, FFN, normalization, residuals, logits, and backpropagation |
-| Decoder | [Decoder-Only Language Model](../../../learning/genai/01-transformers/04a-decoder-only-language-model-theory.ipynb) | Causal objective, aligned targets, autoregressive generation, and cache intuition |
-| Reader-writer | [Encoder-Decoder and Cross-Attention](../../../learning/genai/01-transformers/05a-encoder-decoder-and-cross-attention-theory.ipynb) | Source encoding, cross-attention, teacher forcing, and free-running generation |
+| Substrate | [Token Embeddings to Transformers](../../../learning/04-transformers/01-token-embeddings-to-transformers.ipynb) | Pieces, IDs, lookup rows, embedding gradients, and the ordering failure |
+| Attention | [Attention, Position, and RoPE](../../../learning/04-transformers/02-attention-and-position.ipynb) | Q/K/V, scaled attention, additive position, RoPE, and routing evidence |
+| Reusable block | [The Complete Transformer Block](../../../learning/04-transformers/03-complete-transformer-block.ipynb) | Multi-head attention, FFN, normalization, residuals, logits, and backpropagation |
+| Decoder | [Decoder-Only Language Model](../../../learning/04-transformers/04a-decoder-only-language-model-theory.ipynb) | Causal objective, aligned targets, autoregressive generation, and cache intuition |
+| Reader-writer | [Encoder-Decoder and Cross-Attention](../../../learning/04-transformers/05a-encoder-decoder-and-cross-attention-theory.ipynb) | Source encoding, cross-attention, teacher forcing, and free-running generation |
 
 **Pedagogical approach used throughout (the [Rigour Rubric](../../authoring-guidelines.md#20--rigour-rubric--the-nine-techniques-from-the-transformer-notebook)):**
 - One running example end-to-end: "the cat sat on the mat"
@@ -69,13 +69,13 @@ The [Transformer Foundations series](../../../learning/genai/01-transformers/REA
 
 ```bash
 # Option A: From-scratch Transformer series (PyTorch)
-code learning/genai/01-transformers/03-transformer-block.ipynb
+code learning/04-transformers/03-complete-transformer-block.ipynb
 
 # Option B: Pretrained-model exercise notebook (PyTorch + HuggingFace)
 code notes/03-llm/ch01-transformer-architecture/notebook-exercise.ipynb
 
 # Install the isolated environment for Option A
-cd learning/genai/01-transformers
+cd learning/04-transformers
 # Windows: .\setup.ps1
 # Linux/macOS: bash ./setup.sh
 

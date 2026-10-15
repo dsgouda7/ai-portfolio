@@ -86,7 +86,7 @@ acquisition. These are inspectable source properties, not deployed evidence.
 | Fine-tuning provenance | `checkpoints/` and the fine-tuning learning arc | Immutable release manifest references the unchanged experiment manifest | Serving must not rewrite a training manifest or promote an artifact because it exists. |
 | Governed ingestion and indexing | `projects/rag-knowledge-pipeline/` remote production path | Raw document, parsed document, chunk, and vector-index v1 records | Serving must not import ingestion implementation. |
 | Azure serving composition | `projects/riverside-ai-platform/` | Application API, deployment metadata, release report, and telemetry v1 contracts | Clients must not select physical deployments or supply authorization filters. |
-| Operational concepts | `learning/ai-infrastructure/09-azure-operational-llm-serving/` | Copied/generated fixtures and the same logical contracts | Notebook code is not production source; all 13 code cells executed successfully locally and were then cleared, producing `HOLD_LOCAL_RELEASE` and `HOLD_AZURE_PROMOTION` from p95 gates. Local results do not validate Azure behavior. |
+| Operational concepts | `learning/11-ai-infrastructure/10-azure-operational-llm-serving/` | Copied/generated fixtures and the same logical contracts | Notebook code is not production source; all 13 code cells executed successfully locally and were then cleared, producing `HOLD_LOCAL_RELEASE` and `HOLD_AZURE_PROMOTION` from p95 gates. Local results do not validate Azure behavior. |
 
 The RAG project preserves a local prototype that writes a local Delta table, builds
 a Chroma collection, and serves a Watsonx-bound `/query` API. It now also contains

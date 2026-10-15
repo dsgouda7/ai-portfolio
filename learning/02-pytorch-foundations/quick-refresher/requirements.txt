@@ -1,0 +1,5 @@
+torch>=2.2
+numpy>=1.24
+matplotlib>=3.7
+ipykernel>=6.25
+nbconvert>=7.10

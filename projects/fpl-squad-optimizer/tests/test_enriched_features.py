@@ -6,7 +6,11 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from utils import _add_fixture_strength_features, _add_temporal_context_features
+from utils import (
+    _add_fixture_strength_features,
+    _add_rolling_form_features,
+    _add_temporal_context_features,
+)
 
 
 class EnrichedFeatureTests(unittest.TestCase):
@@ -50,6 +54,42 @@ class EnrichedFeatureTests(unittest.TestCase):
             first[first['fixture'] == 11][columns].values.tolist(),
             second[second['fixture'] == 11][columns].values.tolist(),
         )
+
+    def test_double_gameweek_fixtures_share_pre_gameweek_market_features(self):
+        rows = pd.DataFrame([
+            {'id': 1, 'Game_Week': 0, 'kickoff_time': '2026-08-01T12:00:00Z',
+             'selected': 100, 'transfers_in': 10, 'transfers_out': 2,
+             'transfers_balance': 8, 'value': 50},
+            {'id': 1, 'Game_Week': 1, 'kickoff_time': '2026-08-08T12:00:00Z',
+             'selected': 120, 'transfers_in': 30, 'transfers_out': 5,
+             'transfers_balance': 25, 'value': 51},
+            {'id': 1, 'Game_Week': 1, 'kickoff_time': '2026-08-11T19:30:00Z',
+             'selected': 120, 'transfers_in': 30, 'transfers_out': 5,
+             'transfers_balance': 25, 'value': 51},
+        ])
+
+        enriched = _add_temporal_context_features(rows)
+        double_rows = enriched[enriched['Game_Week'] == 1]
+
+        self.assertEqual(double_rows['price_change_1'].tolist(), [1, 1])
+        self.assertEqual(
+            double_rows['ownership_change_log'].round(6).nunique(), 1
+        )
+        self.assertEqual(double_rows['rest_days'].tolist(), [7.0, 3.3125])
+
+    def test_double_gameweek_rows_do_not_leak_into_rolling_form(self):
+        rows = pd.DataFrame([
+            {'id': 1, 'Game_Week': 0, 'total_points': 2, 'minutes': 90},
+            {'id': 1, 'Game_Week': 0, 'total_points': 4, 'minutes': 90},
+            {'id': 1, 'Game_Week': 1, 'total_points': 0, 'minutes': 0},
+            {'id': 1, 'Game_Week': 1, 'total_points': 0, 'minutes': 0},
+        ])
+
+        enriched = _add_rolling_form_features(rows)
+        double_rows = enriched[enriched['Game_Week'] == 1]
+
+        self.assertEqual(double_rows['roll5_total_points'].tolist(), [6.0, 6.0])
+        self.assertEqual(double_rows['roll5_minutes'].tolist(), [180.0, 180.0])
 
 
 if __name__ == '__main__':
