@@ -19,7 +19,7 @@ Used in: README.md — Reader map: what changes in each Part
 
 ## 04-block-family-comparison.png
 
-Status: generated (MAI-Image-2.6)
+Status: generated (MAI-Image-2.6; regenerated after accuracy review)
 
 Used in: README.md — What is inside each block family?
 
@@ -27,14 +27,14 @@ Used in: README.md — What is inside each block family?
 > - **Target file:** `images/04-block-family-comparison.png`
 > - **Teaches:** The writer with a separate source has one extra place to look: cross-attention.
 > - **Aspect ratio:** 16:9
-> - **Prompt:** Draw three side-by-side vertical stacks in a clean hand-drawn whiteboard style. Encoder: source [3,1,4,1] into self-attention (all valid source positions) then FFN (private per-position refinement). Decoder-only: aria heard into causal self-attention (prefix only) then FFN. Encoder-decoder writer: target [BOS,1,4] into causal self-attention then cross-attention then FFN; a separate blue source-memory bank [3,1,4,1] feeds only cross-attention. Use blue input cards, orange visibility boundaries, and green processed states. Label residual paths and normalization omitted from this comparison, not absent.
-> - **Must show:** Exact operation order in all three stacks; fixed source memory enters cross-attention; future target positions blocked; residual/normalization omission caveat.
+> - **Prompt:** A clean hand-drawn whiteboard diagram on white, 16:9. Title: "Three block families". Subtitle: "residual paths and normalization omitted here, not absent". Three vertical stacks side by side, each read top to bottom with downward arrows only. Stack 1 titled "Encoder": blue card "source 3 1 4 1", down to orange box "self-attention (sees all source positions)", down to green box "feed-forward (each position alone)". Stack 2 titled "Decoder-only": blue card "aria heard", down to orange box "causal self-attention (earlier positions only)", down to green box "feed-forward (each position alone)". Stack 3 titled "Encoder-decoder writer": blue card "target so far: start 1 4", down to orange box "causal self-attention (earlier target positions only)", down to orange box "cross-attention (looks at source memory)", down to green box "feed-forward (each position alone)". To the right of stack 3, a dashed blue box "source memory 3 1 4 1 (fixed, from encoder)" with ONE arrow pointing left into the cross-attention box only. No arrow points into the source memory. Large, sparse, correctly spelled text; nothing else.
+> - **Must show:** Exact operation order in all three stacks; fixed source memory enters cross-attention only, with no arrow back into it; residual/normalization omission caveat.
 > - **Must not show:** invented numbers, unreadable text, decorative clutter, logos, copyrighted characters
 > - **Alt text:** Encoder and decoder-only blocks each have attention then a feed-forward step. A source-conditioned writer adds cross-attention between its causal self-attention and feed-forward step.
 
 ## 04-rope-in-real-path.png
 
-Status: generated (MAI-Image-2.6)
+Status: generated (MAI-Image-2.6; regenerated after accuracy review)
 
 Used in: 02-attention-and-position.ipynb — Before the dials: where the question and label come from
 
@@ -42,7 +42,7 @@ Used in: 02-attention-and-position.ipynb — Before the dials: where the questio
 > - **Target file:** `images/04-rope-in-real-path.png`
 > - **Teaches:** Position turns the question and matching label before scoring, not the information that is delivered.
 > - **Aspect ratio:** 16:9
-> - **Prompt:** Draw the actual attention path left to right with the sentence the cat sat on the mat as the input row. Blue token-state cards feed learned Q/K/V projections, then separate head lanes. Label Q what cat asks, K what each position advertises, V what each position delivers. Q and K pass through orange paired dials labelled rotate by position; V bypasses the dials. Q/K arrows meet at scaled scores, then masks, then softmax (weights that sum to one), then weighted values; the V bypass enters this final blend. Use clean hand-drawn whiteboard style with blue inputs, orange position and legal-route controls, and green retrieved output. Clearly mark the early dial lesson as a visual preview and Sections 4–5 as the full computation connection.
-> - **Must show:** States, learned Q/K/V, head split, Q/K-only rotation, scaled scores, masks before softmax, weighted V in exact order; an explicit unrotated V bypass; preview versus real-path labels.
+> - **Prompt:** A clean hand-drawn whiteboard flow diagram on white, 16:9, one single left-to-right pipeline, no second panel. Title: "Where position enters attention". Far left: a row of six small blue cards "the" "cat" "sat" "on" "the" "mat" labelled "token states". One arrow from them splits into three blue boxes stacked vertically: top "Q: what am I looking for?", middle "K: what do I offer?", bottom "V: what do I deliver?". Q and K each pass through their own orange round dial icon labelled "rotate by position". V has NO dial; its arrow runs straight along the bottom labelled "V is not rotated". The rotated Q and rotated K arrows both enter one orange box "compare -> scaled scores", then arrow to orange box "mask (no illegal routes)", then arrow to orange box "softmax (weights sum to 1)". The softmax arrow and the long bottom V arrow both enter one green box "weighted blend of V", then arrow to green box "output". V never touches scores, mask, or softmax. Large, sparse, correctly spelled text; no numbers; nothing else.
+> - **Must show:** Q and K rotate by position; V bypasses rotation and never touches scores, mask, or softmax; softmax weights and V meet only at the weighted blend.
 > - **Must not show:** invented numbers, unreadable text, decorative clutter, logos, copyrighted characters
-> - **Alt text:** Projected queries and keys split into heads and rotate before scaled, masked comparisons. The resulting weights blend unrotated values.
+> - **Alt text:** Token states become queries, keys, and values. Only queries and keys rotate by position before scaled, masked comparison and softmax; the resulting weights blend unrotated values.

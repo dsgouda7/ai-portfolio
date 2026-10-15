@@ -4,13 +4,13 @@ Generate these images manually when ready. Keep placeholders in the lesson until
 
 ## 03-first-use-concept-map.png
 
-Status: generated (MAI-Image-2.6)
+Status: generated (MAI-Image-2.6; regenerated after accuracy review)
 Used in: `../README.md` — Recommended reader route
 
 - **Target file:** `images/03-first-use-concept-map.png`
 - **Teaches:** each text-tensor idea appears only when the current task needs it, while its formal owner remains easy to find.
 - **Aspect ratio:** 16:9
-- **Prompt:** Draw a clean hand-drawn whiteboard route map in the Stage 03 palette. Follow the real example tokens `D3`, `A3`, `D4`, and `<pad>` from a short piano phrase into reusable token pieces, integer addresses, learned embedding rows, a padded batch, shifted next-token targets, and separate real-position and loss masks. Put each concept beside the first task that needs it: sequence-memory text lab, tokenization and embeddings chapter, and the later sequence objective. Add small arrows to the formal owner in Chapter 02. Use plain readable labels and show that an ID is an address, not a numeric measurement; do not imply every earlier numeric sequence task needs tokenization.
-- **Must show:** the six concepts in route order; labels using `D3`, `A3`, `D4`, and `<pad>`; a visible distinction between input-position and loss-target masks; a link/ownership cue to Chapter 02; no fabricated measurements.
+- **Prompt:** A clean hand-drawn whiteboard route diagram on white, 16:9. Title: "Text machinery appears when a task needs it". Five cards left to right joined by arrows. Card 1 "token pieces": shows "D3  A3  D4  F4" and note "one note = one token". Card 2 "integer IDs": shows "D3 -> id" and note "an ID is an address, not a size". Card 3 "learned rows": shows "id -> embedding row" and note "rows learned in training". Card 4 "shifted targets": two labelled lines "inputs:  D3 A3 D4" and "targets: A3 D4 F4" and note "predict the next note". Card 5 "padding and masks": shows a short row "D3 A3 <pad>" with note "pad = placeholder", then two small labelled tags "input mask: which positions are real" and "loss mask: which targets get graded". Above cards 1 to 5 a thin bracket labelled "first used in Chapter 01B sequence-memory lab". Below all cards a wide box "formally explained in Chapter 02: tokenization and embeddings" with dashed arrows up to each card. Small footnote bottom left: "numeric sequences in Chapter 01A need none of this". Large, sparse, correctly spelled text; nothing else.
+- **Must show:** Five concepts in route order using D3 A3 D4 F4; correct one-step shift (inputs D3 A3 D4, targets A3 D4 F4); separate input and loss masks; first use in Chapter 01B; formal home in Chapter 02; no measurements.
 - **Must not show:** invented numbers, unreadable text, decorative clutter, logos, copyrighted characters, or a claim that tokenization is required for numeric recurrence.
-- **Alt text:** A route map shows piano tokens becoming vocabulary addresses and learned rows, then padding, shifted targets, and distinct masks, with Chapter 02 marked as their formal home.
+- **Alt text:** Piano notes become token pieces, integer addresses, and learned rows, then shifted next-note targets, padding, and separate input and loss masks. All are first used in the Chapter 01B lab and formally explained in Chapter 02.

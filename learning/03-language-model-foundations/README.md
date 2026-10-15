@@ -24,7 +24,7 @@ are memory across a sequence and useful representations for discrete tokens.
 
 The [model-evolution route README](model-evolution/README.md) collects the three new, bounded comparisons and explains their handoffs. The [optional embedding-history branch](optional/embedding-history/README.md) is adjacent background, not a prerequisite for attention.
 
-![A route map shows piano tokens becoming vocabulary addresses and learned rows, then padding, shifted targets, and distinct masks, with Chapter 02 marked as their formal home.](images/03-first-use-concept-map.png)
+![Piano notes become token pieces, integer addresses, and learned rows, then shifted next-note targets, padding, and separate input and loss masks. All are first used in the Chapter 01B lab and formally explained in Chapter 02.](images/03-first-use-concept-map.png)
 *where token pieces, IDs, learned rows, padding, shifted targets, and masks first become necessary along the Stage 03 route.*
 
 

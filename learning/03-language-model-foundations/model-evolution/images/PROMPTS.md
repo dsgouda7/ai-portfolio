@@ -34,7 +34,7 @@ Used in: 01-counts-and-fixed-window-language-models.ipynb — The clue is one se
 
 ## 03-evo-03-fading-notecard.png
 
-Status: generated (MAI-Image-2.6)
+Status: generated (MAI-Image-2.6; regenerated after accuracy review)
 
 Used in: 02-fixed-windows-to-recurrent-language-models.ipynb — Keep the old failure in view
 
@@ -42,8 +42,8 @@ Used in: 02-fixed-windows-to-recurrent-language-models.ipynb — Keep the old fa
 > - **Target file:** `images/03-evo-03-fading-notecard.png`
 > - **Teaches:** A running note has a route beyond the window, but recall is not guaranteed.
 > - **Aspect ratio:** 16:9
-> - **Prompt:** Show two parallel handoffs reading red -> rest -> calmly -> now and blue -> rest -> calmly -> now. At every handoff show an orange card labelled carried state; words blue, warm/cool green. In a caution inset fade red ink over more handoffs, labelled possible forgetting, not measured result. Clean hand-drawn whiteboard style.
-> - **Must show:** Current word and previous note enter every update; no future word enters; fading inset labelled conceptual.
+> - **Prompt:** A clean hand-drawn whiteboard diagram on white, 16:9. Title: "A running note carries the clue past the window". Two horizontal rows. Top row: four word cards in order "red" "rest" "calmly" "now" along the bottom of the row; above them a chain of four orange note cards labelled "note 1" "note 2" "note 3" "note 4" joined left to right by arrows. Each word card has a short arrow pointing up into the note card directly above it, so every note is updated from the previous note plus the current word. After "note 4" an arrow to a green answer card "warm". Bottom row: identical layout with words "blue" "rest" "calmly" "now" and green answer "cool". The first word cards "red" and "blue" are the only difference between rows and are colored red and blue; the other words are black. Small dashed caution box at bottom right: four small orange cards with the word "red" written in fading ink, caption "possible forgetting, conceptual, not measured". Large, sparse, correctly spelled text; no numbers; nothing else.
+> - **Must show:** Each note is updated from the previous note plus the current word; answers warm and cool; only the first word differs between rows; fading inset labelled conceptual.
 > - **Must not show:** invented numbers, unreadable text, decorative clutter, logos, copyrighted characters
 > - **Alt text:** A recurrent reader passes a note between words. The note can carry the clue beyond a window but can also forget.
 
