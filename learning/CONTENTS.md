@@ -20,3 +20,8 @@ Follow the twelve stages in order, then combine their skills in a role track.
 ## Optional
 
 No optional lessons are listed in this directory.
+
+## Curriculum notes
+
+- [Restructuring plan](plan.md) — The additive plan for ordering concepts toward attention, with plain English first.
+- [Pedagogy evaluation](eval.md) — Novice and flow scores for every notebook, plus a ranked list of additive fixes.
