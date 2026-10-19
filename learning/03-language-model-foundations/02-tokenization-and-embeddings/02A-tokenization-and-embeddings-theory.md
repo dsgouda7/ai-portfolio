@@ -34,11 +34,42 @@ A vocabulary assigns each piece an integer ID. ID 500 is not five times ID 100. 
 
 `token ID -> one selected embedding row`
 
+### Are we fetching useful features, or just random numbers?
+
+In 02A, just random numbers. The NumPy table is created with `rng.normal`; it is not trained.
+Its neighbour-mixing example only proves that the same stored row can lead to different results
+after mixing. It does not demonstrate learned word meaning.
+
+02B creates a fresh random `nn.Embedding` table, then trains it along with a prediction layer.
+The GPT-2 tokenizer inspected earlier is a separate artifact: pretrained splitting rules and IDs,
+not pretrained embedding vectors. A random seed makes an initial draw repeatable, not learned.
+
+Why let the rows change? An ID is a name tag. A random row can identify a word too, but it
+doesn't deliberately give the prediction layers useful shared features. In 02B, `contract`
+and `agreement` must support the same answers, `binds` and `protects`. Adjusting the rows gives
+the model somewhere to organize features that help with that shared job. The predictor learns
+to read those features while the rows learn what is useful to offer it.
+
+We don't prescribe a column for "legalness", and matching answers don't require the whole vectors
+to converge: the predictor can ignore differences. Frozen random rows can also work, particularly
+on a tiny task with a strong enough predictor. Learning the table is another way to adapt the
+model, not a prerequisite for lookup. Better performance on new text must be measured, not
+inferred from changed rows or lower training loss.
+
+The important payoff is reuse across words. If `contract` and `agreement` learn useful shared
+features, something learned with one can help with the other in a similar setting. That is how
+embeddings can capture semantic relationships instead of leaving each word as an unrelated name
+tag. Their IDs and rows still differ; similarity is not equality. Context-based training can
+also put opposites such as `increase` and `decrease` near each other because they appear in
+similar surroundings. Nearby vectors aren't proof of synonymy, and a static row doesn't decide
+which meaning of a word is intended in a particular sentence.
+
 Training changes useful rows because prediction errors send gradients into the rows that participated. Similar use can create similar geometry, but an embedding map is evidence about the learned objective, not a complete explanation of meaning.
 
 `nn.Embedding` is therefore not a magic semantic database. It is a trainable table with sparse participation: IDs used in a lesson select rows, and those rows receive gradient through the downstream objective. Two words can move closer because they help predict the same targets. They can also stay far apart if the corpus or task never creates shared pressure.
 
-The 02C capstone removes one remaining convenience: prediction pairs no longer arrive by hand. A
+The [03A lesson](../03-language-models/03A-training-skeleton-and-word-objectives.ipynb)
+removes one remaining convenience: prediction pairs no longer arrive by hand. A
 sliding window first creates CBOW lessons, then reverses their direction for Skip-gram, and finally
 becomes a tiny source-target continuation. One `DataLoader` and fit contract stay visible while
 the input shape, model forward path, and target alignment change. This proves how ordinary text

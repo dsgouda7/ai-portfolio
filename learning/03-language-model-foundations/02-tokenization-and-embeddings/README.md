@@ -3,7 +3,8 @@
 **Contents:** [one-line map of this directory](CONTENTS.md)
 
 
-This required chapter keeps one legal-corpus example across three fresh-kernel notebooks.
+This required chapter keeps one legal-corpus example across two fresh-kernel notebooks.
+It owns tokenization and embedding basics, not the architectures that train complete language models.
 
 **Prerequisite route:** complete Stage 02, or use the
 [PyTorch Training Skeleton quick refresher](../../02-pytorch-foundations/quick-refresher/pytorch-training-skeleton.ipynb)
@@ -23,14 +24,20 @@ chapter now owns those contracts:
 
 1. [02A — Tokenization and Embeddings Theory](02A-tokenization-and-embeddings-theory.ipynb) makes BPE, token addresses, padding, and masking necessary before introducing APIs.
 2. [02B — Tokenization and Embeddings PyTorch Lab](02B-tokenization-and-embeddings-pytorch-lab.ipynb) implements the compact BPE loop, inspects GPT-2 `tiktoken`, trains `nn.Embedding`, and proves the masking loss contract.
-3. [02C — One Training Skeleton, Three Language Objectives](02C-context-windows-to-static-embeddings.ipynb) · [Theory notes](02C-context-windows-to-static-embeddings-theory.md) keeps one `DataLoader` and fit contract visible while CBOW, Skip-gram, and a tiny encoder-decoder change only the prediction job and target alignment.
-4. [Tokenization Theory Notes](02A-tokenization-and-embeddings-theory.md) is the concise handwritten companion for 02A.
+3. [Tokenization Theory Notes](02A-tokenization-and-embeddings-theory.md) is the concise handwritten companion for 02A.
+
+The former 02C lesson is preserved in full as
+[03A — Training Skeleton and Word Objectives](../03-language-models/03A-training-skeleton-and-word-objectives.ipynb)
+· [Theory notes](../03-language-models/03A-training-skeleton-and-word-objectives-theory.md).
+It now opens Chapter 03, where one `DataLoader` and inherited fit contract remain visible while
+CBOW, Skip-gram, recurrent models, and encoder-decoder models change the prediction job.
 
 Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS. The script creates this chapter's
 `.venv`, installs `requirements.txt`, and assigns the
 `stage03-language-model-02-tokenization` kernel.
 
-Continue to [Stage 04: Transformers](../../04-transformers/README.md).
+Continue to [Chapter 03: Language Models](../03-language-models/README.md), then
+[Stage 04: Transformers](../../04-transformers/README.md).
 
 ## Required Bounded Intervention
 

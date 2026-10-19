@@ -65,7 +65,7 @@ Every fix proposed here is additive. None asks to remove content from the Stage 
 | 1 | `01-ml-foundations/02-ml-basics/ml-basics.ipynb` | Defer all test-set reporting until model and threshold choices are final; align the scorecard and coverage ledger. |
 | 2 | `01-ml-foundations/03-neural-networks-and-backprop/01-smartval-…ipynb`, "Your turn: close one ReLU gate" | Recompute the forward and backward pass; print measured before/after gradients. |
 | 3 | `02-pytorch-foundations` framework translation, Ch 05, quick-refresher | Fix the three-class/two-class mismatch; qualify "resumable" at first use; correct the "CBOW is first" claim. |
-| 4 | `03-…/02C-context-windows-to-static-embeddings.ipynb` opening | Plain-English overview of the three tasks before the shape table; add a "focus here for model-evolution 03" cue. |
+| 4 | `03-…/03A-training-skeleton-and-word-objectives.ipynb` opening | Plain-English overview of the three tasks before the shape table; add a "focus here for model-evolution 03" cue. |
 | 5 | `03-…/optional/embedding-history/01-…ipynb` §2–3 | Add intuition and result interpretation before the Word2Vec/GloVe code. |
 | 6 | `04-transformers/focused/01-…-focused.ipynb` "Before the rotating dials" | Add the full attention-path reminder (Q/K rotate, V does not) and a "checked against canonical revision" note. |
 | 7 | `05-llm-training/01-pretraining-data-pipeline.ipynb` and theory | Replace "Notebook 08" with Part 3 (`03-pretrain-a-base-model-lab.ipynb`). |
@@ -127,10 +127,10 @@ Every fix proposed here is additive. None asks to remove content from the Stage 
 | [03-language-model-foundations/01-sequence-memory/01C-cinematic-piano-memory.ipynb](03-language-model-foundations/01-sequence-memory/01C-cinematic-piano-memory.ipynb) | 4 | 4 |
 | [03-language-model-foundations/02-tokenization-and-embeddings/02A-tokenization-and-embeddings-theory.ipynb](03-language-model-foundations/02-tokenization-and-embeddings/02A-tokenization-and-embeddings-theory.ipynb) | 4 | 4 |
 | [03-language-model-foundations/02-tokenization-and-embeddings/02B-tokenization-and-embeddings-pytorch-lab.ipynb](03-language-model-foundations/02-tokenization-and-embeddings/02B-tokenization-and-embeddings-pytorch-lab.ipynb) | 4.5 | 4.5 |
-| [03-language-model-foundations/02-tokenization-and-embeddings/02C-context-windows-to-static-embeddings.ipynb](03-language-model-foundations/02-tokenization-and-embeddings/02C-context-windows-to-static-embeddings.ipynb) | 3.5 | 3.5 |
-| [03-language-model-foundations/model-evolution/01-counts-and-fixed-window-language-models.ipynb](03-language-model-foundations/model-evolution/01-counts-and-fixed-window-language-models.ipynb) | 4.5 | 4.5 |
-| [03-language-model-foundations/model-evolution/02-fixed-windows-to-recurrent-language-models.ipynb](03-language-model-foundations/model-evolution/02-fixed-windows-to-recurrent-language-models.ipynb) | 4.5 | 4 |
-| [03-language-model-foundations/model-evolution/03-recurrent-encoder-decoder-to-attention.ipynb](03-language-model-foundations/model-evolution/03-recurrent-encoder-decoder-to-attention.ipynb) | 4 | 4.5 |
+| [03-language-model-foundations/03-language-models/03A-training-skeleton-and-word-objectives.ipynb](03-language-model-foundations/03-language-models/03A-training-skeleton-and-word-objectives.ipynb) | 3.5 | 3.5 |
+| [03-language-model-foundations/03-language-models/03B-counts-and-fixed-window-language-models.ipynb](03-language-model-foundations/03-language-models/03B-counts-and-fixed-window-language-models.ipynb) | 4.5 | 4.5 |
+| [03-language-model-foundations/03-language-models/03C-fixed-windows-to-recurrent-language-models.ipynb](03-language-model-foundations/03-language-models/03C-fixed-windows-to-recurrent-language-models.ipynb) | 4.5 | 4 |
+| [03-language-model-foundations/03-language-models/03D-recurrent-encoder-decoder-to-attention.ipynb](03-language-model-foundations/03-language-models/03D-recurrent-encoder-decoder-to-attention.ipynb) | 4 | 4.5 |
 | [03-language-model-foundations/optional/embedding-history/01-from-counts-to-static-geometry.ipynb](03-language-model-foundations/optional/embedding-history/01-from-counts-to-static-geometry.ipynb) | 3.5 | 3.5 |
 | [04-transformers/01-token-embeddings-to-transformers.ipynb](04-transformers/01-token-embeddings-to-transformers.ipynb) | 4 | 4 |
 | [04-transformers/02-attention-and-position.ipynb](04-transformers/02-attention-and-position.ipynb) | 4 | 4 |
@@ -365,19 +365,19 @@ The reviewers' unedited findings follow. Paths are relative to each stage direct
 - **Covers:** readable toy BPE, GPT-2 byte/token inspection and round-trip, embedding-row gradients, padding masks and `ignore_index` parity. “A compact BPE you can read in one minute” leads to the real tokenizer only after the toy mechanism.
 - **Issues:** No substantive correctness or ordering concern found. The merge-budget experiment is a meaningful one-variable test; output is explicitly scoped to the small legal corpus. Good handoff from 02A and into Transformer-specific contextual routing.
 
-##### `03-language-model-foundations/02-tokenization-and-embeddings/02C-context-windows-to-static-embeddings.ipynb` — novice score 3.5/5, flow score 3.5/5
+##### `03-language-model-foundations/03-language-models/03A-training-skeleton-and-word-objectives.ipynb` — novice score 3.5/5, flow score 3.5/5
 - **Covers:** CBOW, Skip-gram, a reusable loader/fit contract, then a GRU encoder-decoder with aligned sequence targets, teacher forcing, and greedy generation. It carefully distinguishes objectives, tensor shapes, static rows and the one-state source bottleneck.
 - **Issues [P1]:** The opening cell is a `[B, C, D, V, S, T]` shape table before the notebook title and conversational setup; this reverses the plain-intuition-first rule. The 50-cell route also asks readers to traverse vocabulary construction, loading, two Word2Vec objectives, embedding geometry/PCA, and seq2seq. Add an English-first “three different questions” orientation before the shape map and mark the encoder-decoder portion as the relevant bridge for readers approaching Notebook 3. This is an additive fix, not a reason to remove the existing material.
 
-##### `03-language-model-foundations/model-evolution/01-counts-and-fixed-window-language-models.ipynb` — novice score 4.5/5, flow score 4.5/5
+##### `03-language-model-foundations/03-language-models/03B-counts-and-fixed-window-language-models.ipynb` — novice score 4.5/5, flow score 4.5/5
 - **Covers:** next-word counts, ordered learned windows, then an identical-input/different-answer proof of the fixed boundary. The `red/blue … rest calmly now` construction makes the impossibility structural, not merely a low benchmark score.
 - **Issue [P2]:** The notebook introduces IDs and embedding rows inside “Give each position its own seat” before its code; that is a reasonable first use after Chapter 02, but one sentence distinguishing this next-token model from the later CBOW/Skip-gram objectives would clarify why this is a language model, not another static-vector lesson. The scope ledger and `visible_words` caveat are strong.
 
-##### `03-language-model-foundations/model-evolution/02-fixed-windows-to-recurrent-language-models.ipynb` — novice score 4.5/5, flow score 4/5
+##### `03-language-model-foundations/03-language-models/03C-fixed-windows-to-recurrent-language-models.ipynb` — novice score 4.5/5, flow score 4/5
 - **Covers:** reuses exactly the eight color-clue sentences, compares a three-token window with a running RNN state, records clue-sensitive state distances, then reconnects to LSTM/GRU memory without reteaching gates.
 - **Issue [P2]:** The fixed-window/RNN comparison has unequal parameter counts and differs in input access and update budget; the notebook discloses this, but put that caveat directly beside the accuracy comparison as well as in the prose. Two held-out sentences are explicitly called a tiny task, not a benchmark. Its conclusion correctly separates state difference from useful recall.
 
-##### `03-language-model-foundations/model-evolution/03-recurrent-encoder-decoder-to-attention.ipynb` — novice score 4/5, flow score 4.5/5
+##### `03-language-model-foundations/03-language-models/03D-recurrent-encoder-decoder-to-attention.ipynb` — novice score 4/5, flow score 4.5/5
 - **Covers:** an explicit task shift to integer reversal; teacher-forced versus free-running inputs; learned recurrent summary versus per-step attention over source states; per-length held-out scores and a diagnostic routing map. The transition from text is explained, and “attention” remains clearly recurrent here.
 - **Issue [P2]:** The first implementation calls GRU state a query and uses scaled dot products/softmax; definitions are present, but this is the densest novel jargon in the route. Add one concrete sentence before those names describing the writer’s need to “ask each source note which detail helps this digit.” Model capacity and non-universal results are honestly disclosed.
 

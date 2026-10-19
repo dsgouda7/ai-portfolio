@@ -1,10 +1,10 @@
 <#
 .SYNOPSIS
-    Creates the chapter-local environment for Stage 03 Language-Model Foundations Model Evolution.
+    Creates the chapter-local environment for Stage 03 Chapter 03 Language Models.
 
 .DESCRIPTION
     Creates or reuses `.venv` next to this script, installs every dependency
-    from the adjacent requirements.txt, registers the `stage03-language-model-evolution`
+    from the adjacent requirements.txt, registers the `stage03-language-model-03-models`
     Jupyter kernel, and assigns that kernel to every notebook in this chapter.
 
     Pass -SkipKernel to install dependencies without registering or assigning
@@ -19,8 +19,8 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Requirements = Join-Path $ScriptDir "requirements.txt"
 $VenvDir = Join-Path $ScriptDir ".venv"
 $VenvPython = Join-Path $VenvDir "Scripts\python.exe"
-$KernelName = "stage03-language-model-evolution"
-$KernelDisplayName = "Python (Stage 03 Language Models Model Evolution .venv)"
+$KernelName = "stage03-language-model-03-models"
+$KernelDisplayName = "Python (Stage 03 Chapter 03 Language Models .venv)"
 $KernelSetter = Join-Path $ScriptDir "..\..\..\scripts\set-notebook-kernel.py"
 
 $PythonCommand = Get-Command python -ErrorAction SilentlyContinue
@@ -65,6 +65,6 @@ if (-not $SkipKernel) {
 }
 
 Write-Host ""
-Write-Host "Setup complete for Stage 03 Language-Model Foundations Model Evolution." -ForegroundColor Green
+Write-Host "Setup complete for Stage 03 Chapter 03 Language Models." -ForegroundColor Green
 Write-Host "Virtual environment: $VenvDir"
 Write-Host "Jupyter kernel: $KernelDisplayName"

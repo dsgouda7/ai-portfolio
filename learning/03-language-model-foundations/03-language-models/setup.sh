@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Creates the chapter-local environment for Stage 03 Language-Model Foundations Model Evolution.
+# Creates the chapter-local environment for Stage 03 Chapter 03 Language Models.
 
 set -euo pipefail
 
@@ -7,8 +7,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REQUIREMENTS="$SCRIPT_DIR/requirements.txt"
 VENV_DIR="$SCRIPT_DIR/.venv"
 VENV_PYTHON="$VENV_DIR/bin/python"
-KERNEL_NAME="stage03-language-model-evolution"
-KERNEL_DISPLAY_NAME="Python (Stage 03 Language Models Model Evolution .venv)"
+KERNEL_NAME="stage03-language-model-03-models"
+KERNEL_DISPLAY_NAME="Python (Stage 03 Chapter 03 Language Models .venv)"
 KERNEL_SETTER="$SCRIPT_DIR/../../../scripts/set-notebook-kernel.py"
 SKIP_KERNEL=0
 
@@ -56,6 +56,6 @@ if [ "$SKIP_KERNEL" -eq 0 ]; then
 fi
 
 echo ""
-echo "Setup complete for Stage 03 Language-Model Foundations Model Evolution."
+echo "Setup complete for Stage 03 Chapter 03 Language Models."
 echo "Virtual environment: $VENV_DIR"
 echo "Jupyter kernel: $KERNEL_DISPLAY_NAME"

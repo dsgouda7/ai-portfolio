@@ -14,7 +14,7 @@ The first chapters use small sentences such as `the cat sat on the mat` because 
 
 ## Reader map: what changes in each Part
 
-**Coming from Stage 03:** If you already know how one component reads a source and another writes a target, the [model-evolution route](../03-language-model-foundations/model-evolution/README.md) is your bridge into this track. Keep those reader/writer roles; Part 5 opens their insides and replaces recurrent updates with Transformer blocks. Standalone readers still get the complete explanation here.
+**Coming from Stage 03:** If you already know how one component reads a source and another writes a target, the [model-evolution route](../03-language-model-foundations/03-language-models/README.md) is your bridge into this track. Keep those reader/writer roles; Part 5 opens their insides and replaces recurrent updates with Transformer blocks. Standalone readers still get the complete explanation here.
 
 | Part | The question it answers | Familiarity signpost |
 |---|---|---|

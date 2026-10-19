@@ -14,9 +14,9 @@ Answer these before taking the shortcut. For any **no**, use the linked explanat
 |---|---|
 | Why is a token ID an address rather than a numerical meaning? | [Canonical Part 1](../01-token-embeddings-to-transformers.ipynb) and [Stage 03 tokenization](../../03-language-model-foundations/02-tokenization-and-embeddings/README.md) |
 | How does an ID retrieve a trainable vector row, and how can loss change it? | [Canonical Part 1](../01-token-embeddings-to-transformers.ipynb) |
-| What does a recurrent state remember, and why can a single summary make source details hard to access? | [Stage 03 sequence memory](../../03-language-model-foundations/01-sequence-memory/README.md) and [model evolution](../../03-language-model-foundations/model-evolution/README.md) |
-| Why might a reader process a complete source before a writer makes a separate answer? | [Existing seq2seq foundations](../../03-language-model-foundations/02-tokenization-and-embeddings/02C-context-windows-to-static-embeddings.ipynb) |
-| During practice, why is the correct previous target allowed but the current answer forbidden? What changes during generation? | [Stage 03 model evolution](../../03-language-model-foundations/model-evolution/README.md) and [canonical Part 4A](../04a-decoder-only-language-model-theory.ipynb) |
+| What does a recurrent state remember, and why can a single summary make source details hard to access? | [Stage 03 sequence memory](../../03-language-model-foundations/01-sequence-memory/README.md) and [model evolution](../../03-language-model-foundations/03-language-models/README.md) |
+| Why might a reader process a complete source before a writer makes a separate answer? | [Existing seq2seq foundations](../../03-language-model-foundations/03-language-models/03A-training-skeleton-and-word-objectives.ipynb) |
+| During practice, why is the correct previous target allowed but the current answer forbidden? What changes during generation? | [Stage 03 model evolution](../../03-language-model-foundations/03-language-models/README.md) and [canonical Part 4A](../04a-decoder-only-language-model-theory.ipynb) |
 | Can you follow tensor shapes, a loss, and a backward pass in PyTorch? | [Training skeleton refresher](../../02-pytorch-foundations/quick-refresher/pytorch-training-skeleton.ipynb) |
 
 ## Route
