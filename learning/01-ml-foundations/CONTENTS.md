@@ -10,4 +10,4 @@ Build the conceptual contracts that later training code relies on.
 
 ## Optional
 
-No optional lessons are listed in this directory.
+- [Audible Backpropagation Capstone](03-neural-networks-and-backprop/optional/README.md) — After Chapter 03, hear the same responsibility chain restore four synthesizer controls. Not required for Stage 02.

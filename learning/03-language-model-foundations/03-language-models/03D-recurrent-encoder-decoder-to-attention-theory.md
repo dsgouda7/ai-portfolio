@@ -53,6 +53,8 @@ Sequence accuracy requires every predicted token, including end, to match. One w
 
 In the recorded run, the mean free-running sequence accuracy over the seven length buckets is 75.0% for one card and about 94.6% for look-back. At length eight, the corresponding scores are 17.5% and 87.5%. At length four, the fixed-summary score is slightly higher: 97.5% against 95.0%. Looking back helped in this run. It didn't win at every length.
 
+The look-back model also has more weights, so this isn't attention alone.
+
 Practice and generation have identical exact-sequence scores here. That is not evidence that their histories are identical. After the first wrong prediction, the whole row already fails either exact score. Token accuracy reveals later differences: at length eight, one-card practice reaches about 85.3% while free-running reaches about 71.7%.
 
 Generation uses the known source length only as a step budget that includes end. A correct answer must place end exactly after the reversed digits. An early end fails; later steps cannot rescue that row.

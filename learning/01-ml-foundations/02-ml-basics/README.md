@@ -1,36 +1,18 @@
 # ML Contracts
 
-**Contents:** [one-line map of this directory](CONTENTS.md)
+**Start:** [ML Contracts: Evidence Before Optimization](ml-basics.ipynb).
+One SmartVal dataset separates fair tests, loss, metrics, thresholds, and generalization.
+Theory and scikit-learn experiments are together in the notebook.
 
-
-
-This condensed foundation chapter uses one SmartVal dataset to separate the contracts that are
-often blurred together:
-
-- train, validation, and test evidence;
-- regression loss versus human-readable metrics;
-- probability versus thresholded decisions;
-- training fit versus held-out generalization.
-
-## Required Notebook
-
-- [ML Contracts: Evidence Before Optimization](ml-basics.ipynb)
-
-The notebook uses one compact scikit-learn implementation. PyTorch mechanics are deliberately
-deferred to [Stage 02: PyTorch Foundations](../../02-pytorch-foundations/README.md).
+**Before this:** [Math Foundations](../01-math-foundations/README.md).
+**Contents:** [lesson map](CONTENTS.md).
 
 ## Setup
 
-- Windows: `./setup.ps1`
+- Windows: `.\setup.ps1`
 - Linux or macOS: `bash ./setup.sh`
 
-## Handoff
+Use the `stage01-ml-basics` kernel. Framework training loops wait until Stage 02.
 
-Continue to [SmartVal: Why Hidden Layers and Backpropagation Exist](../03-neural-networks-and-backprop/01-smartval-neural-networks-and-backprop.ipynb).
-
-## Required Bounded Intervention
-
-Run **“Your turn: change one decision, not the whole experiment”** in
-[`ml-basics.ipynb`](ml-basics.ipynb). Predict the precision/recall direction, change only
-`YOUR_THRESHOLD`, measure both metrics before and after, diagnose the trade-off, and explain whether
-the result supports the claim that a threshold changes decisions without retraining the model.
+**Next:** [SmartVal: Why Hidden Layers and Backpropagation Exist](../03-neural-networks-and-backprop/01-smartval-neural-networks-and-backprop.ipynb).
+Fair evidence helps judge a model; it cannot make a straight boundary express XOR.

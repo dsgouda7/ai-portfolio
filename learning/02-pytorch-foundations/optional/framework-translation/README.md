@@ -1,21 +1,11 @@
 # Optional Framework Translation
 
-**Contents:** [one-line map of this directory](CONTENTS.md)
+Already know Keras? Translate its layers, weight layouts, gradients, and training loop using
+penguin measurements and species labels. This is optional, not the next required chapter.
 
+- [Notebook](01-keras-to-pytorch-antarctic-field-guide.ipynb) · [Contents](CONTENTS.md)
+- Setup from this directory: [Windows](setup.ps1) (`.\setup.ps1`) or [Linux/macOS](setup.sh) (`bash ./setup.sh`).
+- Return to [Stage 02](../../README.md).
 
-
-[Keras to PyTorch: Antarctic Field Guide](01-keras-to-pytorch-antarctic-field-guide.ipynb)
-preserves the framework-translation evidence from the former required route:
-
-- Keras/PyTorch vocabulary;
-- dense-layer weight-layout parity;
-- `GradientTape` versus autograd;
-- `fit()` versus the explicit PyTorch loop;
-- evaluation-mode differences.
-
-Use it only when translating existing Keras knowledge. The canonical route is
-[Stage 02: PyTorch Foundations](../../01-deep-learning-map/).
-
-This optional branch was extracted from the former
-`learning/genai-prerequisites/03-pytorch-fundamentals/optional` directory. Its notebook,
-five visual assets, dependency manifest, and setup scripts moved together.
+Keras snippets are reference-only. The runnable cells use PyTorch and bundled data.
+Rows reused to choose settings are validation, not an untouched final test.

@@ -1,131 +1,73 @@
-# Chapter 03: Language Models - From Learned Rows to Attention
+# Chapter 03: Language Models — From Learned Rows to Attention
 
-**Contents:** [one-line map of this directory](CONTENTS.md)
+**Contents:** [directory map](CONTENTS.md)
 
-You can fetch a word's embedding row. You can train a network. Now put those skills together:
-**what should we ask the model to guess, and what does it need to see to get the answer right?**
+You can fetch an embedding row and train a network. **What should it guess, and what does it
+need to see to get the answer right?** Keep that question while the training loop stays familiar.
 
-[Chapter 02](../02-tokenization-and-embeddings/README.md) explains pieces, IDs, and embedding
-rows. Its 02A and 02B lessons stay unchanged. Here we make practice questions from text, train
-the rows along with the predictor, and find the limits of each model. That gives us a reason
-to want the attention and position machinery in [Stage 04](../../04-transformers/README.md).
+## Before you start
 
-The former 02C and all three model-evolution lessons are here in full, with their experiments,
-exercises, pictures, and theory notes. The LSTM example and shared-loop demonstrations build
-on them rather than replacing them.
+Use [Stage 02](../../02-pytorch-foundations/README.md) for tensors and optimization,
+[Chapter 01](../01-sequence-memory/README.md) for recurrent memory, and
+[Chapter 02](../02-tokenization-and-embeddings/README.md) for pieces, IDs, and learned rows.
 
-We keep the legal phrases for 03A. Then we switch to eight color-clue sentences: you can see
-exactly which word decides the answer and whether the model gets to read it. Those sentences
-stay the same in 03C. In 03D, reversing digits gives the reader and writer separate jobs and
-lets us check exactly where each answer digit came from.
+From this directory, run [`setup.ps1`](setup.ps1) on Windows or [`setup.sh`](setup.sh) on
+Linux/macOS. The scripts create a local `.venv`, install [requirements](requirements.txt),
+and assign kernel `stage03-language-model-03-models` (Python 3.10+).
+Select that kernel, restart, and run each notebook independently; kernels don't share state.
+03A needs internet for its first TinyStories download, then reuses its checked local cache.
+03B–03D use local, generated examples and one CPU thread.
 
-## A few pictures to keep in your head
+## Read in order
 
-- **Rows you fetch:** a token ID is an address. The embedding row is the numbers stored there,
-  not a little dictionary definition.
-- **Seats that keep order:** a fixed window puts retrieved rows in separate positions.
-  Averaging those rows loses the seat numbers.
-- **A note you carry:** recurrence updates a hidden-state vector after each token. Unlike a
-  stored word row, the note depends on what has been read so far.
-- **A reader and a writer:** the encoder reads; the decoder writes. The final note handed over
-  is the **summary card**. Attention lets the writer consult the earlier saved notes too.
-
-These pictures explain different jobs, not different kinds of intelligence. The actual rows,
-notes, and queries are all vectors of numbers learned through training.
-
-## Reader route
-
-| Read | What you can explain afterward | Handwritten notes | Code-only view |
+| Notebook | The next complaint | Handwritten notes | Code-only view |
 |---|---|---|---|
-| [03A. Training skeleton and word objectives](03A-training-skeleton-and-word-objectives.ipynb) | How CBOW and Skip-gram train rows jointly with a predictor, and how the same loop handles a sequence-shaped answer | [Theory](03A-training-skeleton-and-word-objectives-theory.md) | [Python](03A-training-skeleton-and-word-objectives.py) |
-| [03B. Counts and fixed windows](03B-counts-and-fixed-window-language-models.ipynb) | Why identical windows force identical predictions, even with learned ordered features | [Theory](03B-counts-and-fixed-window-language-models-theory.md) | [Python](03B-counts-and-fixed-window-language-models.py) |
-| [03C. Fixed windows to recurrent language models](03C-fixed-windows-to-recurrent-language-models.ipynb) | How RNN/LSTM state carries history, shifted targets train next-token prediction, and embeddings learn through the inherited loop | [Theory](03C-fixed-windows-to-recurrent-language-models-theory.md) | [Python](03C-fixed-windows-to-recurrent-language-models.py) |
-| [03D. Recurrent reader/writer to attention](03D-recurrent-encoder-decoder-to-attention.ipynb) | Why one learned card differs from looking back, and generation needs its own test | [Theory](03D-recurrent-encoder-decoder-to-attention-theory.md) | [Python](03D-recurrent-encoder-decoder-to-attention.py) |
+| [03A. Training skeleton and word objectives](03A-training-skeleton-and-word-objectives.ipynb) | Lookup gives you rows, but what teaches them? Make practice questions from text and train rows with the predictor | [Theory](03A-training-skeleton-and-word-objectives-theory.md) | [Python](03A-training-skeleton-and-word-objectives.py) |
+| [03B. Counts and fixed windows](03B-counts-and-fixed-window-language-models.ipynb) | Ordered seats preserve word order, but a clue outside the window is still invisible | [Theory](03B-counts-and-fixed-window-language-models-theory.md) | [Python](03B-counts-and-fixed-window-language-models.py) |
+| [03C. Fixed windows to recurrent models](03C-fixed-windows-to-recurrent-language-models.ipynb) | A running note can carry the clue; RNN and LSTM memory still have limits | [Theory](03C-fixed-windows-to-recurrent-language-models-theory.md) | [Python](03C-fixed-windows-to-recurrent-language-models.py) |
+| [03D. Recurrent reader/writer to attention](03D-recurrent-encoder-decoder-to-attention.ipynb) | One final summary may not be enough; let the writer consult earlier source notes | [Theory](03D-recurrent-encoder-decoder-to-attention-theory.md) | [Python](03D-recurrent-encoder-decoder-to-attention.py) |
 
-### Why 03A still contains an encoder-decoder
+03A starts learning from a small sample of children's stories from
+[TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories), with a separate familiar
+cat document for the close-up examples. Its [helper](real_text_embeddings.py) downloads and
+checks the pinned corpus, builds practice pairs, and records the embedding comparison.
+Read the notebook's printed budget and measured losses rather than treating a tiny CPU run
+as a model-quality benchmark. The later held-out comparison trains fresh models separately
+and keeps the limits visible. The full notebook took about 3–5 minutes on the authoring CPU;
+your machine may differ.
 
-It's a quick peek at where we're going: ask for several answer words and see whether the same
-training loop still works. You don't need to master that architecture yet.
-Read 03B and 03C next. In 03D, slow down the reader/writer handoff and test whether looking back
-helps. You won't need to return to Chapter 02 to find the architecture lesson.
+Then we switch to eight color-clue sentences in 03B–03C: you can see exactly which word
+decides the answer and whether the model can read it. In 03D, reversing digits gives the
+reader and writer separate jobs and known source positions to check.
+These are deliberate diagnostic tasks, not competing text corpora.
 
-### Find the code without the notebook narration
+## Keep the code handy
 
-Want just the code? Each notebook has a `.py` file with the same name and short `# %%` sections.
-These are ordinary Python files, not scripts that secretly load the notebooks. You get the
-experiments, plots, things to change, and checks without the lesson prose.
-Run any one on its own in the chapter environment:
+The same-stem `.py` files are ordinary scripts with `# %%` sections. For example:
 
 ```powershell
 .\.venv\Scripts\python.exe .\03C-fixed-windows-to-recurrent-language-models.py
 ```
 
-Plots use the selected Matplotlib backend. For noninteractive execution, set `MPLBACKEND=Agg`;
-the notebooks remain the intended view for inline plots and HTML animations.
+Set `MPLBACKEND=Agg` for noninteractive plots. The notebooks remain the best view for inline
+figures and HTML animations. Saved notebooks have no outputs; run them to see the measurements.
 
-The shared [TrainableLanguageModel](language_model.py) keeps the practice routine in one place:
-`fit_language_model` runs the loop, `training_loss` calculates the loss, and `targets_for_loss`
-selects the answers to grade. 03A shows that small class inline so you can read it; its Python
-companion imports the matching version. The added RNN/LSTM model in 03C and reader/writer wrapper
-in 03D import it too. The original comparison experiments keep their own sampling and clipping
-loops. The wrapper shows another way to connect the model, not a replacement experiment.
+The shared [training base](language_model.py) keeps `fit_language_model → training_loss →
+forward → loss → backward → step` in one place. 03A shows it inline, 03C reuses it for
+RNN/LSTM prediction, and 03D connects a reader/writer through a small wrapper.
+The original comparison loops stay visible too; the wrapper doesn't replace their experiments.
 
-```text
-TrainableLanguageModel.fit_language_model
--> self.training_loss
--> subclass forward -> model-specific logits
--> subclass/default targets_for_loss
--> cross-entropy -> backward -> optimizer step
-```
+The [03A illustration manifest](images/03a-illustration-prompts.json) and
+[generator](generate_illustrations.py) are only for rebuilding the intuition sketches.
+Running the lessons doesn't call the image generator; running it separately uses Azure
+CLI sign-in and incurs the deployment's normal charges.
 
-Keep the guessing jobs separate: CBOW fills a gap, an LSTM continues a stream,
-and an encoder-decoder writes an answer based on a separate source.
+## What comes next
 
-## The route is not a leaderboard
+This route isn't a leaderboard or a mandatory family tree. The look-back model also has more
+weights, so its result isn't attention alone. Practice gets correct earlier answers;
+generation must live with its own guesses. Check both.
 
-![Counts lead to a bounded window, a running note, and a reader and writer. Looking back removes a source-access restriction.](images/03-evo-01-model-evolution-map.png)
-*A route of complaints, not a ranking of newer models.*
-
-
-This is a learning route, not a family tree. LSTM gives the running note more control over
-what to keep; you don't have to pass through LSTM to use attention. Attention also existed
-before Transformers. "Encoder" and "decoder" name the reading and writing jobs, not a particular
-layer. CBOW and Skip-gram help us watch word rows learn; they aren't compulsory ancestors of
-a Transformer. Convolutional sequence models offer another route, which we leave for later.
-
-## Prerequisites and setup
-
-Use [Stage 02](../../02-pytorch-foundations/README.md) for tensors and optimization.
-Use [sequence memory](../01-sequence-memory/README.md) for running notes and LSTM gates.
-[Tokenization and embeddings](../02-tokenization-and-embeddings/README.md) explains token
-pieces, addresses, and learned rows. Each notebook briefly reminds you of what it needs.
-Before 03D, revisit the reader/writer preview in
-[03A](03A-training-skeleton-and-word-objectives.ipynb) if the source/target distinction is unclear.
-
-Run `./setup.ps1` in PowerShell or `bash setup.sh` on Linux/macOS from this directory.
-The scripts are adapted from sequence-memory. They create a local `.venv`, install
-[requirements](requirements.txt), and assign kernel `stage03-language-model-03-models`, displayed
-as `Python (Stage 03 Chapter 03 Language Models .venv)`. Python 3.10+ is required.
-Select that kernel, restart, and Run All for each notebook independently.
-No downloaded models, data, checkpoints, internet calls, or shared notebook state are needed.
-The model-evolution experiments use one CPU thread and small tensors to keep runs bounded.
-
-The saved notebooks have no outputs. Run them and read what actually happened; the takeaways
-follow the measured results. We show the data splits and different weight counts so the
-comparisons don't promise more than they tested. Reversal uses new sequences at familiar lengths,
-not longer sequences than the models saw in training. Static pictures and plots keep the lesson
-readable even when HTML animations aren't available.
-
-## Try one change at a time
-
-Predict whether `visible_words = 4` reveals color in 03B, then change only that variable.
-Explain why revealing a clue is not fitting a four-word model. In 03C, change only
-`clue_word`. In 03D, change only the first source digit and compare free-running output
-with its expected reversal.
-
-## Handoff
-
-Keeping a better note isn't the whole answer. The writer needs access to earlier notes,
-and the recurrent reader still works one token at a time. Continue to the self-contained
-[Stage 04 route](../../04-transformers/README.md):
-**what if we drop recurrence and let attention do all the reading?**
+The writer can now look back, but the reader still works one token at a time.
+Continue to [Stage 04 — Transformers](../../04-transformers/README.md):
+**what if attention does the reading too?**

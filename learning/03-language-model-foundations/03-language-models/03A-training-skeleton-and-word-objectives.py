@@ -1,9 +1,11 @@
 """Code companion for 03A-training-skeleton-and-word-objectives.ipynb. Run from this directory."""
 
-# %% 1 - Keep the corpus small enough to inspect
+# %% 1 - Read real stories; append one familiar probe document
 import math
-import re
+import sys
+import time
 from collections import Counter
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,26 +14,34 @@ import torch.nn as nn
 from numpy.lib.stride_tricks import sliding_window_view
 from torch.utils.data import DataLoader, TensorDataset
 
+# A notebook kernel may start at the repository root; scripts already know their own path.
+CHAPTER_DIRECTORY = (
+    Path(__file__).resolve().parent if "__file__" in globals() else
+    next(candidate for candidate in (
+        Path.cwd(), Path.cwd() / "learning" / "03-language-model-foundations" / "03-language-models",
+    ) if (candidate / "real_text_embeddings.py").is_file())
+)
+if str(CHAPTER_DIRECTORY) not in sys.path:
+    sys.path.insert(0, str(CHAPTER_DIRECTORY))
+from real_text_embeddings import read_story_sentences, tokenize
+
 SEED = 17
 torch.manual_seed(SEED)
 np.random.seed(SEED)
+torch.set_num_threads(1)
+notebook_started = time.perf_counter()
 
-LEGAL_CORPUS = [
-    "the non-disclosure agreement protects confidential information",
-    "the contract protects confidential records",
-    "the agreement lists payment obligations",
-    "a non-disclosure clause limits disclosure",
-    "the contract and agreement bind the company",
-]
-
-
-def tokenize(text):
-    return re.findall(r"[a-z-]+", text.lower())
-
-
-documents = [tokenize(text) for text in LEGAL_CORPUS]
+INTRO_STORIES = 1_000
+CAT_PROBE = "the sleepy cat sat on the mat"
+real_documents = read_story_sentences(INTRO_STORIES)
+# One independent document at the END, not copies inserted among the stories.
+documents = real_documents + [tokenize(CAT_PROBE)]
+assert documents[-1] == tokenize(CAT_PROBE)
+assert sum(document == tokenize(CAT_PROBE) for document in documents) == 1
+print(f"Real source: first {INTRO_STORIES:,} pinned Hugging Face TinyStories stories")
 print(f"Documents: {len(documents)}")
 print("First tokenized document:", documents[0])
+print("Last document (appended exactly once):", documents[-1])
 
 # %% 2 - A vocabulary turns repeated strings into stable addresses
 items = []
@@ -40,7 +50,9 @@ for document in documents:
         items.append(word)
 
 counts = Counter(items)
-itos = ["<unk>"] + [word for word, _ in counts.most_common()]
+itos = ["<unk>"] + [word for word, _ in counts.most_common(1_199)]
+# Rare mat still needs an address to be probed. This adds no examples or weight.
+itos += [word for word in dict.fromkeys(tokenize(CAT_PROBE)) if word not in itos]
 stoi = {word: index for index, word in enumerate(itos)}
 vocabulary_size = len(itos)
 
@@ -51,6 +63,8 @@ id_documents = [
 
 print(f"Tokens counted: {len(items)}")
 print(f"Vocabulary size: {vocabulary_size}")
+print("Cat-probe word counts (not weights):",
+      {word: counts[word] for word in dict.fromkeys(tokenize(CAT_PROBE))})
 print("First 10 index-to-string entries:", itos[:10])
 print("First encoded document:", id_documents[0])
 assert all(itos[index] == word for word, index in stoi.items())
@@ -65,59 +79,98 @@ per_document_windows = [
     if len(ids) >= window_width
 ]
 windows = np.concatenate(per_document_windows)
-windows = windows[~(windows == stoi["<unk>"]).any(axis=1)]
+# Keep rare-word slots as <unk>; do not discard or reweight any document's windows.
+assert len(windows) == sum(max(0, len(ids) - window_width + 1) for ids in id_documents)
+assert np.array_equal(windows[-3:], per_document_windows[-1])
 
 print(f"Window width: {window_width}")
 print(f"All windows shape: {windows.shape}")
+print(f"Unknown window slots: {(windows == 0).mean():.1%}")
 for row in windows[:4]:
     print([itos[index] for index in row])
 
-# %% Separate what the model sees from what it must predict
-contexts = torch.tensor(
-    np.delete(windows, CONTEXT_RADIUS, axis=1),
-    dtype=torch.long,
-)
-targets = torch.tensor(windows[:, CONTEXT_RADIUS], dtype=torch.long)
+# Shared raw material, not a CBOW question/answer split.
+window_ids = torch.tensor(windows, dtype=torch.long)
+# [all windows, 5] -> [3, 5]: the appended document supplies three adjacent probes.
+cat_window_ids = window_ids[-3:]
+assert window_ids.shape == (len(windows), window_width)
 
-print("Complete windows:", windows.shape)
-print("Context tensor:", tuple(contexts.shape))
-print("Target tensor:", tuple(targets.shape))
-print(
-    "First lesson:",
-    [itos[index] for index in contexts[0].tolist()],
-    "->",
-    itos[targets[0]],
-)
-
-assert contexts.shape == (len(windows), 2 * CONTEXT_RADIUS)
-assert targets.shape == (len(windows),)
 
 # %% 4 - DataLoader changes delivery, not meaning
-def make_dataloader(input_ids, target_ids, batch_size=None):
+def make_dataloader(input_ids, target_ids, batch_size=512):
     dataset = TensorDataset(input_ids, target_ids)
     return DataLoader(
         dataset,
-        batch_size=batch_size or len(dataset),
+        batch_size=batch_size,
         shuffle=True,
         generator=torch.Generator().manual_seed(SEED),
     )
 
 
-dataloader = make_dataloader(contexts, targets)
-batch_contexts, batch_targets = next(iter(dataloader))
+# %% 5 - See the rows before the shape letters
+toy_table = torch.tensor([[2.0, 0.0], [1.0, 3.0], [0.0, 4.0]])
+toy_ids = torch.tensor([[0, 2], [2, 0]])
+toy_rows = torch.nn.functional.embedding(toy_ids, toy_table)
+# [2 questions, 2 words, 2 numbers] -> [2, 2]: combine words WITHIN each question.
+toy_averages = toy_rows.mean(dim=1)
 
-print("Batch contexts:", tuple(batch_contexts.shape))
-print("Batch targets:", tuple(batch_targets.shape))
-print("First batch target:", itos[batch_targets[0]])
-assert len(batch_contexts) == len(batch_targets)
+print("Two questions, two visible word IDs each:\n", toy_ids)
+print("One two-number row for each visible word:\n", toy_rows)
+print("One averaged row per question:\n", toy_averages)
+assert toy_rows.shape == (2, 2, 2)
+assert torch.equal(toy_averages, torch.tensor([[1.0, 2.0], [1.0, 2.0]]))
 
-# %% 5 - Crude attempt: give every context word an equal vote
-EMBEDDING_WIDTH = 12
+toy_figure, toy_axes = plt.subplots(1, 3, figsize=(14, 5))
+toy_panels = [
+    (
+        "1. One shared lookup table\n3 words, 2 numbers per word",
+        ["Word (ID)", "Number 1", "Number 2"],
+        [["the (0)", 2, 0], ["cat (1)", 1, 3], ["sat (2)", 0, 4]],
+    ),
+    (
+        "2. Fetch rows for each question\n2 questions, 2 words each, 2 numbers each",
+        ["Question / visible word", "Number 1", "Number 2"],
+        [["A: the", 2, 0], ["A: sat", 0, 4],
+         ["B: sat", 0, 4], ["B: the", 2, 0]],
+    ),
+    (
+        "3. Average within EACH question\n2 questions, 2 numbers per question",
+        ["Question", "Number 1", "Number 2"],
+        [["A", *toy_averages[0].tolist()], ["B", *toy_averages[1].tolist()]],
+    ),
+]
+for toy_axis, (title, columns, cells) in zip(toy_axes, toy_panels):
+    toy_axis.axis("off")
+    toy_axis.set_title(title, fontsize=10, pad=18)
+    table = toy_axis.table(cellText=cells, colLabels=columns, loc="center",
+                           cellLoc="center", colWidths=[0.56, 0.22, 0.22])
+    table.auto_set_font_size(False)
+    table.set_fontsize(9)
+    table.scale(1, 2.4)
+    for (row, column), cell in table.get_celld().items():
+        cell.set_facecolor("#dff2ef" if row else "#b9ddd9")
+toy_figure.suptitle("A: the ___ sat     |     B: sat ___ the\n"
+                   "Different order goes in. The same average comes out.", fontsize=13)
+toy_figure.text(0.5, 0.05, "Made-up teaching numbers. "
+                "No averaging between questions. No training in this picture.", ha="center")
+toy_figure.tight_layout(rect=(0, 0.1, 1, 0.85))
+toy_directory = CHAPTER_DIRECTORY
+toy_figure.savefig(toy_directory / "images" / "03a-lookup-tensor-structure.png", dpi=130)
+plt.show()
+plt.close(toy_figure)
+
+# %% Crude attempt: give every context word an equal vote
+EMBEDDING_WIDTH = 32
 probe_embedding = nn.Embedding(vocabulary_size, EMBEDDING_WIDTH)
 
-one_context = contexts[:1]
+# [N, 5] -> [3, 4]: inspect three rows, removing the hidden center column.
+preview_contexts = window_ids[:3, [0, 1, 3, 4]]
+# [3, 4] -> [1, 4]: retain the batch axis even when inspecting one question.
+one_context = preview_contexts[:1]
+# [1, 4] -> [1, 4]: reverse positions, not questions; mean should erase this change.
 reversed_context = one_context.flip(dims=[1])
 one_vectors = probe_embedding(one_context)
+# [1, 4, 32] -> [1, 32]: pool only the four context rows.
 original_mean = one_vectors.mean(dim=1)
 reversed_mean = probe_embedding(reversed_context).mean(dim=1)
 
@@ -128,6 +181,32 @@ print("Maximum difference after reversal:", (original_mean - reversed_mean).abs(
 
 assert torch.allclose(original_mean, reversed_mean)
 
+# %% Why drawers, and not a giant one-hot checklist?
+one_hot_cat = nn.functional.one_hot(torch.tensor(1), num_classes=3).float()
+print("Checklist for cat:", one_hot_cat.tolist())
+print("Checklist x table: ", (one_hot_cat @ toy_table).tolist())
+print("Open drawer 1:     ", toy_table[1].tolist())
+assert torch.equal(one_hot_cat @ toy_table, toy_table[1])
+
+checklists = torch.eye(vocabulary_size)
+random_rows = probe_embedding.weight.detach()
+
+
+def checklist_gap(word_a, word_b):
+    return (checklists[stoi[word_a]] - checklists[stoi[word_b]]).norm().item()
+
+
+def row_similarity(rows, word_a, word_b):
+    return torch.cosine_similarity(rows[stoi[word_a]], rows[stoi[word_b]], dim=0).item()
+
+
+print(f"\nOne checklist: {vocabulary_size} boxes. One drawer row: {EMBEDDING_WIDTH} numbers.")
+for word_a, word_b in [("cat", "dog"), ("cat", "mat")]:
+    print(f"{word_a} vs {word_b:<10}  checklist gap {checklist_gap(word_a, word_b):.3f}   "
+          f"random-row similarity {row_similarity(random_rows, word_a, word_b):+.3f}")
+
+assert checklist_gap("cat", "dog") == checklist_gap("cat", "mat")
+
 # %% Where EmbeddingBag fits
 embedding_bag = nn.EmbeddingBag(
     vocabulary_size,
@@ -137,8 +216,9 @@ embedding_bag = nn.EmbeddingBag(
 with torch.no_grad():
     embedding_bag.weight.copy_(probe_embedding.weight)
 
-manual_means = probe_embedding(contexts[:3]).mean(dim=1)
-bag_means = embedding_bag(contexts[:3])
+# [3, 4, 32] -> [3, 32]: average each question's clues; EmbeddingBag fuses this same job.
+manual_means = probe_embedding(preview_contexts).mean(dim=1)
+bag_means = embedding_bag(preview_contexts)
 
 print("Manual mean shape:", tuple(manual_means.shape))
 print("EmbeddingBag shape:", tuple(bag_means.shape))
@@ -146,43 +226,132 @@ print("Maximum difference:", (manual_means - bag_means).abs().max().item())
 assert torch.allclose(manual_means, bag_means)
 
 # %% 6 - Give replaceable models one small training contract
+# %% 6A - CBOW data: neighbours -> middle word
+# Two [N, 2] slices -> [N, 4]: join left/right clues without the center answer.
+cbow_contexts = torch.cat(
+    [window_ids[:, :CONTEXT_RADIUS], window_ids[:, CONTEXT_RADIUS + 1:]],
+    dim=1,
+)
+# [N, 5] -> [N]: one center answer per row, in the same row order.
+cbow_targets = window_ids[:, CONTEXT_RADIUS]
+cbow_dataloader = make_dataloader(cbow_contexts, cbow_targets)
+cbow_batch_contexts, cbow_batch_targets = next(iter(cbow_dataloader))
+
+print("CBOW: neighbours -> middle word")
+print("Questions:", len(cbow_contexts))
+print("Batch inputs:", tuple(cbow_batch_contexts.shape))
+print("Batch answers:", tuple(cbow_batch_targets.shape))
+print(
+    "First unshuffled pair:",
+    [itos[index] for index in cbow_contexts[0].tolist()],
+    "->", itos[cbow_targets[0]],
+)
+
+assert cbow_contexts.shape == (len(window_ids), 2 * CONTEXT_RADIUS)
+assert cbow_targets.shape == (len(window_ids),)
+assert torch.equal(cbow_targets, window_ids[:, CONTEXT_RADIUS])
+assert len(cbow_batch_contexts) == len(cbow_batch_targets)
+
+# %% 6B - CBOW model
 from language_model import TrainableLanguageModel
 
 
 class CBOW(TrainableLanguageModel):
     def __init__(self, vocabulary_size, embedding_width):
         super().__init__()
+        # The chest of drawers: one learnable row of numbers per word.  [V, D]
         self.embedding = nn.Embedding(vocabulary_size, embedding_width)
+        # A small "thinking" layer that squeezes the row down to D/2 features.
         self.hidden = nn.Linear(embedding_width, embedding_width // 2)
+        # ReLU zeroes negatives, so the two layers can't collapse into one straight line.
         self.activation = nn.ReLU()
+        # One score per vocabulary word: "how likely is this the hidden word?"
         self.output = nn.Linear(embedding_width // 2, vocabulary_size)
 
     def forward(self, context_ids, target_ids=None):
+        # target_ids is unused here; it's in the signature so the shared
+        # training loop can call every model the same way.
+        # B is the current batch (at most 512), D=32 here; V is printed above.
+
+        # context_ids: the four clue words around each gap, as IDs.   [B, 4]
+        # e.g. "the sleepy ___ sat on" -> [the, sleepy, sat, on]
+        # Look up each word's row in the drawers.                     [B, 4, D]
         token_vectors = self.embedding(context_ids)
+
+        # Average the four rows into one "gist of the clues" row.     [B, D]
+        # This is the "bag" in bag of words: word order is lost here.
         pooled_context = token_vectors.mean(dim=1)
+
+        # Projection [B, D] -> [B, D/2]: mix the gist into fewer learned features.
         hidden_features = self.activation(self.hidden(pooled_context))
+
+        # Projection [B, D/2] -> [B, V]: one score per possible missing word.
+        # These are raw scores (logits); cross-entropy turns them into chances.
         return self.output(hidden_features)
 
 # %% Trace one untrained batch before optimizing anything
 torch.manual_seed(SEED)
 model = CBOW(vocabulary_size, EMBEDDING_WIDTH)
-untrained_logits = model(batch_contexts)
+untrained_logits = model(cbow_batch_contexts)
 
-print("Input contexts:", tuple(batch_contexts.shape))
+
+def word_probe(logits, expected_word, words=itos):
+    """Keep probability, rank, and the actual shortlist; never force the answer."""
+    # [V] -> [V]: softmax changes scores to shares without changing the word axis.
+    chances = logits.detach().softmax(dim=-1)
+    expected_id = words.index(expected_word)
+    rank = int((chances > chances[expected_id]).sum()) + 1
+    top = chances.topk(5)
+    return {
+        "probability": chances[expected_id].item(),
+        "rank": rank,
+        "top5": [(words[index], round(chance, 4))
+                 for index, chance in zip(top.indices.tolist(), top.values.tolist())],
+    }
+
+
+def report_probe(label, before, after):
+    print(f"{label}: correct-word share {before['probability']:.3%} -> "
+          f"{after['probability']:.3%}; rank {before['rank']} -> {after['rank']}")
+    print("  Before top 5:", before["top5"])
+    print("  After top 5: ", after["top5"])
+    probability_change = "increased" if after["probability"] > before["probability"] else "decreased"
+    rank_change = "improved" if after["rank"] < before["rank"] else (
+        "worsened" if after["rank"] > before["rank"] else "stayed the same")
+    print(f"  Probability {probability_change}; rank {rank_change}. "
+          + ("The expected word is top-ranked." if after["rank"] == 1 else "Not the first guess."))
+
+
+# [3, 5] -> [3, 4]: the same missing-center job, now on the familiar cat document.
+cat_contexts = cat_window_ids[:, [0, 1, 3, 4]]
+with torch.inference_mode():
+    cat_before_logits = model(cat_contexts)
+    cbow_before = {word: word_probe(cat_before_logits[row], word)
+                   for row, word in enumerate(("cat", "sat", "on"))}
+
+print("Input cbow_contexts:", tuple(cbow_batch_contexts.shape))
 print("Vocabulary logits:", tuple(untrained_logits.shape))
-assert untrained_logits.shape == (len(batch_contexts), vocabulary_size)
+assert untrained_logits.shape == (len(cbow_batch_contexts), vocabulary_size)
 
 # %% 7 - One fit loop should survive the model swap
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.03)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.008)
+cbow_started = time.perf_counter()
 losses = model.fit_language_model(
-    dataloader,
+    cbow_dataloader,
     criterion,
     optimizer,
-    epochs=180,
+    epochs=10,
 )
+cbow_seconds = time.perf_counter() - cbow_started
 
 print(f"Loss: {losses[0]:.4f} -> {losses[-1]:.4f}")
+print(f"CBOW: {cbow_seconds:.1f}s on one CPU thread (10 epochs)")
+with torch.inference_mode():
+    cat_after_logits = model(cat_contexts)
+    for row, word in enumerate(("cat", "sat", "on")):
+        report_probe(f"CBOW missing {word!r}", cbow_before[word],
+                     word_probe(cat_after_logits[row], word))
 
 # %% A falling loss is necessary evidence, not the whole story
 random_guess_loss = math.log(vocabulary_size)
@@ -200,6 +369,7 @@ axis.legend(frameon=False)
 axis.grid(alpha=0.2)
 plt.tight_layout()
 plt.show()
+plt.close(fig)
 
 print(f"Random-guess baseline: {random_guess_loss:.4f}")
 print(f"Final training loss: {losses[-1]:.4f}")
@@ -208,8 +378,8 @@ assert losses[-1] < random_guess_loss
 
 # %% 8 - Follow one gradient back to the participating rows
 model.zero_grad()
-gradient_contexts = contexts[:2]
-gradient_targets = targets[:2]
+gradient_contexts = cbow_contexts[:2]
+gradient_targets = cbow_targets[:2]
 gradient_loss = model.training_loss(
     gradient_contexts,
     gradient_targets,
@@ -218,6 +388,7 @@ gradient_loss = model.training_loss(
 gradient_loss.backward()
 
 gradient_norms = model.embedding.weight.grad.norm(dim=1)
+# [2, 4] -> [8]: collect all fetched IDs; flattening here is inspection, not pooling.
 used_ids = set(gradient_contexts.reshape(-1).tolist())
 rows_with_gradient = {
     index for index, norm in enumerate(gradient_norms.tolist()) if norm > 0
@@ -229,6 +400,7 @@ assert rows_with_gradient == used_ids
 
 # %% 9 - The learned embedding weights are the vectors
 embedding_weights = model.embedding.weight.detach().cpu()
+# [V, 32] -> [V, 1]: keep a singleton feature axis so division normalizes EACH word row.
 embedding_norms = embedding_weights.norm(dim=1, keepdim=True).clamp_min(1e-12)
 normalized_embeddings = embedding_weights / embedding_norms
 
@@ -248,17 +420,18 @@ def most_similar(word, top_k=4):
     ]
 
 
-for word in ["contract", "agreement", "protects", "confidential"]:
+for word in ["cat", "dog", "mat", "sat"]:
     print(f"{word:>12} -> {most_similar(word)}")
 
 # %% A 2D projection is a map, not the territory
-visible_count = min(16, vocabulary_size - 1)
-visible_ids = torch.tensor(
-    [stoi[word] for word, _ in counts.most_common(visible_count)]
-)
+# [V, 32] -> [visible words, 32]: keep the running example beside common words.
+visible_words = list(dict.fromkeys(tokenize(CAT_PROBE) + [w for w, _ in counts.most_common(10)]))
+visible_ids = torch.tensor([stoi[word] for word in visible_words])
 visible_vectors = embedding_weights[visible_ids]
+# [words, 32] -> [1, 32]: one center per feature, broadcast back across words.
 centered = visible_vectors - visible_vectors.mean(dim=0, keepdim=True)
 _, _, right_singular_vectors = torch.linalg.svd(centered, full_matrices=False)
+# [2, 32] -> [32, 2]: turn two PCA directions into columns; project [words, 32] -> [words, 2].
 coordinates = centered @ right_singular_vectors[:2].T
 
 fig, axis = plt.subplots(figsize=(10, 7))
@@ -268,30 +441,54 @@ for point, token_id in zip(coordinates, visible_ids.tolist()):
 axis.axhline(0, color="#9ca3af", linewidth=0.7)
 axis.axvline(0, color="#9ca3af", linewidth=0.7)
 axis.set(
-    title="Frequent embedding rows projected from 12D to 2D",
+    title="Cat-probe and frequent embedding rows projected from 32D to 2D",
     xlabel="projection axis 1",
     ylabel="projection axis 2",
 )
 axis.grid(alpha=0.15)
 plt.tight_layout()
 plt.show()
+plt.close(fig)
 
-# %% 10 - Flip the arrow: Skip-gram predicts neighbours from the center
-skipgram_inputs = targets.repeat_interleave(contexts.shape[1])
-skipgram_targets = contexts.reshape(-1)
-skipgram_dataloader = make_dataloader(skipgram_inputs, skipgram_targets)
-
-print("CBOW lessons:", len(contexts))
-print("Skip-gram lessons:", len(skipgram_inputs))
-print(
-    "First Skip-gram lesson:",
-    itos[skipgram_inputs[0]],
-    "->",
-    itos[skipgram_targets[0]],
+# %% 10A - Skip-gram data: middle word -> one neighbour
+# Each raw window supplies one center and all its neighbours.
+skipgram_centers = window_ids[:, CONTEXT_RADIUS]
+# [N, 2] plus [N, 2] -> [N, 4]: keep each window's neighbours in left-to-right order.
+skipgram_neighbours = torch.cat(
+    [window_ids[:, :CONTEXT_RADIUS], window_ids[:, CONTEXT_RADIUS + 1:]],
+    dim=1,
 )
+neighbours_per_window = skipgram_neighbours.shape[1]
+# [N] -> [4N]: repeat each center four times BEFORE moving to the next window.
+skipgram_inputs = skipgram_centers.repeat_interleave(neighbours_per_window)
+# [N, 4] -> [4N]: row-major flattening keeps each answer aligned with its repeated center.
+skipgram_targets = skipgram_neighbours.reshape(-1)
+skipgram_dataloader = make_dataloader(skipgram_inputs, skipgram_targets)
+skipgram_batch_inputs, skipgram_batch_targets = next(iter(skipgram_dataloader))
 
-assert len(skipgram_inputs) == len(contexts) * contexts.shape[1]
-assert len(skipgram_inputs) == len(skipgram_targets)
+print("Skip-gram: middle word -> ONE neighbour per question")
+print("Questions:", len(skipgram_inputs))
+print("Batch inputs:", tuple(skipgram_batch_inputs.shape))
+print("Batch answers:", tuple(skipgram_batch_targets.shape))
+print("Pairs from the first raw window:")
+for center, neighbour in zip(
+    skipgram_inputs[:neighbours_per_window], skipgram_targets[:neighbours_per_window],
+):
+    print("   ", itos[center], "->", itos[neighbour])
+
+assert skipgram_inputs.shape == (len(window_ids) * neighbours_per_window,)
+assert skipgram_targets.shape == skipgram_inputs.shape
+assert torch.equal(
+    # [4N] -> [N, 4]: reconstruct groups to check alignment, not mix examples.
+    skipgram_inputs.reshape(len(window_ids), neighbours_per_window),
+    # [N] -> [N, 1] -> [N, 4]: broadcast a center beside each of its own neighbours.
+    skipgram_centers[:, None].expand_as(skipgram_neighbours),
+)
+assert torch.equal(
+    # [4N] -> [N, 4]: the flattened answers must reconstruct the original neighbour rows.
+    skipgram_targets.reshape_as(skipgram_neighbours), skipgram_neighbours,
+)
+assert len(skipgram_batch_inputs) == len(skipgram_batch_targets)
 
 # %% The model swap is smaller than the objective swap
 class SkipGram(TrainableLanguageModel):
@@ -302,30 +499,52 @@ class SkipGram(TrainableLanguageModel):
         self.activation = nn.ReLU()
         self.output = nn.Linear(embedding_width // 2, vocabulary_size)
 
+    # Same layers as CBOW. The only change is what goes in: one word, not four.
     def forward(self, center_ids, target_ids=None):
+        # center_ids: one word per lesson, e.g. cat.                  [B]
+        # Look up its row. Only one row, so there's nothing to average. [B, D]
         center_vectors = self.embedding(center_ids)
+
+        # Projection [B, D] -> [B, D/2]: mix this one center's row into features.
         hidden_features = self.activation(self.hidden(center_vectors))
+
+        # Projection [B, D/2] -> [B, V]: score all words as neighbours of this center.
+        # The same center appears in several lessons with different answers
+        # (cat -> the, sleepy, sat, on), so it can never be sure of just one.
         return self.output(hidden_features)
 
 
 torch.manual_seed(SEED)
 skipgram_model = SkipGram(vocabulary_size, EMBEDDING_WIDTH)
-skipgram_optimizer = torch.optim.Adam(skipgram_model.parameters(), lr=0.03)
+with torch.inference_mode():
+    # [1] -> [1, V] -> [V]: one cat-center distribution for the neighbour job.
+    skipgram_before_logits = skipgram_model(torch.tensor([stoi["cat"]]))[0]
+    skipgram_before = {word: word_probe(skipgram_before_logits, word)
+                       for word in ("the", "sleepy", "sat", "on")}
+skipgram_optimizer = torch.optim.Adam(skipgram_model.parameters(), lr=0.008)
+skipgram_started = time.perf_counter()
 skipgram_losses = skipgram_model.fit_language_model(
     skipgram_dataloader,
     criterion,
     skipgram_optimizer,
-    epochs=220,
+    epochs=4,
 )
+skipgram_seconds = time.perf_counter() - skipgram_started
 
 with torch.inference_mode():
-    probe_center = targets[:1]
+    probe_center = skipgram_centers[:1]
     neighbour_logits = skipgram_model(probe_center)
-    predicted_ids = neighbour_logits.topk(contexts.shape[1], dim=1).indices[0]
+    predicted_ids = neighbour_logits.topk(neighbours_per_window, dim=1).indices[0]
 
-print(f"Skip-gram loss: {skipgram_losses[0]:.4f} -> {skipgram_losses[-1]:.4f}")
+print(f"Skip-gram loss: {skipgram_losses[0]:.4f} -> {skipgram_losses[-1]:.4f}; "
+      f"{skipgram_seconds:.1f}s (4 epochs)")
 print("Center:", itos[probe_center.item()])
 print("Top predicted neighbours:", [itos[index] for index in predicted_ids.tolist()])
+with torch.inference_mode():
+    cat_neighbour_logits = skipgram_model(torch.tensor([stoi["cat"]]))[0]
+    for word, before in skipgram_before.items():
+        report_probe(f"Skip-gram cat -> neighbour {word!r}", before,
+                     word_probe(cat_neighbour_logits, word))
 
 assert skipgram_losses[-1] < skipgram_losses[0]
 assert skipgram_losses[-1] < math.log(vocabulary_size)
@@ -333,10 +552,12 @@ assert neighbour_logits.shape == (1, vocabulary_size)
 
 # %% 11 - Both static objectives still miss token roles
 model.eval()
-ordered_context = contexts[:1]
+ordered_context = cbow_contexts[:1]
+# [1, 4] -> [1, 4]: reorder only clue positions; their mean must stay the same.
 permuted_context = ordered_context[:, torch.tensor([3, 1, 0, 2])]
 
 with torch.no_grad():
+    # Both [1, 4, 32] lookups -> [1, 32] means: only word order changed, not membership.
     ordered_vectors = model.embedding(ordered_context).mean(dim=1)
     permuted_vectors = model.embedding(permuted_context).mean(dim=1)
     ordered_logits = model(ordered_context)
@@ -353,15 +574,16 @@ print(f"Maximum logit difference: {logit_difference:.8f}")
 assert torch.allclose(ordered_vectors, permuted_vectors)
 assert torch.allclose(ordered_logits, permuted_logits)
 
-# %% 12 - One target token is not a target sequence
+# %% 12A - Sequence data: ordered prefix -> continuation
 BOS_ID = vocabulary_size
 EOS_ID = vocabulary_size + 1
 sequence_itos = itos + ["<bos>", "<eos>"]
 sequence_vocabulary_size = len(sequence_itos)
 
-window_ids = torch.tensor(windows, dtype=torch.long)
+# [N, 5] -> [N, 3] source and [N, 2] continuation: split WITHIN each window.
 source_sequences = window_ids[:, :3]
 continuations = window_ids[:, 3:]
+# [N, 1] + [N, 2] + [N, 1] -> [N, 4]: bracket each answer, never join documents.
 sequence_targets = torch.cat(
     [
         torch.full((len(windows), 1), BOS_ID, dtype=torch.long),
@@ -380,34 +602,67 @@ print("Target:", [sequence_itos[index] for index in sequence_targets[0].tolist()
 assert source_sequences.shape == (len(windows), 3)
 assert sequence_targets.shape == (len(windows), 4)
 
+sequence_batch_inputs, sequence_batch_targets = next(iter(sequence_dataloader))
+print("Sequence batch sources:", tuple(sequence_batch_inputs.shape))
+print("Sequence batch full answers:", tuple(sequence_batch_targets.shape))
+print("Writer sees:", [sequence_itos[index] for index in sequence_targets[0, :-1].tolist()])
+print("Loss checks:", [sequence_itos[index] for index in sequence_targets[0, 1:].tolist()])
+assert len(sequence_batch_inputs) == len(sequence_batch_targets)
+assert torch.equal(source_sequences, window_ids[:, :3])
+assert torch.equal(sequence_targets[:, 1:-1], window_ids[:, 3:])
+assert bool((sequence_targets[:, 0] == BOS_ID).all())
+assert bool((sequence_targets[:, -1] == EOS_ID).all())
+
 # %% A destination preview, not a second embedding lesson
 class EncoderDecoderLM(TrainableLanguageModel):
     def __init__(self, vocabulary_size, embedding_width, hidden_width):
         super().__init__()
+        # One shared chest of drawers for reader and writer.          [V, D]
         self.embedding = nn.Embedding(vocabulary_size, embedding_width)
+        # The reader: walks the source left to right, updating a running note.
         self.encoder = nn.GRU(embedding_width, hidden_width, batch_first=True)
+        # The writer: starts from the reader's final note and writes word by word.
         self.decoder = nn.GRU(embedding_width, hidden_width, batch_first=True)
+        # Turns the writer's note at each step into a score for every word.
         self.output = nn.Linear(hidden_width, vocabulary_size)
 
     def encode(self, source_ids):
+        # source_ids: e.g. [the, sleepy, cat]                          [B, 3]
+        # Look up rows, read them in order. We keep only the final note
+        # (the "summary card"), not the note after each word.          [1, B, H]
+        # Lookup expands [B, 3] -> [B, 3, D]; GRU keeps its final state [1, B, H].
         _, hidden = self.encoder(self.embedding(source_ids))
         return hidden
 
     def decode(self, decoder_input_ids, hidden):
+        # decoder_input_ids: the words the writer is shown, e.g. [<bos>, sat, on]
+        # Starting from the reader's note, write one note per step.    [B, T, H]
+        # Lookup [B, T] -> [B, T, D]; recurrence produces [B, T, H] states in order.
         decoder_states, hidden = self.decoder(
             self.embedding(decoder_input_ids),
             hidden,
         )
+        # Projection changes [B, T, H] -> [B, T, V], retaining batch and time.
+        # Score every word at every step: "what comes next?"
         return self.output(decoder_states), hidden
 
     def forward(self, source_ids, target_ids=None):
         if target_ids is None:
             raise ValueError("Training requires target IDs for teacher forcing.")
+        # 1. Read the source into one summary note.
         hidden = self.encode(source_ids)
+        # 2. Teacher forcing: show the writer the CORRECT previous words
+        #    (<bos>, sat, on), dropping the last one, which it never needs to see.
+        #    targets_for_loss() below supplies the matching answers (sat, on, <eos>).
+        # [B, 4] -> [B, 3]: drop the last answer; keep <bos> and previous words.
         logits, _ = self.decode(target_ids[:, :-1], hidden)
         return logits
 
     def targets_for_loss(self, target_ids):
+        # forward() fed the writer target_ids[:, :-1]  -> <bos>, sat, on
+        # so its answers are shifted one step left    -> sat,   on,  <eos>
+        # Each input word is marked against the word that should come next.
+        # [B, 4] -> [B, 3]: drop <bos> to align each score with the NEXT token.
         return target_ids[:, 1:]
 
 
@@ -415,37 +670,61 @@ torch.manual_seed(SEED)
 sequence_model = EncoderDecoderLM(
     sequence_vocabulary_size,
     embedding_width=EMBEDDING_WIDTH,
-    hidden_width=24,
+    hidden_width=48,
 )
-sequence_optimizer = torch.optim.Adam(sequence_model.parameters(), lr=0.03)
+# [3, 5] -> two [3, 3/4] probe tensors using the same preparation as the full dataset.
+cat_sources = source_sequences[-3:]
+cat_answers = sequence_targets[-3:]
+with torch.inference_mode():
+    writer_before_logits = sequence_model(cat_sources, cat_answers)
+    writer_before = {
+        "sat": word_probe(writer_before_logits[0, 0], "sat", sequence_itos),
+        "mat": word_probe(writer_before_logits[2, 1], "mat", sequence_itos),
+    }
+sequence_optimizer = torch.optim.Adam(sequence_model.parameters(), lr=0.008)
 assert EncoderDecoderLM.fit_language_model is TrainableLanguageModel.fit_language_model
+sequence_started = time.perf_counter()
 sequence_losses = sequence_model.fit_language_model(
     sequence_dataloader,
     criterion,
     sequence_optimizer,
-    epochs=400,
+    epochs=6,
 )
+sequence_seconds = time.perf_counter() - sequence_started
 
 with torch.inference_mode():
-    teacher_forced_logits = sequence_model(source_sequences, sequence_targets)
+    # [N, ...] -> first at most 4096 rows: bounded diagnostic avoids a huge [N, 3, V] allocation.
+    teacher_forced_logits = sequence_model(source_sequences[:4096], sequence_targets[:4096])
     teacher_forced_predictions = teacher_forced_logits.argmax(dim=-1)
-    expected_sequence_ids = sequence_targets[:, 1:]
+    expected_sequence_ids = sequence_targets[:4096, 1:]
     teacher_forced_accuracy = (
         teacher_forced_predictions == expected_sequence_ids
     ).float().mean().item()
+    # [probe, 3] -> [probe, 2]: exclude the easy final stop target when checking content.
+    content_accuracy = (
+        teacher_forced_predictions[:, :-1] == expected_sequence_ids[:, :-1]
+    ).float().mean().item()
 
 print(f"Seq2Seq loss: {sequence_losses[0]:.4f} -> {sequence_losses[-1]:.4f}")
-print("Teacher-forced token accuracy:", f"{teacher_forced_accuracy:.0%}")
+print(f"Encoder-decoder: {sequence_seconds:.1f}s (6 epochs)")
+print("Teacher-forced accuracy on the first 4096 training windows:", f"{teacher_forced_accuracy:.1%}")
+print("Without the predictable stop target:", f"{content_accuracy:.1%}")
 print("Sequence logits:", tuple(teacher_forced_logits.shape))
+with torch.inference_mode():
+    writer_after_logits = sequence_model(cat_sources, cat_answers)
+    report_probe("Writer next 'sat' after source 'the sleepy cat' + <bos>",
+                 writer_before["sat"], word_probe(writer_after_logits[0, 0], "sat", sequence_itos))
+    report_probe("Writer next 'mat' after source 'cat sat on' + correct previous 'the'",
+                 writer_before["mat"], word_probe(writer_after_logits[2, 1], "mat", sequence_itos))
 
 assert sequence_losses[-1] < sequence_losses[0]
 assert sequence_losses[-1] < math.log(sequence_vocabulary_size)
-assert teacher_forced_accuracy >= 0.9
+assert teacher_forced_logits.shape == (min(4096, len(windows)), 3, sequence_vocabulary_size)
+print(f"Introductory training total: {cbow_seconds + skipgram_seconds + sequence_seconds:.1f}s")
 
 # %% Teacher forcing worked - can the decoder use its own answer?
 def greedy_decode(model, source_ids, bos_id, eos_id, max_steps):
     model.eval()
-    hidden = model.encode(source_ids)
     current_ids = torch.full(
         (len(source_ids), 1),
         bos_id,
@@ -454,32 +733,36 @@ def greedy_decode(model, source_ids, bos_id, eos_id, max_steps):
     generated = []
 
     with torch.inference_mode():
+        hidden = model.encode(source_ids)
         for _ in range(max_steps):
             logits, hidden = model.decode(current_ids, hidden)
+            # [B, 1, V] -> [B, V] -> [B]: choose only the latest step's best word.
             next_ids = logits[:, -1].argmax(dim=-1)
             generated.append(next_ids)
+            # [B] -> [B, 1]: a new one-token time axis lets the GRU read its own guess.
             current_ids = next_ids.unsqueeze(1)
             if bool((next_ids == eos_id).all()):
                 break
 
+    # List of T [B] columns -> [B, T]: keep generated words in time order.
     return torch.stack(generated, dim=1)
 
 
 generated_ids = greedy_decode(
     sequence_model,
-    source_sequences[:1],
+    cat_sources[:1],
     BOS_ID,
     EOS_ID,
     max_steps=sequence_targets.shape[1] - 1,
 )
 
 with torch.inference_mode():
-    ordered_hidden = sequence_model.encode(source_sequences[:1])
-    reversed_hidden = sequence_model.encode(source_sequences[:1].flip(dims=[1]))
+    ordered_hidden = sequence_model.encode(cat_sources[:1])
+    reversed_hidden = sequence_model.encode(cat_sources[:1].flip(dims=[1]))
 
 expected_words = [
     sequence_itos[index]
-    for index in sequence_targets[0, 1:].tolist()
+    for index in cat_answers[0, 1:].tolist()
 ]
 generated_words = [
     sequence_itos[index]
@@ -494,3 +777,116 @@ print(f"Hidden-state difference after reversal: {hidden_difference:.6f}")
 assert generated_ids.shape[0] == 1
 assert generated_ids.shape[1] >= 1
 assert hidden_difference > 0
+
+# %% 13 - More real text and held-out stories, not copies of the cat probe
+from pathlib import Path
+
+import real_text_embeddings
+from real_text_embeddings import (
+    animate_word_maps,
+    blank_shortlist,
+    load_real_text,
+    plot_losses_and_geometry,
+    plot_similarity_heatmaps,
+    plot_word_maps,
+    project_snapshots,
+    report_neighbours,
+    shortlist_summary,
+    train_comparison,
+)
+from real_text_embeddings import best_versus_final
+
+real_corpus = load_real_text()
+
+# %% Keep the starting rows identical; change the prediction job
+REAL_TEXT_EPOCHS = 16
+real_results = train_comparison(
+    real_corpus, CBOW, SkipGram, EncoderDecoderLM, epochs=REAL_TEXT_EPOCHS,
+)
+
+# %% Falling practice loss can hide worse guesses on new text
+chart_directory = Path(real_text_embeddings.__file__).resolve().parent / "images"
+loss_figure = plot_losses_and_geometry(real_results)
+loss_figure.savefig(chart_directory / "03a-real-text-loss-and-similarity.png", dpi=130)
+plt.show()
+plt.close(loss_figure)
+
+# %% One fixed camera for all three moving word maps
+real_probe_words, real_coordinates, real_pca_fraction = project_snapshots(
+    real_corpus, real_results,
+)
+map_figure = plot_word_maps(real_probe_words, real_coordinates, real_results)
+map_figure.savefig(chart_directory / "03a-real-text-word-maps.png", dpi=130)
+plt.show()
+plt.close(map_figure)
+
+# %% Check the full rows, not just their two-dimensional shadows
+similarity_figure = plot_similarity_heatmaps(real_corpus, real_results)
+similarity_figure.savefig(chart_directory / "03a-real-text-cosine-heatmaps.png", dpi=130)
+plt.show()
+plt.close(similarity_figure)
+
+# %% Play the recorded epochs; no invented in-between training states
+real_animation = animate_word_maps(real_probe_words, real_coordinates, real_results)
+real_animation_html = real_animation.to_jshtml()
+if "get_ipython" in globals():
+    from IPython.display import HTML, display
+
+    display(HTML(real_animation_html))
+else:
+    print(f"Recorded animation rendered ({len(real_animation_html):,} HTML characters).")
+
+# %% Useful neighbours, or merely nearby dots?
+report_neighbours(real_corpus, real_results)
+
+# %% Your turn - change only the pair, without training again
+probe_pair = ("mom", "dad")  # CHANGE THIS: try ("mom", "green"), without retraining
+for objective, record in real_results.items():
+    pair_ids = [real_corpus["word_ids"][word] for word in probe_pair]
+    pair_scores = []
+    for rows in (record["snapshots"][0], record["snapshots"][-1]):
+        pair_vectors = torch.nn.functional.normalize(rows[pair_ids], dim=1)
+        pair_scores.append((pair_vectors[0] @ pair_vectors[1]).item())
+    print(f"{objective}: {' / '.join(probe_pair)} cosine "
+          f"{pair_scores[0]:+.3f} -> {pair_scores[1]:+.3f}; "
+          f"final across-group mean {record['across'][-1]:+.3f}")
+
+# %% Is a guess one word, or a shortlist? Ask CBOW at its best held-out epoch
+cbow_best = real_results["CBOW"]["best_model"]
+for left, right in [("was so", "to have"), ("a little", "named tom"),
+                    ("played with", "toys and"), ("they went", "the park")]:
+    menu = blank_shortlist(cbow_best, real_corpus, left, right)
+    print(f"{left} ___ {right} -> " + ", ".join(f"{word} {chance:.0%}" for word, chance in menu))
+
+shortlist = shortlist_summary(cbow_best, real_corpus)
+print(f"\nAll {shortlist['blanks']:,} held-out blanks with a known answer:")
+print(f"  right answer is the number-one guess:   {shortlist['first_right']:.1%}")
+print(f"  right answer is somewhere in the top 5: {shortlist['shortlist_right']:.1%}")
+print(f"  average share given to the first guess: {shortlist['first_share']:.1%}")
+print(f"  how alike the 5 shortlisted words' rows are: {shortlist['shortlist_similarity']:+.3f}")
+print(f"  how alike 5 random words' rows are:          {shortlist['random_similarity']:+.3f}")
+
+assert shortlist["shortlist_right"] > shortlist["first_right"]
+assert shortlist["shortlist_similarity"] > shortlist["random_similarity"]
+
+# %% Why does the writer's final map look weaker? Read the same run at its best epoch
+writer_check = best_versus_final(real_results)
+writer_record = writer_check["Encoder-decoder"]
+if writer_record["final_gap"] < writer_record["best_gap"]:
+    print("The writer's group separation faded after its best held-out checkpoint.")
+else:
+    print("This run did not show fading group separation; judge the recorded losses too.")
+
+# %% Optional: is that one lucky seed? (about two minutes per extra seed)
+RUN_SEED_CHECK = False
+if RUN_SEED_CHECK:
+    for check_seed in (5, 123):
+        print(f"--- seed {check_seed}")
+        best_versus_final(train_comparison(
+            real_corpus, CBOW, SkipGram, EncoderDecoderLM,
+            epochs=REAL_TEXT_EPOCHS, seed=check_seed, verbose=False,
+        ))
+else:
+    print("Skipped. Set RUN_SEED_CHECK = True to retrain with seeds 5 and 123.")
+print(f"Whole default lesson: {time.perf_counter() - notebook_started:.1f}s "
+      "(cache verified, one CPU thread; first download is extra).")

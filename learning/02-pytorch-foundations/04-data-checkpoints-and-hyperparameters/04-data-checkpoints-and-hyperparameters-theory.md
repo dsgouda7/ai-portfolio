@@ -52,7 +52,7 @@ probe. That is stronger evidence than checking that the file exists.
 
 **Complaint:** weight parity is enough for inference, but not enough to continue training.
 
-## 4. A resumable checkpoint contains process state
+## 4. A training-state snapshot saves more than weights
 
 Use the travel-bag mental model:
 
@@ -64,10 +64,13 @@ Use the travel-bag mental model:
 Adam's moving averages affect its next update. Loading only model weights and creating a new Adam
 optimizer changes the continuation, even if the first reloaded prediction is identical.
 
-A scheduler, scaler, sampler, or early-stopping counter may add more state later. "Resumable" is a
-claim about all continuation dependencies, not a filename.
+A scheduler, scaler, sampler, or stopping counter may need saving too. The useful question is
+simple: will the same batch produce the same next update?
 
-**Evidence limit:** this notebook proves prediction parity after weight reload and writes a bundle containing model, optimizer, progress, and configuration state. It does not reload that bundle and compare the next training update with an uninterrupted run. In particular, the shuffled loader's random-generator state is not saved, so exact batch-order continuation is not established. Treat the file as a checkpoint-layout example, not proof of exact recovery.
+This notebook checks matching predictions after weight reload and writes a training-state
+snapshot. It does not reload that snapshot or compare against uninterrupted training.
+The shuffled loader's random state is missing. We keep the existing `part04_resumable.pt`
+filename for compatibility; its name does not add a recovery test.
 
 Variable-length sequences add another batching complaint: rows must fit a rectangle without pretending that blank slots are real observations. Filling those slots is **padding**; keeping each row's true **length** tells you where the content ends. Stage 03 applies that contract to text and distinguishes which blanks must not be read from which blanks must not be graded.
 

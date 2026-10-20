@@ -106,6 +106,8 @@ token batches
 ```
 
 The number of parameters, axes, devices, and updates grows. The responsibilities do not change.
+Part 02 uses text-shaped tensors because positions inside each example expose axis mistakes
+that a one-column sensor table hides. That preview checks shapes, not language learning.
 
 ## Practical failure modes
 

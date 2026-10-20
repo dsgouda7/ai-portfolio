@@ -1,15 +1,9 @@
 # Stage 01: ML Foundations
 
-**Contents:** [one-line map of this directory](CONTENTS.md)
+Start with a free kick, then use SmartVal to ask which predictions to trust and which weights
+caused an error. This stage owns the ideas; Stage 02 owns their PyTorch implementation.
 
-
-
-You can compute a prediction, but why should you trust it or know which adjustable number to change? Start with a free kick: small changes build a path. Then carry that habit into SmartVal, where a good training score can hide poor predictions on new examples.
-
-**Ownership:** this stage owns optimization (changing model settings to reduce mistakes), generalization (working on unseen examples), neural networks (learned layers of features), and backpropagation (tracing each setting's effect on error). Stage 02 owns the PyTorch objects that implement those ideas.
-
-This stage builds the conceptual contracts that the code-first stages rely on: the math of change,
-the evidence rules of machine learning, and the responsibility flow behind backpropagation.
+**Contents:** [lesson map](CONTENTS.md). Each chapter has its own setup scripts.
 
 ## Required route
 
@@ -17,11 +11,9 @@ the evidence rules of machine learning, and the responsibility flow behind backp
 2. [ML Basics](02-ml-basics/README.md)
 3. [Neural Networks and Backpropagation](03-neural-networks-and-backprop/README.md)
 
-The audible backpropagation lab remains an optional branch inside Chapter 03.
+**Optional:** [audible backpropagation lab](03-neural-networks-and-backprop/optional/README.md),
+after Chapter 03. It does not block the required route.
 
-**Previous:** start of the curriculum  
-**Current:** Stage 01 — ML Foundations  
-**Next:** [Stage 02 — PyTorch Foundations](../02-pytorch-foundations/README.md)
-
-
-You can now trace a prediction's error back to its weights. The remaining complaint is practical: who stores those weights, clears yesterday's gradients, and applies today's update? [Stage 02, Chapter 01](../02-pytorch-foundations/01-deep-learning-map/01-deep-learning-map.ipynb) turns that responsibility report into a working training loop.
+**Next:** [Stage 02 — PyTorch Foundations](../02-pytorch-foundations/README.md).
+You can trace an error back to its weights. Next, give those weights, gradients, and updates
+explicit homes in code.

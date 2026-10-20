@@ -1,16 +1,9 @@
 # PyTorch Training Skeleton: Quick Refresher
 
-**Contents:** [one-line map of this directory](CONTENTS.md)
+Already know PyTorch? Refresh the core classifier loop, then use the notebook's table to find gaps.
+It does not run validation, device placement, scheduling, mixed precision, or checkpoint recovery.
 
-
-
-[Open the refresher notebook](pytorch-training-skeleton.ipynb) when you already know PyTorch but
-need the complete training skeleton back in working memory. Its readiness table routes uncertain
-topics to the matching full chapter in Stage 02.
-
-Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS. The standalone setup creates this
-refresher's `.venv`, installs `requirements.txt`, and assigns the
-`stage02-pytorch-quick-refresher` kernel.
-
-After the readiness check, continue to
-[Stage 03: Language-Model Foundations](../../03-language-model-foundations/README.md).
+- [Notebook](pytorch-training-skeleton.ipynb) · [Contents](CONTENTS.md)
+- Setup from this directory: [Windows](setup.ps1) (`.\setup.ps1`) or [Linux/macOS](setup.sh) (`bash ./setup.sh`).
+- For missing pieces: [full Stage 02 route](../README.md).
+- Once those pieces are familiar: [Sequence Memory](../../03-language-model-foundations/01-sequence-memory/README.md).

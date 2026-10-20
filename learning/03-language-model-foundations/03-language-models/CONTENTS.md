@@ -14,14 +14,13 @@ Follow the failures that lead from counting continuations to a writer that can l
 - [Recurrent Reader-and-Writer Models to Attention](03D-recurrent-encoder-decoder-to-attention.ipynb) — Compare a writer given one learned summary with a writer that can inspect every source position during practice and generation.
 - [Recurrent Reader-and-Writer Models to Attention: Theory Notes](03D-recurrent-encoder-decoder-to-attention-theory.md) — Review why looking back at source notes differs from remembering one summary and from receiving correct earlier words during practice.
 
-## Optional
-
-No optional lessons are listed in this directory.
-
 ## Code-only companions
 
 - [Common training base](language_model.py) — Keep one practice loop while each model chooses how to guess and which answers to grade.
-- [03A - Python](03A-training-skeleton-and-word-objectives.py) — CBOW, Skip-gram, and the small encoder-decoder preview.
+- [03A - Python](03A-training-skeleton-and-word-objectives.py) — Word objectives, the reader/writer preview, and the story-trained embedding comparison.
+- [Real-text experiment helper](real_text_embeddings.py) — Cache the checked TinyStories file, build practice questions, and record losses and embedding diagnostics.
 - [03B - Python](03B-counts-and-fixed-window-language-models.py) — Counts and an ordered fixed-window predictor.
 - [03C - Python](03C-fixed-windows-to-recurrent-language-models.py) — Original RNN experiments plus inherited LSTM training and generation.
 - [03D - Python](03D-recurrent-encoder-decoder-to-attention.py) — Fixed-summary and attention experiments plus an inherited-training adapter.
+
+**Next:** [Stage 04 — Transformers](../../04-transformers/README.md).

@@ -2,7 +2,7 @@
 
 ## 1. Why text needs a boundary
 
-A model consumes fixed-width numeric rows. A contract arrives as a string with words, punctuation, rare names, and multilingual fragments. Character tokens never become unknown, but they make sequences long. Whole-word tokens are shorter, but every unseen spelling becomes an out-of-vocabulary failure.
+A model consumes fixed-width numeric rows. A pet-sitter's note arrives as a string with words, punctuation, rare names, and multilingual fragments. Character tokens never become unknown, but they make sequences long. Whole-word tokens are shorter, but every unseen spelling becomes an out-of-vocabulary failure.
 
 The useful complaint is not "strings are not numbers." It is: **which reusable pieces preserve coverage without wasting the context window?**
 
@@ -22,7 +22,7 @@ A merge budget creates a trade-off:
 | more repeated character work | more rare, brittle pieces |
 | excellent coverage | weaker reuse |
 
-The theory notebook tracks `non-disclosure` through real merge steps and measures its token count. The animation is paired with a static storyboard so the evidence survives without JavaScript.
+The theory notebook tracks `sleepy` through real merge steps: 7 symbols, including the end marker, become 1 piece after 18 merges. The animation is paired with a static storyboard so the evidence survives without JavaScript.
 
 The merge list is ordered. Later pieces depend on earlier pieces existing, so you cannot treat the learned pairs as an unordered dictionary. Encoding replays the ranked merge decisions; decoding concatenates the stored byte or text pieces. The toy notebook begins from characters because the mechanics remain visible. Production GPT-2 begins from bytes so every possible input remains representable, including unusual Unicode sequences after UTF-8 encoding.
 
@@ -45,23 +45,23 @@ The GPT-2 tokenizer inspected earlier is a separate artifact: pretrained splitti
 not pretrained embedding vectors. A random seed makes an initial draw repeatable, not learned.
 
 Why let the rows change? An ID is a name tag. A random row can identify a word too, but it
-doesn't deliberately give the prediction layers useful shared features. In 02B, `contract`
-and `agreement` must support the same answers, `binds` and `protects`. Adjusting the rows gives
+doesn't deliberately give the prediction layers useful shared features. In 02B, `cat`
+and `dog` must support the same answers, `sat` and `slept`. Adjusting the rows gives
 the model somewhere to organize features that help with that shared job. The predictor learns
 to read those features while the rows learn what is useful to offer it.
 
-We don't prescribe a column for "legalness", and matching answers don't require the whole vectors
+We don't prescribe a column for "furriness", and matching answers don't require the whole vectors
 to converge: the predictor can ignore differences. Frozen random rows can also work, particularly
 on a tiny task with a strong enough predictor. Learning the table is another way to adapt the
 model, not a prerequisite for lookup. Better performance on new text must be measured, not
 inferred from changed rows or lower training loss.
 
-The important payoff is reuse across words. If `contract` and `agreement` learn useful shared
+The important payoff is reuse across words. If `cat` and `dog` learn useful shared
 features, something learned with one can help with the other in a similar setting. That is how
 embeddings can capture semantic relationships instead of leaving each word as an unrelated name
 tag. Their IDs and rows still differ; similarity is not equality. Context-based training can
-also put opposites such as `increase` and `decrease` near each other because they appear in
-similar surroundings. Nearby vectors aren't proof of synonymy, and a static row doesn't decide
+also put opposites such as `happy` and `sad` near each other because they appear in
+similar surroundings, such as "the dog felt ___". Nearby vectors aren't proof of synonymy, and a static row doesn't decide
 which meaning of a word is intended in a particular sentence.
 
 Training changes useful rows because prediction errors send gradients into the rows that participated. Similar use can create similar geometry, but an embedding map is evidence about the learned objective, not a complete explanation of meaning.
@@ -70,12 +70,13 @@ Training changes useful rows because prediction errors send gradients into the r
 
 The [03A lesson](../03-language-models/03A-training-skeleton-and-word-objectives.ipynb)
 removes one remaining convenience: prediction pairs no longer arrive by hand. A
-sliding window first creates CBOW lessons, then reverses their direction for Skip-gram, and finally
-becomes a tiny source-target continuation. One `DataLoader` and fit contract stay visible while
+sliding window over short stories creates CBOW lessons, then reverses their direction for Skip-gram,
+and finally becomes a tiny source-target continuation. One familiar cat sentence stays available
+for close-ups. One `DataLoader` and training loop stay visible while
 the input shape, model forward path, and target alignment change. This proves how ordinary text
 can support several language objectives without hiding the common PyTorch mechanics.
 
-**Complaint:** one lookup row gives the same vector every time. The word `bank` still begins from one static row in both "river bank" and "bank loan."
+**Complaint:** one lookup row gives the same vector every time. The word `bark` still begins from one static row in both "loud bark" and "rough bark."
 
 ## 4. Static lookup versus contextual representation
 
@@ -83,11 +84,11 @@ Static embedding lookup answers: **which token type is this?**
 
 Contextualization answers: **what role is this token playing here?**
 
-A contextual model begins with the static row, then mixes information from neighboring token representations. The same `bank` row can therefore become two different token representations after context mixing.
+A contextual model begins with the static row, then mixes information from neighboring token representations. The same `bark` row can therefore become two different token representations after context mixing.
 
 Tokenization and embeddings do not perform that mixing by themselves. Transformers will own the contextual mechanism.
 
-This boundary prevents a common overclaim. Nearest neighbors in a static table show geometric consequences of training, not sentence-level understanding. Word2Vec and GloVe are valuable optional history because they make that geometry explicit. They still assign one learned type vector to every occurrence of `bank`.
+This boundary prevents a common overclaim. Nearest neighbors in a static table show geometric consequences of training, not sentence-level understanding. Word2Vec and GloVe are valuable optional history because they make that geometry explicit. They still assign one learned type vector to every occurrence of `bark`.
 
 ## 5. Padding creates fake positions
 

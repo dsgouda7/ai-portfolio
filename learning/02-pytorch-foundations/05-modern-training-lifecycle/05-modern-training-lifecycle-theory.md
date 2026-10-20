@@ -1,5 +1,8 @@
 # The Modern Training Lifecycle: Handwritten Theory
 
+Keep the two sensor columns and fuel target from Parts 03–04. A curved interaction now gives a
+small nonlinear model something to learn; the new focus is separating training from validation.
+
 ## 1. Split before preprocessing
 
 Validation and test sets exist to simulate future evidence. If their feature distribution helps
@@ -87,7 +90,7 @@ The stopping rule and the best-model rule are related but different:
 
 The last epoch is not automatically the best epoch.
 
-## 6. Best-model and resumable checkpoints serve different jobs
+## 6. Best-model files and training-state snapshots serve different jobs
 
 A best-model checkpoint supports inference. It needs:
 
@@ -95,7 +98,7 @@ A best-model checkpoint supports inference. It needs:
 - preprocessing state;
 - architecture/configuration facts required for reconstruction.
 
-A resumable checkpoint supports continuation. It additionally needs:
+Continuing the same training run needs more than inference weights:
 
 - optimizer state;
 - scheduler state;
@@ -104,10 +107,13 @@ A resumable checkpoint supports continuation. It additionally needs:
 - mixed-precision scaler state when enabled;
 - any sampler or accumulation progress that affects the next update.
 
-The notebook writes separate files so the distinction remains visible. It reloads the best model
-for test inference and checks that the resumable file contains every declared continuation field.
+The notebook reloads the best model for test inference. The separate training-state snapshot
+gets a key check, not a recovery test. It leaves out the scaler, shuffled-loader and dropout
+random states, and preprocessing statistics. We keep the existing `resume_training.pt` filename
+for compatibility.
 
-**What the recovery evidence actually checks:** the best-model file is loaded into a fresh model for test inference. The resume file is checked for a declared set of keys only. No interrupted-versus-uninterrupted update comparison is run. The resume bundle omits the mixed-precision scaler state, shuffled-loader state, random-number state used by dropout, and preprocessing statistics. Exact continuation, especially on CUDA, is therefore not established by the field-presence assertion. A real recovery test must restore all state that affects the next batch and update, then compare that update.
+Saving weights plus optimizer state does not prove a matching next update. To check that,
+restore everything that affects the next batch and update, then compare with uninterrupted training.
 
 ## 7. Return predictions to original units
 

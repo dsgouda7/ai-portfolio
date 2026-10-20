@@ -1,12 +1,14 @@
 # Image Prompts
 
+**Authoring only:** reusable illustration instructions, not part of the learner route.
+
 Generate pending images manually, review them against the criteria, then embed only existing files.
 
 ## 01-melodyne-fixed-notes-adjustable-tone.png
 
 Status: generated (MAI-Image-2.6)
 
-Used in: 02-melodyne-backprop-synthesizer.ipynb — Build the Differentiable Forward Pass
+Used in: [Melodyne Backprop Lab](../02-melodyne-backprop-synthesizer.ipynb) — Build the Differentiable Forward Pass
 
 > **Copilot image prompt**
 > - **Target file:** `images/01-melodyne-fixed-notes-adjustable-tone.png`

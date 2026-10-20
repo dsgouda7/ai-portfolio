@@ -1,12 +1,13 @@
-# Optional Language-Model Foundation Branches
+# Optional Language-Model Foundations
 
-**Contents:** [one-line map of this directory](CONTENTS.md)
+**Contents:** [directory map](CONTENTS.md)
 
+[Embedding history](embedding-history/README.md) follows one-hot and bag-of-words counts
+through Word2Vec, GloVe, and the limit of one fixed row per word.
+Use it after [tokenization and embeddings](../02-tokenization-and-embeddings/README.md)
+if that history helps; it isn't a prerequisite for attention.
 
-Optional branches are revision routes, not prerequisites for the default LLM curriculum.
+Each branch has its own setup instructions. Search and sentiment applications are outside
+this branch; semantic search belongs in the [RAG stage](../../07-rag/README.md).
 
-This is an optional adjacent branch about where static word vectors came from. You can skip it without losing any prerequisite for attention or for the model-evolution route.
-
-- [Embedding History](embedding-history/README.md) covers one-hot and bag-of-words, Word2Vec, GloVe, analogies, static geometry, and the static/contextual boundary.
-
-Sentiment applications and semantic search are deliberately excluded. Semantic search belongs in the RAG track, where retrieval evidence has a clear owner.
+**Main route:** [Chapter 03 — Language Models](../03-language-models/README.md).

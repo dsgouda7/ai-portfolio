@@ -2,11 +2,6 @@
 
 Choose a revision branch without blocking the language-model route.
 
-## Required route
-
-This branch adds no required lessons to the main route.
-
-## Optional
-
-- [Framework Translation](framework-translation/README.md) — (optional) Match Keras operations to explicit PyTorch code and check corresponding weight behavior.
-- [Vision](vision/README.md) — (optional) See how image models reuse small detectors and learn compressed reconstructions.
+- [Framework Translation](framework-translation/README.md) — Match Keras operations to explicit PyTorch code and check weight-layout parity.
+- [Vision](vision/README.md) — Inspect reusable filters and compressed image reconstructions.
+- [Main Stage 02 route](../README.md) — Neither branch is required before language models.

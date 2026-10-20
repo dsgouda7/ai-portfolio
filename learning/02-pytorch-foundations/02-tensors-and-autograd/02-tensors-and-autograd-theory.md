@@ -2,6 +2,9 @@
 
 The previous loop worked, but a list of numbers does not tell you which number belongs to which example. A **tensor** is a number container; an **axis** is one dimension of its address system. A **batch** groups examples. **Shape** gives each axis length, **dtype** specifies the kind of number stored, and **device** says where those numbers live. **Autograd** records operations so it can trace error sensitivity backward.
 
+Why leave sensor rows for this preview? Text-shaped data adds positions inside each example.
+The familiar feature columns remain, but a new axis makes moving or losing dimensions visible.
+
 For the language-shaped preview, a **token** is one chosen text piece. Its integer **ID** is an address, not a measurement of meaning. An **embedding** retrieves a trainable row for that address. A **hidden state** is an intermediate feature list. A **logit** is a raw score for one possible answer, not yet a probability. Here a **head** is just one group cut from a feature list; the reason to use several attention heads belongs to [Stage 04](../../04-transformers/README.md). [Stage 03](../../03-language-model-foundations/02-tokenization-and-embeddings/README.md) owns how text pieces and their learned rows are chosen.
 
 ## 1. A shape is an address system
@@ -133,4 +136,7 @@ This is the same mechanism used in a large language model, reduced to inspectabl
 selecting, regrouping, moving, repeating, or contracting named axes.
 
 
-The preview's squared-score loss only checks gradient wiring. It does not train a useful text predictor. Next, [Models and Training Loops](../03-models-and-training-loops/03-models-and-training-loops.ipynb) asks who owns these tensors when they must move, train, and survive a fresh process.
+The preview's squared-score loss only checks gradient wiring. It does not train a useful text predictor.
+Next, [Models and Training Loops](../03-models-and-training-loops/03-models-and-training-loops.ipynb)
+returns to two sensor columns and one fuel target. Dropping the position axis keeps the comparison
+of raw tensors and modules simple: who owns the weights, and how do they survive a fresh process?

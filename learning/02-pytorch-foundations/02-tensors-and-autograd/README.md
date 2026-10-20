@@ -1,25 +1,8 @@
 # Part 02: Tensors and Autograd
 
-**Contents:** [one-line map of this directory](CONTENTS.md)
+Name axes, expose shape mistakes, and check autograd. Text-shaped tensors add a position axis
+to the sensor-row picture; the toy loss checks wiring, not language learning.
 
-
-
-- [Notebook](02-tensors-and-autograd.ipynb)
-- [Handwritten theory](02-tensors-and-autograd-theory.md)
-
-This chapter merges the external tensor/autograd route with the repository's stronger shape-first
-evidence: named axes, visible failures, reshape/transpose distinctions, broadcasting repairs,
-matrix contraction, gradient accumulation, and an LM-shaped graph.
-
-Run `./setup.ps1` on Windows or `bash ./setup.sh` on Linux/macOS.
-
-## Required Bounded Intervention
-
-Run **“Your turn: change one known axis”** in
-[`02-tensors-and-autograd.ipynb`](02-tensors-and-autograd.ipynb). Predict the head width, change only
-`YOUR_HEADS`, measure the printed before/after shapes, diagnose divisibility failures if any, and
-explain whether the evidence supports the claim that reshaping changes the axis interpretation
-without changing the feature count.
-
-
-The tensor math works, but loose trainable tensors still have no reusable owner. Continue to [the next required chapter](../03-models-and-training-loops/03-models-and-training-loops.ipynb).
+- [Notebook](02-tensors-and-autograd.ipynb) · [Theory](02-tensors-and-autograd-theory.md) · [Contents](CONTENTS.md)
+- Setup from this directory: [Windows](setup.ps1) (`.\setup.ps1`) or [Linux/macOS](setup.sh) (`bash ./setup.sh`).
+- Next: [Models and Training Loops](../03-models-and-training-loops/README.md) gives trainable tensors a reusable home.

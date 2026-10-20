@@ -25,6 +25,7 @@ for row in corpus:
 vocab = ["<start>"] + sorted({word for row in corpus for word in row})
 to_id = {word: i for i, word in enumerate(vocab)}
 def encode(rows):
+    # Equal-length word lists -> IDs [N,T]; keep row and time order so later answer slices align.
     return torch.tensor([[to_id[word] for word in row] for row in rows])
 train_ids, test_ids = encode(train_rows), encode(test_rows)
 print("ID addresses:", to_id)
@@ -38,6 +39,7 @@ def window_pairs(rows):
             prefix = ["<start>"] * WINDOW + row[:position]
             contexts.append([to_id[word] for word in prefix[-WINDOW:]])
             answers.append(to_id[row[position]])
+    # One ordered window per answer: contexts [N,WINDOW], answers [N]; start IDs fill missing left seats.
     return torch.tensor(contexts), torch.tensor(answers)
 class WindowLM(nn.Module):
     def __init__(self):
@@ -46,6 +48,8 @@ class WindowLM(nn.Module):
         self.predictor = nn.Sequential(nn.Linear(WINDOW * 8, 24), nn.Tanh(),
                                        nn.Linear(24, len(vocab)))
     def forward(self, context):
+        # IDs [B,W] -> rows [B,W,8] -> [B,W*8], preserving each seat's feature block.
+        # The shared W*8 -> 24 -> V projections score words without averaging away order.
         return self.predictor(self.rows(context).flatten(1))
 
 # %% 1. Keep the old failure in view
@@ -56,6 +60,7 @@ for step in range(300):
     loss = F.cross_entropy(window_model(x), y)
     optimizer.zero_grad(); loss.backward(); optimizer.step()
 with torch.no_grad():
+    # Keep only final windows [2,3] -> [2,V] probabilities; argmax -> [2] guesses, mean -> one accuracy.
     window_probs = window_model(test_ids[:, -4:-1]).softmax(-1)
     window_accuracy = (window_probs.argmax(-1) == test_ids[:, -1]).float().mean().item()
 print(f"Fixed-window final-token accuracy: {window_accuracy:.1%}")
@@ -74,7 +79,9 @@ class RunningLM(nn.Module):
         self.reader = nn.RNN(8, width, batch_first=True)
         self.head = nn.Linear(width, len(vocab))
     def forward(self, tokens):
+        # IDs [B,T] -> rows [B,T,8] -> running notes [B,T,H]; last is the separate final state [1,B,H].
         notes, last = self.reader(self.rows(tokens))
+        # Project each note H -> V: [B,T,H] -> [B,T,V], keeping one next-word guess at every position.
         return self.head(notes), notes
 
 torch.manual_seed(17)
@@ -82,7 +89,9 @@ running_model = RunningLM()
 optimizer = torch.optim.Adam(running_model.parameters(), lr=0.02)
 losses = []
 for step in range(350):
+    # Shift [N,5] into input/answer rows [N,4]; position t is graded against the following word, never itself.
     scores, _ = running_model(train_ids[:, :-1])
+    # Merge only examples/time: [N,4,V] -> [N*4,V], answers [N,4] -> [N*4], preserving alignment.
     loss = F.cross_entropy(scores.flatten(0, 1), train_ids[:, 1:].flatten())
     optimizer.zero_grad(); loss.backward()
     nn.utils.clip_grad_norm_(running_model.parameters(), 1.0)
@@ -90,6 +99,7 @@ for step in range(350):
     losses.append(loss.item())
 with torch.no_grad():
     scores, notes = running_model(test_ids[:, :-1])
+    # Read final-time scores [2,4,V] -> [2,V]; argmax -> [2], then mean of correct guesses -> scalar accuracy.
     recurrent_probs = scores[:, -1].softmax(-1)
     recurrent_accuracy = (recurrent_probs.argmax(-1) == test_ids[:, -1]).float().mean().item()
     clue_effect = (recurrent_probs[0] - recurrent_probs[1]).abs().max().item()
@@ -107,11 +117,13 @@ else:
 clue_word = "red"  # CHANGE THIS: "blue"
 probe = torch.tensor([[to_id[w] for w in [clue_word, "rest", "calmly", "now"]]])
 with torch.no_grad():
+    # Select the scores output, first example, and last time: [1,4,V] -> [V] probabilities for the next word.
     final = running_model(probe)[0][0, -1].softmax(-1)
 print("warm:", round(final[to_id["warm"]].item(), 4),
       "cool:", round(final[to_id["cool"]].item(), 4))
 
 # %% 3. Watch the two notes separate
+# Compare two [4,H] paths at matching times; norm removes H -> [4] distances, not one sequence-wide distance.
 distances = (notes[0] - notes[1]).norm(dim=-1).numpy()
 labels = ["red / blue", "rest", "calmly", "now"]
 fig, ax = plt.subplots(figsize=(6, 2.5))
@@ -163,7 +175,9 @@ class RecurrentLanguageModel(TrainableLanguageModel):
         self.output = nn.Linear(hidden_width, vocabulary_size)
 
     def forward(self, input_ids, target_ids=None):
+        # IDs [B,T] -> rows [B,T,D] -> notes [B,T,H]; RNN/LSTM state is separate from these per-time outputs.
         notes, _ = self.reader(self.embedding(input_ids))
+        # Reuse the H -> V projection at each time: [B,T,H] -> [B,T,V] next-word scores.
         return self.output(notes)
 
     def generate(self, prefix_ids, steps):
@@ -171,13 +185,16 @@ class RecurrentLanguageModel(TrainableLanguageModel):
         generated = prefix_ids.clone()
         with torch.inference_mode():
             for _ in range(steps):
+                # Final scores [B,V] -> chosen IDs [B,1]; keep the time axis so they can extend each prefix.
                 next_id = self(generated)[:, -1].argmax(dim=-1, keepdim=True)
+                # Append along time: [B,T] + [B,1] -> [B,T+1]; rows remain separate examples.
                 generated = torch.cat([generated, next_id], dim=1)
         return generated
 
 # %% Follow the inherited method into this LSTM
 torch.manual_seed(17)
 lstm_model = RecurrentLanguageModel(len(vocab))
+# Shift [N,5] -> two aligned [N,4] grids; the shared trainer later flattens B/T together for loss.
 lstm_inputs, lstm_targets = train_ids[:, :-1], train_ids[:, 1:]
 lstm_loader = DataLoader(TensorDataset(lstm_inputs, lstm_targets), batch_size=len(train_ids))
 lstm_optimizer = torch.optim.Adam(lstm_model.parameters(), lr=0.03)
@@ -190,7 +207,9 @@ lstm_losses = lstm_model.fit_language_model(
 lstm_model.eval()
 with torch.inference_mode():
     lstm_logits = lstm_model(test_ids[:, :-1])
+    # Last-time [2,V] -> two IDs [2] -> one mean accuracy; do not average away time before choosing the final word.
     lstm_accuracy = (lstm_logits[:, -1].argmax(-1) == test_ids[:, -1]).float().mean().item()
+    # [2,4] -> [2,4,8]; one LSTM layer returns hidden/cell [1,2,24], not one row per timestep.
     _, (hidden, cell) = lstm_model.reader(lstm_model.embedding(test_ids[:, :-1]))
 embedding_change = (lstm_model.embedding.weight.detach() - embedding_before).abs().max().item()
 

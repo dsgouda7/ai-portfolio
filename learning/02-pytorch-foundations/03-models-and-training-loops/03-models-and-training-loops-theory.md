@@ -2,7 +2,11 @@
 
 ## 1. Raw tensors already contain the learning mechanism
 
-Start with two sensor measurements: engine load and ambient temperature. Give each a learned influence, add the two contributions, and then add a baseline offset. This straight weighted prediction is **linear regression**; a **parameter** is one adjustable influence or offset. The compact line below writes that same recipe with arrays.
+Part 02 used text-shaped tensors to expose extra axes. Return to two sensor measurements—engine
+load and ambient temperature—and one made-up fuel-use target so ownership is the only new problem.
+Give each measurement a learned influence, add the contributions, then add a baseline offset.
+This straight weighted prediction is **linear regression**; a **parameter** is one adjustable
+influence or offset. The compact line below writes that same recipe with arrays.
 
 A linear regression can be written directly:
 
@@ -134,4 +138,7 @@ may return several named outputs. The same principles hold:
 forward behavior, movement, and persistence explicit.
 
 
-Next, [Data, Checkpoints, and Hyperparameters](../04-data-checkpoints-and-hyperparameters/04-data-checkpoints-and-hyperparameters.ipynb) resumes the fuel model in a fresh process. The complaint is no longer how to compute a prediction: it is how to deliver all examples exactly once and decide which state must survive an interruption.
+Next, [Data, Checkpoints, and Hyperparameters](../04-data-checkpoints-and-hyperparameters/04-data-checkpoints-and-hyperparameters.ipynb)
+reloads the fuel model in a fresh process. The complaint is no longer how to compute a prediction:
+it is how to deliver each row once and save more than weights. Matching the next update after an
+interruption is a separate check, not something a saved bundle proves by itself.

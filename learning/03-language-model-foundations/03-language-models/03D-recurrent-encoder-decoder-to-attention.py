@@ -31,6 +31,7 @@ for length in range(2,9):
     while len(unique)<count+40:
         unique.add(tuple(rng.randint(1,8) for _ in range(length)))
     rows=list(sorted(unique)); rng.shuffle(rows)
+    # One length per bucket -> ID rectangles [N_train,L] and [40,L]; no blank slots are needed.
     train[length]=torch.tensor(rows[:count]); test[length]=torch.tensor(rows[count:])
 
 # %% 3. Give both models exactly the same examples
@@ -56,25 +57,37 @@ class ReaderWriter(nn.Module):
         self.query=nn.Linear(64,64,bias=False) if look_back else None
         self.head=nn.Linear(128 if look_back else 64,V)
     def read(self,source):
+        # Source IDs [B,L] -> rows [B,L,24] -> saved notes [B,L,64].
+        # Final state [1,B,64] -> [B,64] drops the one-layer axis, not a source position.
         memory,last=self.reader(self.embedding(source)); return memory,last[0]
     def step(self,previous,state,memory):
         if self.look_back:
+            # Project writer state [B,64] -> query [B,64]; unsqueeze -> [B,64,1].
+            # Batched dot products [B,L,64] @ [B,64,1] -> [B,L,1] -> [B,L]; divide by sqrt(64) to tame score scale.
             scores=torch.bmm(memory,self.query(state).unsqueeze(2)).squeeze(2)/8
+            # Normalize over source positions: [B,L] -> [B,L], one unit-sum reading budget per example.
             weights=scores.softmax(-1)
+            # [B,L] -> [B,1,L] @ notes [B,L,64] -> [B,1,64] -> [B,64], a weighted source blend.
             context=torch.bmm(weights.unsqueeze(1),memory).squeeze(1)
+            # Previous IDs [B] -> [B,24]; append context features [B,64] -> [B,88] for the next writer update.
             state=self.writer(torch.cat([self.embedding(previous),context],-1),state)
+            # Join state/context features [B,64] + [B,64] -> [B,128]; project 128 -> V scores [B,V].
             logits=self.head(torch.cat([state,context],-1))
         else:
+            # Without look-back, [B] -> [B,24] feeds the writer; its state [B,64] alone projects -> [B,V].
             state=self.writer(self.embedding(previous),state); logits=self.head(state); weights=None
         return logits,state,weights
     def forward(self,source,teacher=True):
         memory,state=self.read(source); previous=torch.full((len(source),),BOS)
+        # Reverse only time [B,L] -> [B,L], then append end IDs [B,1] -> answers [B,L+1].
         target=torch.cat([source.flip(1),torch.full((len(source),1),EOS)],1) if teacher else None
         scores=[]; maps=[]
         for t in range(source.shape[1] + 1):
             logits,state,weights=self.step(previous,state,memory); scores.append(logits)
             if weights is not None: maps.append(weights)
+            # Select one correct answer or one guess per row: [B,L+1] or [B,V] -> previous IDs [B].
             previous=target[:,t] if teacher else logits.argmax(-1)
+        # Stack adds writer time: L+1 score arrays [B,V] -> [B,L+1,V]; reading maps [B,L] -> [B,L+1,L].
         return torch.stack(scores,1), torch.stack(maps,1) if maps else None
 
 # %% 4. Build a learned recurrent reader and writer
@@ -90,8 +103,10 @@ for look_back in [False, True]:
         length = schedule.randint(2, 8)
         rows = train[length]
         source = rows[torch.randint(len(rows), (64,), generator=batch_rng)]
+        # Reverse [64,L] and append [64,1] end IDs -> [64,L+1], including the end prediction in training.
         target = torch.cat([source.flip(1), torch.full((64, 1), EOS)], 1)
         logits, _ = model(source, teacher=True)
+        # Scores [64,L+1,V] -> [64*(L+1),V], targets -> [64*(L+1)]; merge matching batch/time axes only.
         loss = F.cross_entropy(logits.flatten(0, 1), target.flatten())
         optimizer.zero_grad(); loss.backward()
         nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -111,9 +126,12 @@ results = []
 with torch.no_grad():
     for look_back, model in models.items():
         for length, source in test.items():
+            # The held-out answers use the same layout: reverse [B,L], append end [B,1] -> [B,L+1].
             target = torch.cat([source.flip(1), torch.full((len(source), 1), EOS)], 1)
             tf_scores, _ = model(source, teacher=True)
             free_scores, _ = model(source, teacher=False)
+            # Choose IDs [B,L+1,V] -> [B,L+1]; all(time) -> [B] whole-answer checks, mean -> scalar accuracy.
+            # The token scores below instead average every [B,L+1] check, so partial answers still count there.
             tf_ok = (tf_scores.argmax(-1) == target).all(1).float().mean().item()
             free_ok = (free_scores.argmax(-1) == target).all(1).float().mean().item()
             tf_token = (tf_scores.argmax(-1) == target).float().mean().item()
@@ -122,6 +140,7 @@ with torch.no_grad():
 print("look-back length practice-sequence free-sequence practice-token free-token")
 for row in results:
     print(row[0], row[1], *[f"{value:.1%}" for value in row[2:]])
+# Seven per-length scores -> one equally weighted mean; this is not a pooled token accuracy.
 fixed_mean = np.mean([r[3] for r in results if not r[0]])
 attention_mean = np.mean([r[3] for r in results if r[0]])
 print(f"Mean over lengths, free-running: one card {fixed_mean:.1%}; look-back {attention_mean:.1%}")
@@ -150,6 +169,7 @@ with torch.no_grad():
     probe = torch.tensor([[3, 1, 4, 1]])
     logits, weights = models[True](probe, teacher=False)
     generated = logits.argmax(-1)[0].tolist()
+    # Choose one example: [1,5,4] -> [5,4], writer steps as rows and source positions as columns.
     heat = weights[0].numpy()
 fig, ax = plt.subplots(figsize=(6, 3))
 image = ax.imshow(heat, vmin=0, vmax=1, cmap="Blues", aspect="auto")
@@ -157,6 +177,7 @@ ax.set_xticks(range(4), ["3 @ 0", "1 @ 1", "4 @ 2", "1 @ 3"])
 ax.set_yticks(range(5), [f"step {i}: chose {digit}" for i, digit in enumerate(generated)])
 ax.set(xlabel="Reader source position", ylabel="Writer step", title="Measured weights: diagnostic, not proof")
 fig.colorbar(image, ax=ax, label="Read weight"); plt.show()
+# Sum only source columns [5,4] -> [5] to check one reading budget at each writer step.
 print("Row sums:", heat.sum(1).round(6).tolist())
 print("Most-read source positions:", heat.argmax(1).tolist())
 print("Expected digit addresses:", [3, 2, 1, 0], "; end has no single source address")
@@ -184,12 +205,14 @@ class ReaderWriterTrainingModel(TrainableLanguageModel):
         self.reader_writer = reader_writer
 
     def forward(self, source_ids, target_ids=None):
+        # Keep scores [B,L+1,V] for the shared loss; reading maps are a diagnostic, not a second prediction target.
         logits, _ = self.reader_writer(source_ids, teacher=True)
         return logits
 
 
 adapter = ReaderWriterTrainingModel(deepcopy(models[False]))
 adapter_source = train[4][:8]
+# Reverse source [8,4] and append end IDs [8,1] -> [8,5], aligned with the writer's five output steps.
 adapter_target = torch.cat(
     [adapter_source.flip(1), torch.full((len(adapter_source), 1), EOS)], dim=1,
 )

@@ -1,0 +1,29 @@
+[
+  {
+    "filename": "03a-01-shared-word-features.png",
+    "semantic_anchor": "Why not leave the rows random?",
+    "aspect_ratio": "16:9",
+    "prompt": "Draw a minimal educational poster, landscape 16:9, navy large sans-serif text. Warm, friendly pets feel: cream background, rounded paper cards, a few tiny simple doodles of a paw print, a ball of yarn, or a small cushion in the margins only. Title 'Different words can help with the same answers'. Exactly THREE horizontal rows, with generous whitespace. Row 1: teal paper card 'cat', a right-pointing arrow, orange paper card 'sat, slept'. Row 2: teal paper card 'dog', a right-pointing arrow, orange paper card 'sat, slept'. Row 3: teal paper card 'bird', a right-pointing arrow, orange paper card 'flew, sang'. Leave a clearly larger vertical gap between the dog row and the bird row. A short purple bracket spans ONLY the cat and dog rows and STOPS above the gap, with the label 'Useful features in common' beside it. The bird row sits on its own below the gap with NO bracket next to it. Footer in two lines: 'Training can make shared clues useful.' and 'Different IDs. Separate rows. Not identical meanings.' The three rows show the practice pairs supplied in Chapter 02B. This is NOT a before-and-after visualization and NOT a measured embedding plot. Flat simple styling, no extra boxes.",
+    "acceptance_criteria": "Exactly three input cards with their correct answer pairs; grouping only cat and dog; explicit separate IDs and rows; no fake measurements or before-after claims.",
+    "prohibited_content": "Numbers, charts, distance claims, named embedding dimensions, merging word IDs, claiming synonyms are identical, photographic animals, realistic animal drawings, illegible tiny text.",
+    "alt_text": "Cat and dog share the practice answers sat and slept, while bird has flew and sang. Their IDs and rows stay separate."
+  },
+  {
+    "filename": "03a-02-text-makes-practice.png",
+    "semantic_anchor": "Where do we get more practice questions?",
+    "aspect_ratio": "16:9",
+    "prompt": "Draw a MINIMAL educational poster, landscape 16:9, navy large sans-serif labels. Warm, friendly pets feel: cream background, rounded paper cards, a few tiny simple doodles of a paw print, a ball of yarn, or a small cushion in the margins only. Teal paper cards and one orange answer card. Title 'The text already has the answer'. Upper row heading 'Original text'. Under it EXACTLY five cards in this exact order: 'the', 'sleepy', 'cat', 'sat', 'on'. Lower row heading 'Practice question'. Under it the same five positions: teal card 'the', teal card 'sleepy', white empty card '?', teal card 'sat', teal card 'on'. Beneath this row centered text 'Use the four visible words to guess the gap'. Near the bottom one separate orange card labelled 'Answer for checking: cat'. Footer 'Slide along the text. Make another question.' NO arrows, NO predictor box, NO third row of word cards. No extra words on cards. Make every full word legible, including sleepy. The question-mark card is a visual gap, not a MASK input token.",
+    "acceptance_criteria": "Both rows have exactly five positions; cat alone becomes a gap; all four other words remain fully visible; separate checking answer; no arrows.",
+    "prohibited_content": "MASK token as a model input, treating this as BERT, feeding the answer into the predictor, fabricated scores, equations, tiny labels, extra sentence words.",
+    "alt_text": "Cover cat in the five-word phrase, use the four visible words as context, and keep cat separately as the answer for checking the guess."
+  },
+  {
+    "filename": "03a-03-feedback-teaches-rows.png",
+    "semantic_anchor": "How does a wrong guess teach the word rows?",
+    "aspect_ratio": "16:9",
+    "prompt": "Draw a minimal educational poster, landscape 16:9, navy large sans-serif labels, Warm, friendly pets feel: cream background, rounded paper cards, a few tiny simple doodles of a paw print, a ball of yarn, or a small cushion in the margins only. Teal and purple paper cards, orange feedback card. Title 'A wrong guess can teach both parts'. TWO completely separate panels divided by whitespace. Top panel heading '1. Make a guess'. Exactly THREE cards linked left to right by navy arrows: teal card 'Fetch and combine input rows', purple card 'Predictor', purple card 'Guess'. A small note under the first card says 'Token IDs stay fixed'. Bottom panel heading '2. Learn from the mistake'. Centered orange card 'Compare guess with cat'. From this orange card exactly TWO orange arrows point downward: one to a teal card 'Update fetched rows', one to a purple card 'Update predictor weights'. The bottom panel is a conceptual training summary, not a second forward pass. Footer 'Lookup fetches. Feedback teaches.' No other arrows, no token examples, no ID numbers, no invented loss numbers, no answer box attached to Guess. This is an intuition sketch of CBOW training, not a literal computational graph.",
+    "acceptance_criteria": "Top panel shows rows to predictor to guess; bottom panel comparison names cat and branches to two parameter updates; IDs fixed; no guess-to-answer arrow or fabricated tokens.",
+    "prohibited_content": "Updating token IDs, updating every row in one step, direct answer-to-input arrow, weight tying, suggesting lookup alone requires prediction, made-up loss values, unreadable labels.",
+    "alt_text": "Input IDs fetch rows which are combined and used to make a guess. Checking against cat sends training feedback to both the predictor weights and the fetched rows, while token IDs stay fixed."
+  }
+]

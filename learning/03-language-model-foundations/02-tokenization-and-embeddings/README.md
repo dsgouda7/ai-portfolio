@@ -1,48 +1,36 @@
 # Chapter 02: Tokenization and Embeddings
 
-**Contents:** [one-line map of this directory](CONTENTS.md)
+**Contents:** [directory map](CONTENTS.md)
 
+Turn a pet-sitter's note into pieces, integer addresses, and learned rows.
+Then check why blank batch slots must not count as evidence.
 
-This required chapter keeps one legal-corpus example across two fresh-kernel notebooks.
-It owns tokenization and embedding basics, not the architectures that train complete language models.
+## Before you start
 
-**Prerequisite route:** complete Stage 02, or use the
-[PyTorch Training Skeleton quick refresher](../../02-pytorch-foundations/quick-refresher/pytorch-training-skeleton.ipynb)
-when its closing readiness check passes.
+Use [Stage 02 — PyTorch Foundations](../../02-pytorch-foundations/README.md), or the
+[training-loop refresher](../../02-pytorch-foundations/quick-refresher/pytorch-training-skeleton.ipynb)
+if you can pass its closing check.
+[Chapter 01B](../01-sequence-memory/01B-sequence-memory-pytorch-lab.ipynb) already used
+IDs, shifted targets, and masks to study memory; here you explain and test those choices.
 
-## Revisit the Chapter 01 Preview
+## Read in order
 
-Chapter 01 deliberately used several language-shaped tensors before explaining their origin. This
-chapter now owns those contracts:
+1. [02A — Tokenization and Embeddings Theory](02A-tokenization-and-embeddings-theory.ipynb) ·
+   [handwritten notes](02A-tokenization-and-embeddings-theory.md) — Discover BPE, separate
+   addresses from rows, and expose a padding failure.
+2. [02B — Tokenization and Embeddings PyTorch Lab](02B-tokenization-and-embeddings-pytorch-lab.ipynb) —
+   Build the small BPE loop, inspect GPT-2 with `tiktoken`, train an embedding table,
+   and check which rows and targets receive learning signals.
 
-| Preview from sequence memory | What this chapter adds |
-|---|---|
-| Token IDs already existed | BPE creates pieces; a vocabulary assigns addresses |
-| `<pad>` appeared in a batch | Padding is bookkeeping and ignored targets need an explicit loss contract |
-| Inputs and targets were shifted | Each logit position must align with the token it predicts |
-| Earlier outputs ignored a future edit | Causality, padding visibility, and loss participation are separate questions |
+## Run it
 
-1. [02A — Tokenization and Embeddings Theory](02A-tokenization-and-embeddings-theory.ipynb) makes BPE, token addresses, padding, and masking necessary before introducing APIs.
-2. [02B — Tokenization and Embeddings PyTorch Lab](02B-tokenization-and-embeddings-pytorch-lab.ipynb) implements the compact BPE loop, inspects GPT-2 `tiktoken`, trains `nn.Embedding`, and proves the masking loss contract.
-3. [Tokenization Theory Notes](02A-tokenization-and-embeddings-theory.md) is the concise handwritten companion for 02A.
+From this directory, run [`setup.ps1`](setup.ps1) on Windows or [`setup.sh`](setup.sh) on
+Linux/macOS. It creates a chapter `.venv`, installs [requirements](requirements.txt),
+and assigns kernel `stage03-language-model-02-tokenization`.
+Restart and run each notebook independently. The lab uses GPT-2's tokenizer, not its
+pretrained model weights; `tiktoken` may fetch its vocabulary on first use.
 
-The former 02C lesson is preserved in full as
-[03A — Training Skeleton and Word Objectives](../03-language-models/03A-training-skeleton-and-word-objectives.ipynb)
-· [Theory notes](../03-language-models/03A-training-skeleton-and-word-objectives-theory.md).
-It now opens Chapter 03, where one `DataLoader` and inherited fit contract remain visible while
-CBOW, Skip-gram, recurrent models, and encoder-decoder models change the prediction job.
-
-Run `setup.ps1` on Windows or `setup.sh` on Linux/macOS. The script creates this chapter's
-`.venv`, installs `requirements.txt`, and assigns the
-`stage03-language-model-02-tokenization` kernel.
-
-Continue to [Chapter 03: Language Models](../03-language-models/README.md), then
-[Stage 04: Transformers](../../04-transformers/README.md).
-
-## Required Bounded Intervention
-
-Run **“Your turn — change the merge budget”** in
-[`02B-tokenization-and-embeddings-pytorch-lab.ipynb`](02B-tokenization-and-embeddings-pytorch-lab.ipynb).
-Predict the target piece count, change only `merge_budget`, measure the resulting pieces, diagnose
-which learned merge became available or unavailable, and explain whether the evidence supports the
-claim that adding already-learned merges cannot increase this word's piece count.
+**Next:** [Chapter 03 — Language Models](../03-language-models/README.md).
+[03A](../03-language-models/03A-training-skeleton-and-word-objectives.ipynb) ·
+[theory notes](../03-language-models/03A-training-skeleton-and-word-objectives-theory.md)
+asks how ordinary text can supply the practice questions that train those rows.

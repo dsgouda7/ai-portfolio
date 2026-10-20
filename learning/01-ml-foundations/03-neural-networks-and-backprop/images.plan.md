@@ -1,9 +1,12 @@
-# Chapter 02 Image Plan
+# Chapter 03 Image Plan
+
+**Authoring only:** reusable illustration planning, not part of the learner route.
+Some anchors describe planned expansions rather than sections in the current notebooks.
 
 This plan covers:
 
 - `01-smartval-neural-networks-and-backprop.ipynb`
-- `02-melodyne-backprop-synthesizer.ipynb`
+- `optional/02-melodyne-backprop-synthesizer.ipynb`
 
 ## Medium Policy
 

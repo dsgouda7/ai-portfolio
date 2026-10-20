@@ -1,13 +1,7 @@
 # Contents: Data, Checkpoints, and Hyperparameters
 
-Build batches of examples and save enough training state to resume rather than start over.
+Check batch coverage, reload predictions, and save selected training state.
 
-## Required route
-
-- [Part 04: Data, Checkpoints, and Hyperparameters](README.md) — Check the chapter prerequisites, notebook, handwritten companion, and next training responsibility.
-- [PyTorch Foundations 04: Data, Checkpoints, and Hyperparameters](04-data-checkpoints-and-hyperparameters.ipynb) — Build batches of examples and save enough training state to resume rather than start over.
-- [Data, Checkpoints, and Hyperparameters: Handwritten Theory](04-data-checkpoints-and-hyperparameters-theory.md) — Review why saved weights alone cannot reproduce a paused training run.
-
-## Optional
-
-No optional lessons are listed in this directory.
+- [Start and setup](README.md) — Requires Part 03's saved model and configuration.
+- [Notebook](04-data-checkpoints-and-hyperparameters.ipynb) — Compare batching policies, reload weights, and write a training-state snapshot.
+- [Theory](04-data-checkpoints-and-hyperparameters-theory.md) — Why matching predictions is not proof of a matching next update.

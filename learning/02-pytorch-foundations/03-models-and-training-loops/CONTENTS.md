@@ -2,12 +2,6 @@
 
 Move from loose arrays to a model that owns its weights and a loop with explicit update steps.
 
-## Required route
-
-- [Part 03: Models and Training Loops](README.md) — Check the chapter prerequisites, notebook, handwritten companion, and next training responsibility.
-- [PyTorch Foundations 03: Models and Training Loops](03-models-and-training-loops.ipynb) — Move from loose arrays to a model that owns its weights and a loop with explicit update steps.
-- [Models and Training Loops: Handwritten Theory](03-models-and-training-loops-theory.md) — Review which state belongs to the model, the update rule, and the training loop.
-
-## Optional
-
-No optional lessons are listed in this directory.
+- [Start and setup](README.md) — Run this before Part 04 to create its input artifacts.
+- [Notebook](03-models-and-training-loops.ipynb) — Compare raw tensors and a module on two sensor columns and one fuel target.
+- [Theory](03-models-and-training-loops-theory.md) — Why parameters need an owner and loss stays outside the model.

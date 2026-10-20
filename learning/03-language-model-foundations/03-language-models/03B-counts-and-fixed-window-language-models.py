@@ -47,6 +47,7 @@ print(previous_word, "->", dict(next_counts[previous_word]))
 vocab = ["<start>"] + sorted({word for row in corpus for word in row})
 to_id = {word: i for i, word in enumerate(vocab)}
 def encode(rows):
+    # Equal-length word lists -> IDs [N,T]; keep row and time order so later answer slices align.
     return torch.tensor([[to_id[word] for word in row] for row in rows])
 train_ids, test_ids = encode(train_rows), encode(test_rows)
 print("ID addresses:", to_id)
@@ -60,6 +61,7 @@ def window_pairs(rows):
             prefix = ["<start>"] * WINDOW + row[:position]
             contexts.append([to_id[word] for word in prefix[-WINDOW:]])
             answers.append(to_id[row[position]])
+    # One ordered window per answer: contexts [N,WINDOW], answers [N]; start IDs fill missing left seats.
     return torch.tensor(contexts), torch.tensor(answers)
 class WindowLM(nn.Module):
     def __init__(self):
@@ -68,13 +70,17 @@ class WindowLM(nn.Module):
         self.predictor = nn.Sequential(nn.Linear(WINDOW * 8, 24), nn.Tanh(),
                                        nn.Linear(24, len(vocab)))
     def forward(self, context):
+        # IDs [B,W] -> rows [B,W,8] -> [B,W*8], preserving each seat's feature block.
+        # The shared W*8 -> 24 -> V projections score words without averaging away order.
         return self.predictor(self.rows(context).flatten(1))
 
 # %% 2. Give each position its own seat
 model = WindowLM()
 a = torch.tensor([[to_id[w] for w in ["red", "wait", "quietly"]]])
+# Reverse the time/seat axis only: [1,3] -> [1,3], same words in a different order.
 b = a.flip(1)
 with torch.no_grad():
+    # Mean removes seats: [1,3,8] -> [1,8]; comparing row averages cannot detect their order.
     bag_gap = (model.rows(a).mean(1) - model.rows(b).mean(1)).abs().max().item()
     ordered_gap = (model(a) - model(b)).abs().max().item()
 print(f"Bag row-average gap: {bag_gap:.8f}")
@@ -96,16 +102,19 @@ plt.show()
 # %% 2. Give each position its own seat
 probe_words = ["red", "wait", "quietly"]  # CHANGE THIS: replace only "red" with "blue"
 with torch.no_grad():
+    # One [1,3] window -> [1,V] scores; softmax keeps [1,V], then [0] selects one word distribution [V].
     probabilities = model(torch.tensor([[to_id[w] for w in probe_words]])).softmax(-1)[0]
 print([(vocab[i], round(probabilities[i].item(), 3))
        for i in probabilities.topk(3).indices.tolist()])
 
 # %% 3. The clue is one seat too far away
+# Rows [2,5] -> final windows [2,3] and answers [2]; the opening color is deliberately outside the window.
 contexts = test_ids[:, -4:-1]
 answers = test_ids[:, -1]
 with torch.no_grad():
     predictions = model(contexts).softmax(-1)
     blind_gap = (predictions[0] - predictions[1]).abs().max().item()
+    # argmax reduces vocabulary [2,V] -> chosen IDs [2]; compare matching answers and mean -> accuracy scalar.
     window_final = (predictions.argmax(-1) == answers).float().mean().item()
 print("Inputs:", [[vocab[i] for i in row] for row in contexts.tolist()])
 print("Required answers:", [vocab[i] for i in answers.tolist()])
@@ -116,6 +125,7 @@ print("Takeaway: identical windows force identical predictions, not identical co
 
 # %% 3. The clue is one seat too far away
 visible_words = 3  # CHANGE THIS: try 4
+# [2,5] -> [2,visible_words]; widening this inspection reveals the clue but does not resize the trained model.
 visible = test_ids[:, -(visible_words + 1):-1]
 print([[vocab[i] for i in row] for row in visible.tolist()])
 print("Still identical?", torch.equal(visible[0], visible[1]))

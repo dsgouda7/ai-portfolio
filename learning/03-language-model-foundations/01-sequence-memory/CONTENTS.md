@@ -10,6 +10,4 @@ Follow an early clue through increasingly demanding memory tasks.
 - [01C - Cinematic Piano Memory](01C-cinematic-piano-memory.ipynb) — Hear whether a recurrent model remembers an opening cue when choosing the ending of a piano phrase.
 - [Sequence Memory: Handwritten Theory Notes](01A-sequence-memory-theory.md) — Review why running memory forgets and how controlled memory gates help preserve useful signals.
 
-## Optional
-
-No optional lessons are listed in this directory.
+**Next:** [Chapter 02 — Tokenization and Embeddings](../02-tokenization-and-embeddings/README.md).
