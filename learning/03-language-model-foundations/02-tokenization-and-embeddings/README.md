@@ -17,10 +17,12 @@ IDs, shifted targets, and masks to study memory; here you explain and test those
 
 1. [02A — Tokenization and Embeddings Theory](02A-tokenization-and-embeddings-theory.ipynb) ·
    [handwritten notes](02A-tokenization-and-embeddings-theory.md) — Discover BPE, separate
-   addresses from rows, and expose a padding failure.
-2. [02B — Tokenization and Embeddings PyTorch Lab](02B-tokenization-and-embeddings-pytorch-lab.ipynb) —
+   addresses from compact rows, check one-hot selection and ID renumbering, and expose a padding failure.
+2. [02B — Tokenization and Embeddings PyTorch Lab](02B-tokenization-and-embeddings-pytorch-lab.ipynb) ·
+   [handwritten notes](02B-tokenization-and-embeddings-pytorch-lab-theory.md) —
    Build the small BPE loop, inspect GPT-2 with `tiktoken`, train an embedding table,
-   and check which rows and targets receive learning signals.
+   inspect probability shortlists and sampling, and take one visible optimizer step:
+   stored rows change while input and answer IDs stay fixed.
 
 ## Run it
 

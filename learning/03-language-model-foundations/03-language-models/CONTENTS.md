@@ -19,6 +19,7 @@ Follow the failures that lead from counting continuations to a writer that can l
 - [Common training base](language_model.py) — Keep one practice loop while each model chooses how to guess and which answers to grade.
 - [03A - Python](03A-training-skeleton-and-word-objectives.py) — Word objectives, the reader/writer preview, and the story-trained embedding comparison.
 - [Real-text experiment helper](real_text_embeddings.py) — Cache the checked TinyStories file, build practice questions, and record losses and embedding diagnostics.
+- [Window and objective checks](test_real_text_embeddings.py) — Check document boundaries, short documents, unknown slots, and each objective's question/answer alignment offline.
 - [03B - Python](03B-counts-and-fixed-window-language-models.py) — Counts and an ordered fixed-window predictor.
 - [03C - Python](03C-fixed-windows-to-recurrent-language-models.py) — Original RNN experiments plus inherited LSTM training and generation.
 - [03D - Python](03D-recurrent-encoder-decoder-to-attention.py) — Fixed-summary and attention experiments plus an inherited-training adapter.

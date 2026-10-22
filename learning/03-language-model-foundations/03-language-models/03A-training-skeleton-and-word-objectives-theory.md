@@ -6,10 +6,21 @@
 
 ## 1. We can fetch word rows. What teaches their numbers?
 
-Chapter 02 gave each word an address and fetched its row of numbers. An address distinguishes
-`cat` from `dog`; it does not tell a predictor what those words have in common.
+[02A's notebook](../02-tokenization-and-embeddings/02A-tokenization-and-embeddings-theory.ipynb)
+gave each word an address and checked compact lookup against a one-hot checklist.
+[02B's notebook](../02-tokenization-and-embeddings/02B-tokenization-and-embeddings-pytorch-lab.ipynb)
+repeated the three-word table in PyTorch, then trained the six `cat/dog -> sat/slept`
+and `bird -> flew/sang` questions. Its shortlist showed why a fixed chance table
+can support different sampled answers. An address distinguishes `cat` from `dog`;
+it doesn't tell a predictor what those words have in common.
 
 Think of an embedding as a drawer. Lookup opens the drawer. Training changes its contents.
+The input is the integer address, not freshly drawn random numbers. The row starts random
+once, then is reused. It is an input to the predictor and a trainable weight of the whole
+model. Backpropagation calculates feedback for it; the optimizer changes the stored values.
+The same fixed ID then fetches the updated row. Renumbering IDs adds no meaning: keep the
+address book, matching rows, and output labels in agreement, and predictions stay the same.
+
 A one-hot checklist multiplied by the table opens the same drawer, carrying vocabulary-sized
 zeros along. Short rows solve storage; useful shared features still need learning.
 
@@ -31,6 +42,9 @@ independent document, **the sleepy cat sat on the mat**, at the end: **13,765 do
 **149,572 tokens**, and **94,512 five-word windows**. Its seven words supply three windows.
 No window crosses a sentence boundary. No copies, special weights, or extra sampling
 chances are given to that document.
+One shared document-safe helper builds windows for all three objectives, in both the
+introductory run and the larger comparison. Each objective still chooses its own clues
+and answers; sharing the cutter does not make the questions identical.
 
 The vocabulary keeps common words plus every cat-probe word: **1,202 entries**.
 `mat` occurs once; reserving its drawer adds no evidence. Other rare words become unknown.
@@ -58,6 +72,11 @@ Keep probability, rank, and shortlist together.
 
 CBOW sees both sides of a blank, unlike next-word writing. Its mean erases order:
 reversing clues leaves the representation and logits unchanged.
+
+The feedback close-up uses the illustrated **the sleepy ___ sat on** question on a
+copy of the model. A fresh plain SGD step changes the four fetched input rows and the
+predictor, but no IDs. The answer `cat` is not another input lookup. The shorter
+**the ___ sat** table is only an arithmetic magnification, not a different training corpus.
 
 **Complaint:** more epochs cannot restore a distinction discarded before prediction.
 

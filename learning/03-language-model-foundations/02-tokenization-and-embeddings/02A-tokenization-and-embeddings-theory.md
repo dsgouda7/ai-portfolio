@@ -1,133 +1,168 @@
-# Tokenization and Embeddings: Handwritten Theory Notes
+# Tokenization and Embeddings: Handwritten Theory
 
-## 1. Why text needs a boundary
+Read alongside [02A's notebook](02A-tokenization-and-embeddings-theory.ipynb).
+Then try [02B's lab](02B-tokenization-and-embeddings-pytorch-lab.ipynb).
 
-A model consumes fixed-width numeric rows. A pet-sitter's note arrives as a string with words, punctuation, rare names, and multilingual fragments. Character tokens never become unknown, but they make sequences long. Whole-word tokens are shorter, but every unseen spelling becomes an out-of-vocabulary failure.
+## 1. A note is not yet a model input
 
-The useful complaint is not "strings are not numbers." It is: **which reusable pieces preserve coverage without wasting the context window?**
+Start with **the sleepy cat sat on the mat**. You can read it immediately;
+a network needs numbers. Before picking those numbers, decide which text pieces
+they will stand for.
 
-Token boundaries change the task itself. A long sequence consumes more compute and leaves less room for useful context. A huge vocabulary gives every row fewer learning examples and makes the output head wider. There is no universally correct split; the vocabulary is a trained compression code for a particular corpus and objective.
+One whole-word token is compact, but a new spelling needs a new entry.
+Single characters can spell unfamiliar words using a known alphabet, but they
+use more positions. The notebook checks both on six pet-sitter's notes.
+`sleepyhead` has no whole-word entry, although all its letters are available.
 
-## 2. BPE grows reusable pieces
+This matters later: more positions mean more work, while a bigger vocabulary
+means more rows to learn. Neither extreme wins everywhere.
 
-Start each word as characters plus an end marker. Count adjacent pairs. Merge the most frequent pair. Repeat.
+**Complaint:** can common fragments share a piece without making every new
+word a special case?
 
-The memorable model is a zipper. Each merge closes one common seam. Frequent fragments become single pieces while rare words can still fall back to smaller pieces.
+## 2. BPE closes common seams
 
-A merge budget creates a trade-off:
+Picture a zipper. Start each word as characters, count adjacent pairs, and
+join the most common pair. Count again, because the available pieces changed.
 
-| Too few merges | Too many merges |
-|---|---|
-| long sequences | large vocabulary |
-| more repeated character work | more rare, brittle pieces |
-| excellent coverage | weaker reuse |
+This is **byte-pair encoding**, or BPE. Our toy uses characters and an end-of-word
+marker so the joins remain visible. GPT-2 starts with bytes instead; the byte
+alphabet supplies coverage for UTF-8 text.
 
-The theory notebook tracks `sleepy` through real merge steps: 7 symbols, including the end marker, become 1 piece after 18 merges. The animation is paired with a static storyboard so the evidence survives without JavaScript.
+In 02A, `sleepy` goes from seven symbols, including its marker, to one piece
+after 18 merges. A merge elsewhere can leave `sleepy` unchanged. The static
+chart and animation read the same recorded states.
 
-The merge list is ordered. Later pieces depend on earlier pieces existing, so you cannot treat the learned pairs as an unordered dictionary. Encoding replays the ranked merge decisions; decoding concatenates the stored byte or text pieces. The toy notebook begins from characters because the mechanics remain visible. Production GPT-2 begins from bytes so every possible input remains representable, including unusual Unicode sequences after UTF-8 encoding.
+The merge list is ordered: a later join may depend on an earlier one.
+Learning those joins and applying them to new text are separate jobs.
+02B replays the learned list on `sleepyhead`, keeping spare letters where needed.
 
-**Complaint:** pieces now exist, but the model still cannot consume strings.
+**Complaint:** shorter strings are useful, but the model still needs numeric inputs.
 
-## 3. Token IDs are addresses
+## 3. An ID opens a drawer
 
-A vocabulary assigns each piece an integer ID. ID 500 is not five times ID 100. It is row 500 in an embedding table.
+Give each piece an integer address. The ID selects a row; its size does not
+measure meaning.
 
-`token ID -> one selected embedding row`
+Both notebooks use this exact miniature table:
 
-### Are we fetching useful features, or just random numbers?
+| Word | Local ID | Stored row |
+|---|---:|---|
+| the | 0 | [2, 0] |
+| cat | 1 | [1, 3] |
+| sat | 2 | [0, 4] |
 
-In 02A, just random numbers. The NumPy table is created with `rng.normal`; it is not trained.
-Its neighbour-mixing example only proves that the same stored row can lead to different results
-after mixing. It does not demonstrate learned word meaning.
+ID 2 fetches the `sat` row, not twice some other row. ID zero fetches `[2, 0]`,
+not zeros. For **the ___ sat**, the two visible IDs fetch two rows.
+The covered word is not another input.
 
-02B creates a fresh random `nn.Embedding` table, then trains it along with a prediction layer.
-The GPT-2 tokenizer inspected earlier is a separate artifact: pretrained splitting rules and IDs,
-not pretrained embedding vectors. A random seed makes an initial draw repeatable, not learned.
+Giving `cat` ID 2 instead of 1 adds no meaning. Renumber the address book and
+move the matching rows together, and lookup returns exactly the same features.
+The notebook checks this, then shows the mistake: moving only the IDs fetches
+the wrong rows. In a predictor, output labels must use the same address book too.
 
-Why let the rows change? An ID is a name tag. A random row can identify a word too, but it
-doesn't deliberately give the prediction layers useful shared features. In 02B, `cat`
-and `dog` must support the same answers, `sat` and `slept`. Adjusting the rows gives
-the model somewhere to organize features that help with that shared job. The predictor learns
-to read those features while the rows learn what is useful to offer it.
+These are hand-picked teaching numbers, not learned features. The table has
+three words and two numbers per word. It reappears in 03A so that only the
+new operation, combining rows, needs your attention.
 
-We don't prescribe a column for "furriness", and matching answers don't require the whole vectors
-to converge: the predictor can ignore differences. Frozen random rows can also work, particularly
-on a tiny task with a strong enough predictor. Learning the table is another way to adapt the
-model, not a prerequisite for lookup. Better performance on new text must be measured, not
-inferred from changed rows or lower training loss.
+**Complaint:** why not send one box per word instead?
 
-The important payoff is reuse across words. If `cat` and `dog` learn useful shared
-features, something learned with one can help with the other in a similar setting. That is how
-embeddings can capture semantic relationships instead of leaving each word as an unrelated name
-tag. Their IDs and rows still differ; similarity is not equality. Context-based training can
-also put opposites such as `happy` and `sad` near each other because they appear in
-similar surroundings, such as "the dog felt ___". Nearby vectors aren't proof of synonymy, and a static row doesn't decide
-which meaning of a word is intended in a particular sentence.
+## 4. A compact row replaces a giant checklist
 
-Training changes useful rows because prediction errors send gradients into the rows that participated. Similar use can create similar geometry, but an embedding map is evidence about the learned objective, not a complete explanation of meaning.
+A **one-hot** row has one box per vocabulary item: one is selected, the rest
+are zero. Multiply that checklist by the embedding table and it selects the
+same row as direct lookup. The notebook checks that equality.
 
-`nn.Embedding` is therefore not a magic semantic database. It is a trainable table with sparse participation: IDs used in a lesson select rows, and those rows receive gradient through the downstream objective. Two words can move closer because they help predict the same targets. They can also stay far apart if the corpus or task never creates shared pressure.
+Every distinct pair of one-hot rows is equally far apart. The checklist
+distinguishes identities but says nothing about related uses.
 
-The [03A lesson](../03-language-models/03A-training-skeleton-and-word-objectives.ipynb)
-removes one remaining convenience: prediction pairs no longer arrive by hand. A
-sliding window over short stories creates CBOW lessons, then reverses their direction for Skip-gram,
-and finally becomes a tiny source-target continuation. One familiar cat sentence stays available
-for close-ups. One `DataLoader` and training loop stay visible while
-the input shape, model forward path, and target alignment change. This proves how ordinary text
-can support several language objectives without hiding the common PyTorch mechanics.
+An embedding can give each selected token a much shorter row. A 50,000-word
+vocabulary might use 32 numbers per selected row instead of 50,000 checklist
+entries. The shared table still has 50,000 rows. Lookup avoids constructing
+the giant checklist; it doesn't make the table disappear.
 
-**Complaint:** one lookup row gives the same vector every time. The word `bark` still begins from one static row in both "loud bark" and "rough bark."
+That is the first embedding job: compact features. The second needs learning.
 
-## 4. Static lookup versus contextual representation
+**Complaint:** making a row short doesn't make its numbers useful.
 
-Static embedding lookup answers: **which token type is this?**
+## 5. Practice can teach shared features
 
-Contextualization answers: **what role is this token playing here?**
+02A's later `bark` table starts random. 02B's trainable table also starts random.
+Neither borrows GPT-2's model weights. Its tokenizer supplies splitting rules,
+IDs, and decoding, not trained embedding values.
 
-A contextual model begins with the static row, then mixes information from neighboring token representations. The same `bark` row can therefore become two different token representations after context mixing.
+02B supplies six little questions:
 
-Tokenization and embeddings do not perform that mixing by themselves. Transformers will own the contextual mechanism.
+- `cat` and `dog` each predict `sat` and `slept`.
+- `bird` predicts `flew` and `sang`.
 
-This boundary prevents a common overclaim. Nearest neighbors in a static table show geometric consequences of training, not sentence-level understanding. Word2Vec and GloVe are valuable optional history because they make that geometry explicit. They still assign one learned type vector to every occurrence of `bark`.
+The input row and the prediction layer both change when a guess is checked.
+The row starts random once, when the table is created; lookup doesn't redraw it.
+The integer ID stays fixed. The stored row is an input to the predictor and a
+trainable weight of the whole model. Backpropagation calculates its feedback;
+the optimizer updates it. The same ID then fetches the updated numbers.
+Words used alike can develop useful features in common, helping the predictor
+reuse what it learned rather than treat every identity as unrelated.
 
-## 5. Padding creates fake positions
+We don't assign a column called "furriness". We also don't require whole
+vectors to become identical or closer in every direction. The prediction layer
+can use some differences and ignore others.
 
-Batches need a rectangle, but sentences have different lengths. Padding fills the unused positions. Those pad IDs are bookkeeping, not language.
+This is the second embedding job: somewhere to learn relationships from use.
+Frozen random rows can still support learning in the predictor. Lower training
+loss or moving rows alone doesn't prove transfer to unfamiliar text.
 
-A mask marks real positions:
+**Complaint:** the same question sometimes has more than one sensible answer.
 
-`1 = real token, 0 = padding`
+## 6. A shortlist is not a single inevitable word
 
-Without a mask, a model can appear to improve by learning the easy repeated pad target. The wrong loss averages over every rectangle cell. The correct loss sums only real-token losses and divides by the count of real targets. In PyTorch, `ignore_index` implements the same contract; the lab proves it against an explicit reduction.
+Our identical `cat` input is paired with `sat` and with `slept`. One forward
+calculation cannot know which practice card was drawn.
 
-Three similarly shaped controls have different jobs:
+02B turns raw scores into chances with **softmax**. Each answer gets a share,
+and the shares add to one. The tiny balanced task learns roughly half for
+each of those two answers.
 
-1. A **padding mask** marks positions that are not real input evidence.
-2. A **loss mask** removes positions that are not real prediction targets.
-3. A **causal mask** prevents a real earlier position from reading a real future position.
+Choosing the largest share is deterministic. Sampling draws from the spread,
+so repeated draws can differ without changing the input or weights.
+Embeddings don't create the randomness; the sampling choice does.
 
-One mask cannot be assumed to perform all three jobs. Recurrent models get causal direction from their left-to-right computation, but they still need padding and loss handling. Transformers will need padding and causality expressed explicitly in attention.
+That is a warm-up, not a sentence writer. 03A will manufacture questions
+from text before later lessons build next-token writing.
 
-**Complaint:** masking fixes the denominator, but it does not automatically prevent future-token leakage. Causal attention will require another mask with a different job.
+**Complaint:** shared features still don't tell us which meaning a sentence intends.
 
-## 6. Production bridge
+## 7. One stored row, two meanings
 
-GPT-2 uses byte-level BPE. Bytes guarantee coverage, learned merges shorten common sequences, and spaces can become part of token pieces. `tiktoken` exposes the production contract:
+The `bark` in **the loud bark woke the cat** and in
+**the rough bark covered the tree** starts from the same stored row.
+Lookup sees an identity, not the sentence.
 
-`text -> token IDs -> decoded token bytes -> text`
+Adding different neighbours changes the result in 02A's small demonstration.
+That mixing rule is hand-written, not trained understanding. Later models
+learn how surrounding words should affect each occurrence.
 
-Production vocabularies are pretrained artifacts. You inspect and use their merge decisions; you do not retrain them inside an application notebook.
+Similar usage also isn't synonymy: `happy` and `sad` fit similar sentence slots
+while meaning opposite things. Nearby rows are clues, not replacement rules.
 
-Round-trip checks matter. Token strings may display whitespace markers or partial byte sequences that look strange in isolation. The reliable contract is that encoding followed by decoding reconstructs the original text. When debugging, inspect IDs, raw token bytes, and the decoded result rather than guessing from a prettified token label.
+**Complaint:** batching adds positions that aren't words at all.
 
-## 7. Practical failure modes
+## 8. Blank seats must not count as evidence
 
-| Failure | Check |
-|---|---|
-| IDs treated as numeric features | verify IDs enter `nn.Embedding` as `torch.long` |
-| padding row learns content | set `padding_idx` and inspect its gradient |
-| masked loss still changes with extra pads | compare explicit real-token reduction |
-| decoded pieces look odd | inspect bytes and whitespace-bearing tokens |
-| static vectors described as contextual | compare lookup output before context mixing |
+Unequal notes need padding to fit in one rectangle. A mask marks real seats.
+The notebook's invented losses average to **0.175** when blanks count and
+**0.300** when only real targets count. Excluding blanks changes both the sum
+and the number of graded targets.
 
-**Durable summary:** tokenization chooses reusable text pieces, IDs address embedding rows, context prediction can organize those rows, and neither equal pooling nor static lookup can preserve token roles in a sentence.
+Keep three jobs apart: an input padding mask excludes blank evidence; a loss
+mask excludes blank answers; a causal mask blocks future clues. An embedding's
+padding-row setting is another input-side control, not a substitute for loss masking.
+
+Watch for ID arithmetic, mixed vocabularies, untrained rows called semantic,
+and padding accidentally improving a score.
+
+**Next:** 02B makes these checks in PyTorch. [03A's notebook](../03-language-models/03A-training-skeleton-and-word-objectives.ipynb)
+then creates its own questions, with a separate loader for each objective.
+
+**Remember:** pieces choose the units, IDs choose rows, practice teaches features,
+and sampling chooses from the resulting chances.

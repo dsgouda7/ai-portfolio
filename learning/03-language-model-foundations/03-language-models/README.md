@@ -31,6 +31,10 @@ Select that kernel, restart, and run each notebook independently; kernels don't 
 [TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories), with a separate familiar
 cat document for the close-up examples. Its [helper](real_text_embeddings.py) downloads and
 checks the pinned corpus, builds practice pairs, and records the embedding comparison.
+Its document-safe window builder is shared by the introductory run and held-out comparison:
+CBOW, Skip-gram, and the writer reuse raw windows, then choose their own inputs and answers.
+03A also takes one isolated optimizer step to show that embedding weights change while
+the word IDs stay fixed.
 Read the notebook's printed budget and measured losses rather than treating a tiny CPU run
 as a model-quality benchmark. The later held-out comparison trains fresh models separately
 and keeps the limits visible. The full notebook took about 3–5 minutes on the authoring CPU;
@@ -56,6 +60,12 @@ The shared [training base](language_model.py) keeps `fit_language_model → trai
 forward → loss → backward → step` in one place. 03A shows it inline, 03C reuses it for
 RNN/LSTM prediction, and 03D connects a reader/writer through a small wrapper.
 The original comparison loops stay visible too; the wrapper doesn't replace their experiments.
+
+The offline [window and objective checks](test_real_text_embeddings.py) need no corpus download:
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest test_real_text_embeddings -v
+```
 
 The [03A illustration manifest](images/03a-illustration-prompts.json) and
 [generator](generate_illustrations.py) are only for rebuilding the intuition sketches.

@@ -1,88 +1,151 @@
 # Sequence Memory: Handwritten Theory Notes
 
-## 1. The complaint that creates recurrence
+Use beside [01A's notebook](01A-sequence-memory-theory.ipynb), then test the
+contracts in [01B](01B-sequence-memory-pytorch-lab.ipynb) and listen to
+[01C](01C-cinematic-piano-memory.ipynb).
 
-A dense network sees a fixed bag of features. A convolution sees a local neighborhood. Melodyne Labs needs the second `twinkle` to depend on an earlier phrase, so the input has a new axis: `(batch, time, feature)`.
+## 1. Same notes, different tune
 
-The memorable model is a notecard. At each timestep, a recurrent cell reads the current note and the previous notecard, then writes the next notecard. The same cell is reused through time. That reuse lets a short sequence become a chain of computation without creating a new layer for every position.
+Play **D3 A3 D4**, then **D4 A3 D3**. Each phrase contains the same notes
+once, but they are different tunes. A count card cannot distinguish them:
+we threw the order away before the model saw it.
 
-The tensor contract keeps the roles separate:
+Separate ordered seats keep that distinction. A batch now has three questions:
+which phrase, which position in that phrase, and which features at that position?
+Those are the batch, time, and feature axes.
 
-- `batch` says which independent examples travel together.
-- `time` says where each observation sits in order.
-- `feature` says what is known at one timestep.
+A dense model with ordered input seats can use order too. Recurrence isn't
+the only way to preserve it. Recurrence adds a reusable reading rule: keep
+applying the same update instead of requiring another fixed input seat forever.
 
-Collapsing time into features can work only for one fixed window. It loses the reusable "same update at every step" idea. Recurrence keeps that update reusable and produces two related artifacts: an output at every valid timestep and a final state that summarizes the path so far. Sequence labeling needs the first; sequence classification may use the second. Neither artifact is automatically meaningful at padded positions.
+**Complaint:** how do we read another note without keeping the entire transcript?
 
-**Complaint:** the notecard exists, but can the final mistake teach the opening cue?
+## 2. One reader, a changing notecard
 
-## 2. Backpropagation through time
+At each step the reader gets the current note and its previous notecard.
+It writes a fresh card, then passes that card onward.
 
-Training unfolds the reused cell into a long chain and sends credit backward through every copy. This is backpropagation through time. The parameters are shared, but the gradient still has to cross one state transition per timestep.
+The card is a short row of numbers, not a literal sentence. Its width is fixed,
+so it must compress the history. A new independent phrase starts with a fresh
+blank card.
 
-A simple retention factor makes the danger visible. If every transition preserves only 65% of a signal, a cue 20 steps away keeps `0.65^20` of its route. Repeated multiplication, not a mysterious optimizer failure, creates the vanishing gradient.
+The reader's weights stay the same throughout a pass. The card changes at
+every step. Three boxes drawn across time mean three uses of one reader,
+not three independently trained readers.
 
-A vanilla recurrent state can also explode when the repeated multiplier is above one. Clipping limits an update after gradients are computed; it does not repair forgotten evidence.
+The notebook uses hand-picked two-number inputs for D3, A3, and D4.
+Reversing those inputs changes the final card while the weights stay fixed.
+That proves order can affect the computation, not that the model learned music.
 
-This distinction matters in debugging. A small opening-cue gradient can mean the route vanished, or it can mean the model already made almost no final error. Always read the gradient beside the loss that created it. Likewise, a large gradient norm is not proof of useful memory; it may be one unstable update. The notebook therefore controls the route multiplier and delay before making an architectural claim.
+**Complaint:** carrying a card forward doesn't guarantee that training can
+teach the opening clue.
 
-**Complaint:** clipping can cap an unstable gradient, but it cannot create a long, protected memory route.
+## 3. Reading goes forward; teaching comes back
 
-## 3. The LSTM cell state
+Suppose the final guess is wrong. Backpropagation follows the saved steps
+backward to calculate how earlier computations contributed to that mistake.
+This is **backpropagation through time**.
 
-An LSTM adds a cell-state conveyor belt. Four gates manage it:
+Each use contributes to the gradients of the same shared weights. The
+optimizer changes those weights afterward. It doesn't edit the input notes
+or turn the changing hidden cards into separately trained parameters.
 
-1. The **forget gate** decides how much old cell state survives.
-2. The **input gate** decides how much candidate evidence enters.
-3. The **candidate** proposes new content.
-4. The **output gate** decides how much cell state becomes visible as hidden state.
+Consider a deliberately simple route passing on 65% of the feedback at
+every transition. Two transitions retain 65% of the remaining 65%.
+Repeated shrinking compounds: the notebook's autograd check falls below
+1% after 11 transitions.
 
-Gates are values between zero and one. They are not four separate memories. They are controls around one carried cell state.
+The 65% value is chosen, not a universal RNN constant. Real derivatives
+depend on inputs, weights, and nonlinearities. The toy isolates why a long
+route can become hard to teach.
 
-The key comparison is the memory route. A vanilla route repeatedly rewrites its state through a nonlinear transform. A well-opened LSTM forget route can stay close to one, so the same 20-step signal remains measurable.
+**Complaint:** can a training safety brake recover the missing signal?
 
-The cell state and hidden state have different jobs. The cell state is the longer-lived conveyor belt. The hidden state is the currently exposed view used by the next recurrent computation and downstream head. An output gate can hide some carried evidence without deleting it. An input gate can reject a distracting note without freezing the entire model. A forget gate can deliberately clear stale evidence; "remember everything" would be as unhelpful as "forget everything."
+## 4. Clipping stops a surge, not a fade
 
-**Boundary:** an LSTM improves the route; it does not guarantee perfect recall. Training data, hidden width, initialization, and optimization still matter.
+Repeated shrinking can make gradients vanish. Repeated amplification can
+make them explode. Gradient clipping caps an overly large combined gradient
+after backward and before the optimizer step.
 
-## 4. Controlled RNN versus LSTM evidence
+A cap doesn't enlarge a tiny gradient. It cannot recreate forgotten evidence
+or shorten the route from a final error to an early clue.
 
-Hold the delay constant and change only the memory route. The theory notebook records the gradient reaching the opening cue for both paths. The LSTM route retains more signal at long delays because its cell state has a nearly additive path.
+Small gradients also need context: a nearly correct final answer may require
+almost no correction. Read error beside its feedback, rather than treating
+every small gradient as a memory failure.
 
-This comparison is evidence about mechanism, not a claim that every LSTM beats every RNN on every dataset. A badly trained LSTM can lose. A short task may not need gates.
+**Complaint:** we need a better way to carry evidence, not just safer updates.
 
-Parameter cost also changes. An LSTM computes four aligned gate/candidate blocks where a vanilla RNN computes one state proposal. That extra capacity is justified only when the task needs selective retention. The piano capstone therefore reports both error and parameter count when the learner changes hidden width.
+## 5. Keep some, write some, show some
 
-**Complaint:** we understand why the architecture can remember. We still need framework contracts for real batches.
+An LSTM adds a carried cell state and three learned controls:
 
-## 5. What the PyTorch lab adds
-
-The next lab begins with a low-noise forecasting task:
-
-`series -> sliding windows -> temporal split -> Dataset/DataLoader -> nn.LSTM -> prediction`
-
-It then switches to the contract needed by language models:
-
-`token IDs -> shifted targets -> embedding -> packed LSTM -> vocabulary logits`
-
-Those token IDs, padding positions, and shifted targets are preview contracts used to keep the
-memory experiment concrete. [Chapter 02](../02-tokenization-and-embeddings/README.md) formally
-explains how token pieces receive IDs and separates padding visibility, loss participation, and
-causal access. The lab measures recurrence first; it does not silently take ownership of
-tokenization.
-
-Padding is bookkeeping, not a target. `ignore_index` removes padded positions from cross-entropy, while explicit reduction shows the denominator is the number of real tokens. A causal-invariance test changes future tokens and verifies earlier logits stay unchanged. Gradient clipping is placed after `backward()` and before `step()`.
-
-Packing and masking solve different failures. Packing stops recurrence at each row's real length, so the final state refers to the final real token. Loss masking stops padded targets from changing the objective. You often need both. A packed LSTM with an unmasked loss still rewards pad predictions after unpacking; a masked loss without packing may still return a final state created after several padded inputs.
-
-## 6. Practical failure modes
-
-| Failure | What to inspect |
+| Part | Memorable job |
 |---|---|
-| Final state represents padding | Pack with real lengths before the LSTM |
-| Loss improves by predicting pads | Ignore pad targets and divide by real-token count |
-| Validation looks suspiciously strong | Split in time before building validation conclusions |
-| Earlier logits change when future IDs change | The model or mask leaks future information |
-| Training spikes | Print the pre-clip norm; do not hide it |
+| Forget gate | How much old memory to **keep** |
+| Input gate | How much proposed content to **write** |
+| Output gate | How much squashed memory to **show** |
+| Candidate | The proposed new content; not a fourth gate |
 
-**Durable summary:** recurrence carries a notecard, BPTT tests whether teaching can reach it, and the LSTM cell state creates a better route for evidence that must survive many steps.
+The controls are dimmers between zero and one. Candidate and memory values
+can be signed. Real controls are learned from the current input and previous
+exposed hidden state; nobody hand-labels a column "remember D3".
+
+The new carried memory combines retained old evidence with permitted new
+content. The exposed hidden state is its squashed, output-controlled view.
+Closing the show control can hide memory without deleting it.
+
+01A chooses the controls by hand to make this distinction inspectable.
+Its zero-show probe produces zero exposure with nonzero carried memory.
+A second scalar route keeps 95% per step and passes much more feedback
+than the 65% route at the same delay.
+
+These are mechanism checks, not trained-architecture scores. An LSTM can
+still forget, overfit, or learn bad controls.
+
+**Complaint:** which card is "final" when a short phrase sits beside a longer one?
+
+## 6. Stop reading blanks; stop grading blanks
+
+01B starts with 24-value forecasting windows. It checks later answer times
+against a persistence guess: repeat the last observation. Earlier history
+may overlap; the validation answer still stays outside its own input.
+
+Then it returns to piano notes. For **D3 A3 D4 F4 A4**, the input is
+**D3 A3 D4 F4** and the answers are **A3 D4 F4 A4**. Each position predicts
+one note ahead. Fixed IDs fetch trainable rows before the LSTM reads them.
+
+The shortest input, **D3 A3**, needs three blank seats to fit the batch.
+Reading those zeros still updates the LSTM. Its final state can drift away
+from the card made immediately after A3.
+
+Packing stops each reader at its real length. The notebook compares padded,
+packed, and solo readings through the same weights.
+
+Loss masking solves another problem: after unpacking, the prediction head
+can still score blank seats. Grade only real answers. The explicit real-target
+average matches the ignore-pad loss; extra blank columns leave it unchanged.
+
+**Complaint:** could an apparently good guess have peeked at the future?
+
+## 7. Change the clue, not the explanation
+
+01B changes a later F4 input to C4 while keeping the earlier prefix fixed.
+Earlier score rows must match in a left-to-right LSTM. This checks future
+access, not whether those guesses are musically correct.
+
+01C makes a different intervention. Two practiced phrases share the same
+clock but start with different key cues. The desired endings differ by three
+semitones. Swapping only that opening cue tests whether its effect survives
+to the ending. Removing both cues makes the inputs identical, so no
+deterministic reader can fit both different endings exactly.
+
+This cue is a numerical pitch feature, not a vocabulary ID. Differentiating
+a copy diagnoses its influence; the optimizer still updates model weights,
+not the training data.
+
+Read the actual pitch shift, error, parameter counts, and local cue sensitivity.
+Neither good audio nor a nearby derivative establishes new-key generalization.
+
+**Remember:** carry a card forward, send teaching backward, and test what
+survives by changing one clue while keeping everything else fixed.

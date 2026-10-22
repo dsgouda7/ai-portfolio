@@ -5,13 +5,13 @@ import math
 import sys
 import time
 from collections import Counter
+from copy import deepcopy
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
-from numpy.lib.stride_tricks import sliding_window_view
 from torch.utils.data import DataLoader, TensorDataset
 
 # A notebook kernel may start at the repository root; scripts already know their own path.
@@ -23,7 +23,7 @@ CHAPTER_DIRECTORY = (
 )
 if str(CHAPTER_DIRECTORY) not in sys.path:
     sys.path.insert(0, str(CHAPTER_DIRECTORY))
-from real_text_embeddings import read_story_sentences, tokenize
+from real_text_embeddings import make_document_windows, read_story_sentences, tokenize
 
 SEED = 17
 torch.manual_seed(SEED)
@@ -72,27 +72,24 @@ assert all(itos[index] == word for word, index in stoi.items())
 # %% 3 - A sliding window manufactures prediction lessons
 CONTEXT_RADIUS = 2
 window_width = 2 * CONTEXT_RADIUS + 1
-
-per_document_windows = [
-    sliding_window_view(np.asarray(ids), window_width)
-    for ids in id_documents
-    if len(ids) >= window_width
-]
-windows = np.concatenate(per_document_windows)
-# Keep rare-word slots as <unk>; do not discard or reweight any document's windows.
+windows = make_document_windows(id_documents, window_width)
 assert len(windows) == sum(max(0, len(ids) - window_width + 1) for ids in id_documents)
-assert np.array_equal(windows[-3:], per_document_windows[-1])
+assert np.array_equal(windows[-3:], make_document_windows([id_documents[-1]], window_width))
 
 print(f"Window width: {window_width}")
 print(f"All windows shape: {windows.shape}")
 print(f"Unknown window slots: {(windows == 0).mean():.1%}")
-for row in windows[:4]:
+print("Our cat document, sliding exactly as in the opening image:")
+for row in windows[-3:]:
     print([itos[index] for index in row])
 
-# Shared raw material, not a CBOW question/answer split.
 window_ids = torch.tensor(windows, dtype=torch.long)
-# [all windows, 5] -> [3, 5]: the appended document supplies three adjacent probes.
 cat_window_ids = window_ids[-3:]
+assert [[itos[index] for index in row] for row in cat_window_ids.tolist()] == [
+    ["the", "sleepy", "cat", "sat", "on"],
+    ["sleepy", "cat", "sat", "on", "the"],
+    ["cat", "sat", "on", "the", "mat"],
+]
 assert window_ids.shape == (len(windows), window_width)
 
 
@@ -242,9 +239,9 @@ print("Questions:", len(cbow_contexts))
 print("Batch inputs:", tuple(cbow_batch_contexts.shape))
 print("Batch answers:", tuple(cbow_batch_targets.shape))
 print(
-    "First unshuffled pair:",
-    [itos[index] for index in cbow_contexts[0].tolist()],
-    "->", itos[cbow_targets[0]],
+    "Illustrated cat-document pair:",
+    [itos[index] for index in cbow_contexts[-3].tolist()],
+    "->", itos[cbow_targets[-3]],
 )
 
 assert cbow_contexts.shape == (len(window_ids), 2 * CONTEXT_RADIUS)
@@ -377,26 +374,42 @@ assert losses[-1] < losses[0]
 assert losses[-1] < random_guess_loss
 
 # %% 8 - Follow one gradient back to the participating rows
-model.zero_grad()
-gradient_contexts = cbow_contexts[:2]
-gradient_targets = cbow_targets[:2]
-gradient_loss = model.training_loss(
-    gradient_contexts,
-    gradient_targets,
-    criterion,
-)
+gradient_model = deepcopy(model)
+gradient_contexts = cat_contexts[:1].clone()
+gradient_targets = torch.tensor([stoi["cat"]], dtype=torch.long)
+saved_context_ids = gradient_contexts.clone()
+saved_target_ids = gradient_targets.clone()
+rows_before_step = gradient_model.embedding.weight.detach().clone()
+output_before_step = gradient_model.output.weight.detach().clone()
+gradient_optimizer = torch.optim.SGD(gradient_model.parameters(), lr=0.1)
+gradient_optimizer.zero_grad()
+gradient_loss = gradient_model.training_loss(gradient_contexts, gradient_targets, criterion)
 gradient_loss.backward()
 
-gradient_norms = model.embedding.weight.grad.norm(dim=1)
-# [2, 4] -> [8]: collect all fetched IDs; flattening here is inspection, not pooling.
+gradient_norms = gradient_model.embedding.weight.grad.norm(dim=1)
 used_ids = set(gradient_contexts.reshape(-1).tolist())
-rows_with_gradient = {
-    index for index, norm in enumerate(gradient_norms.tolist()) if norm > 0
-}
+rows_with_gradient = set(gradient_norms.nonzero().flatten().tolist())
+gradient_optimizer.step()
+changed_rows = (gradient_model.embedding.weight.detach() != rows_before_step).any(dim=1)
+changed_ids = set(changed_rows.nonzero().flatten().tolist())
 
-print("Used rows:", [itos[index] for index in sorted(used_ids)])
-print("Rows with gradients:", [itos[index] for index in sorted(rows_with_gradient)])
-assert rows_with_gradient == used_ids
+assert rows_with_gradient == changed_ids == used_ids
+assert stoi["cat"] not in changed_ids
+assert torch.equal(gradient_contexts, saved_context_ids)
+assert torch.equal(gradient_targets, saved_target_ids)
+assert not gradient_contexts.requires_grad and gradient_contexts.grad is None
+assert not torch.equal(gradient_model.output.weight.detach(), output_before_step)
+assert torch.equal(
+    gradient_model.embedding(gradient_contexts).detach(),
+    gradient_model.embedding.weight.detach()[saved_context_ids],
+)
+print("Unchanged input IDs:", gradient_contexts.tolist(), "answer ID:", gradient_targets.tolist())
+print("Fetched rows / changed rows:",
+      [itos[index] for index in sorted(used_ids)], [itos[index] for index in sorted(changed_ids)])
+first_id = gradient_contexts[0, 0].item()
+print(f"{itos[first_id]!r} row, first three values before:", rows_before_step[first_id, :3].tolist())
+print("Same ID, values fetched after:", gradient_model.embedding(gradient_contexts)[0, 0, :3].detach().tolist())
+print("Takeaway: stored embedding weights and predictor weights changed; no input or answer ID did.")
 
 # %% 9 - The learned embedding weights are the vectors
 embedding_weights = model.embedding.weight.detach().cpu()
@@ -470,9 +483,10 @@ print("Skip-gram: middle word -> ONE neighbour per question")
 print("Questions:", len(skipgram_inputs))
 print("Batch inputs:", tuple(skipgram_batch_inputs.shape))
 print("Batch answers:", tuple(skipgram_batch_targets.shape))
-print("Pairs from the first raw window:")
+print("Pairs from the illustrated cat window:")
 for center, neighbour in zip(
-    skipgram_inputs[:neighbours_per_window], skipgram_targets[:neighbours_per_window],
+    skipgram_inputs[-3 * neighbours_per_window:-2 * neighbours_per_window],
+    skipgram_targets[-3 * neighbours_per_window:-2 * neighbours_per_window],
 ):
     print("   ", itos[center], "->", itos[neighbour])
 
@@ -596,8 +610,8 @@ sequence_dataloader = make_dataloader(source_sequences, sequence_targets)
 
 print("Source shape:", tuple(source_sequences.shape))
 print("Target shape:", tuple(sequence_targets.shape))
-print("Source:", [sequence_itos[index] for index in source_sequences[0].tolist()])
-print("Target:", [sequence_itos[index] for index in sequence_targets[0].tolist()])
+print("Source:", [sequence_itos[index] for index in source_sequences[-3].tolist()])
+print("Target:", [sequence_itos[index] for index in sequence_targets[-3].tolist()])
 
 assert source_sequences.shape == (len(windows), 3)
 assert sequence_targets.shape == (len(windows), 4)
@@ -605,8 +619,8 @@ assert sequence_targets.shape == (len(windows), 4)
 sequence_batch_inputs, sequence_batch_targets = next(iter(sequence_dataloader))
 print("Sequence batch sources:", tuple(sequence_batch_inputs.shape))
 print("Sequence batch full answers:", tuple(sequence_batch_targets.shape))
-print("Writer sees:", [sequence_itos[index] for index in sequence_targets[0, :-1].tolist()])
-print("Loss checks:", [sequence_itos[index] for index in sequence_targets[0, 1:].tolist()])
+print("Writer sees:", [sequence_itos[index] for index in sequence_targets[-3, :-1].tolist()])
+print("Loss checks:", [sequence_itos[index] for index in sequence_targets[-3, 1:].tolist()])
 assert len(sequence_batch_inputs) == len(sequence_batch_targets)
 assert torch.equal(source_sequences, window_ids[:, :3])
 assert torch.equal(sequence_targets[:, 1:-1], window_ids[:, 3:])

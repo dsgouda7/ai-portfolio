@@ -15,6 +15,7 @@ import torch
 from matplotlib.animation import FuncAnimation
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
+from numpy.lib.stride_tricks import sliding_window_view
 
 
 DATASET = "roneneldan/TinyStories"
@@ -74,6 +75,20 @@ def read_story_sentences(stories):
     return list(itertools.chain.from_iterable(map(story_sentences, read_stories(stories))))
 
 
+def make_document_windows(id_documents, window_width):
+    """Keep complete windows in document order; never bridge document boundaries."""
+    if window_width < 1:
+        raise ValueError("window_width must be at least one.")
+    per_document = [
+        sliding_window_view(np.asarray(ids, dtype=np.int64), window_width)
+        for ids in id_documents
+        if len(ids) >= window_width
+    ]
+    if not per_document:
+        return np.empty((0, window_width), dtype=np.int64)
+    return np.concatenate(per_document)
+
+
 def load_real_text(stories=STORY_BUDGET, train_windows=40_000, valid_windows=4_000):
     """Split whole stories before making any windows."""
     texts = read_stories(stories)
@@ -87,11 +102,8 @@ def load_real_text(stories=STORY_BUDGET, train_windows=40_000, valid_windows=4_0
     generator = torch.Generator().manual_seed(71)
 
     def windows_for(sentences, limit):
-        rows = []
-        for sentence in sentences:
-            ids = [word_ids.get(word, 0) for word in sentence]
-            rows.extend(zip(*(ids[offset:] for offset in range(5))))
-        windows = torch.tensor(rows, dtype=torch.long)
+        id_documents = [[word_ids.get(word, 0) for word in sentence] for sentence in sentences]
+        windows = torch.tensor(make_document_windows(id_documents, 5), dtype=torch.long)
         # [all sentence-local windows, 5] -> [at most limit, 5]: sample whole rows,
         # never concatenate sentence ends with the next sentence's beginning.
         return windows[torch.randperm(len(windows), generator=generator)[:limit]]
