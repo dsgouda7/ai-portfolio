@@ -13,6 +13,23 @@ if you can pass its closing check.
 [Chapter 01B](../01-sequence-memory/01B-sequence-memory-pytorch-lab.ipynb) already used
 IDs, shifted targets, and masks to study memory; here you explain and test those choices.
 
+## Follow the embedding thread without backtracking
+
+Each notebook includes a self-contained carry-in, the same pipeline map, and
+experiment-state labels. Earlier links are references, not a request to recover
+missing values or kernel state.
+
+| Step | New question | What carries forward |
+|---|---|---|
+| [01B](../01-sequence-memory/01B-sequence-memory-pytorch-lab.ipynb) | Can fixed note IDs feed a trainable sequence reader? | Lookup supplies rows; the LSTM supplies phrase memory |
+| [02A](02A-tokenization-and-embeddings-theory.ipynb) | What did lookup do, and what could teach its rows? | The **lookup microscope**, `the ___ sat`, isolates hand-picked row selection |
+| [02B](02B-tokenization-and-embeddings-pytorch-lab.ipynb) | What feedback makes stored rows useful? | The **learning game**, `cat/dog -> sat/slept; bird -> flew/sang`, trains fresh rows on six supplied cards |
+| [03A](../03-language-models/03A-training-skeleton-and-word-objectives.ipynb) | How can text supply the practice questions? | The same cat sentence connects lookup, pooling, and different objectives |
+
+Hand-picked, random, and trained tables are marked separately. The three-word
+microscope is an arithmetic close-up, not another training corpus; the GPT-2
+tokenizer, controlled learning game, and later story models have separate vocabularies.
+
 ## Read in order
 
 1. [02A — Tokenization and Embeddings Theory](02A-tokenization-and-embeddings-theory.ipynb) ·
@@ -29,6 +46,11 @@ IDs, shifted targets, and masks to study memory; here you explain and test those
 The [generated illustration](images/02-07-word-id-to-embedding-to-scores.png) and
 executable arithmetic use the same hand-picked values. It then fetches the actual
 trained model's four-number embedding separately from its seven prediction scores.
+
+IDs are registry numbers; embeddings are stored profiles across abstract learned
+sensor channels. These are not literal astronomical measurements. The profile and
+numeric-trace diagrams can be rebuilt offline with the
+[sensor diagram renderer](../03-language-models/generate_sensor_analogy_diagrams.py).
 
 ## Run it
 

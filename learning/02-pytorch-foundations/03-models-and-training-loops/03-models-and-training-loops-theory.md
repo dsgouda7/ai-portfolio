@@ -14,6 +14,11 @@ A linear regression can be written directly:
 prediction = X @ W + b
 ```
 
+All 96 rows share two feature weights and one bias: **three parameters**.
+For the noiseless rule, load 0.5 and temperature 0 give fuel 1.3;
+temperature 0.4 instead gives 1.04. These pencil examples explain the
+two contributions, not physical fuel units or selected noisy rows.
+
 If `W` and `b` require gradients, autograd can train them. This proves that `nn.Module` is not a
 different mathematical method.
 
@@ -24,10 +29,17 @@ The complaint is ownership. With loose tensors, you must remember:
 - which tensors must be saved;
 - which function defines the forward contract.
 
+**Complaint:** a correct calculation is still easy to misplace. A parameter
+forgotten in the update list cannot learn; one forgotten in the save list cannot
+survive the next process. Organization is therefore observable behavior, not
+just a preference for tidy classes.
+
 ## 2. A module gives state a home
 
 Think of `nn.Module` as a labeled equipment case. It contains the adjustable parts and the route
 data follows through them.
+
+![The same engine-load and temperature guesser gets registered parameters and a reusable home.](../images/03-parameters-need-a-home.png)
 
 `nn.Linear` stores:
 
@@ -60,6 +72,11 @@ than intended. The code can run and still optimize the wrong quantity.
 The notebook checks shape equality before training. That is a stronger habit than waiting for a
 runtime error because broadcasting errors often do not raise one.
 
+Two correct predictions `[[1],[2]]` against `[[1],[2]]` have MSE zero.
+Flattening only the targets to `[1,2]` creates four misses: 0, -1, 1, 0.
+Their squared mean is 0.5. Nothing about that scalar warns you that you
+asked an all-against-all question rather than a paired one.
+
 ## 4. The optimizer owns update policy and update state
 
 The visible loop is:
@@ -83,6 +100,16 @@ Each line has one responsibility:
 An optimizer may carry momentum or adaptive averages. Those values are not part of the model's
 forward function, but they matter if training must resume exactly.
 
+Parameters persist between calls. Predictions are activations for the
+current rows. Gradients are feedback written beside parameters. Update
+memory, when present, belongs to the optimizer. Resetting one of these
+doesn't automatically reset the others.
+
+For this parity experiment, ordinary SGD has neither momentum nor adaptive
+memory. It performs the same subtraction as the raw implementation. Adam and
+AdamW add their own process state in later chapters; a model's equipment case
+does not silently contain that worker's memory.
+
 ## 5. Equivalence is a measurable claim
 
 The notebook trains a raw-tensor implementation and an `nn.Module` implementation under the same
@@ -99,6 +126,12 @@ The asserted tolerance turns "these are the same" into a falsifiable statement. 
 fails, the likely cause is not the framework. It is a changed initial value, update count, shape,
 or gradient-clearing rule.
 
+Both models start at zero and receive exactly 180 updates. The module's
+separately inspected first step counts toward that budget. Each history entry
+records loss before its update, and the notebook compares the complete histories
+numerically before plotting them. A final low loss alone would miss an unfair
+extra step or a different path.
+
 **Complaint:** an in-memory model cannot cross a notebook boundary.
 
 ## 6. State and configuration cross the fresh-kernel boundary
@@ -113,6 +146,17 @@ Part 03 therefore writes:
 
 Part 04 reloads both from a fresh kernel. That handoff proves the artifact is usable rather than
 merely present on disk.
+
+The files still rely on the declared model class and sensor-column order.
+They are not a self-describing executable program. The notebook finds its
+artifact directory even when an editor launches the kernel at repository root,
+so a working-directory accident does not quietly create a different handoff.
+
+**Complaint:** choosing a learning rate needs a comparison, not a hopeful
+single run. The nearby drill resets two trial models to the same zeros, gives
+them the same ten updates, and changes only their rate. It leaves the saved
+handoff model untouched. Those training losses demonstrate a local effect,
+not a rate selected on unseen data.
 
 ## 7. The LLM bridge
 

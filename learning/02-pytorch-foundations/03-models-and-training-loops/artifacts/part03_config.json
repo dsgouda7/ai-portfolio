@@ -1,0 +1,7 @@
+{
+  "seed": 23,
+  "n_examples": 96,
+  "input_features": 2,
+  "output_features": 1,
+  "learning_rate": 0.12
+}

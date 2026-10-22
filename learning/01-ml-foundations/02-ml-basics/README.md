@@ -1,8 +1,13 @@
-# ML Contracts
+# ML Basics
 
-**Start:** [ML Contracts: Evidence Before Optimization](ml-basics.ipynb).
+**Start:** [ML Basics: A good fit is not yet a useful prediction](ml-basics.ipynb).
 One SmartVal dataset separates fair tests, loss, metrics, thresholds, and generalization.
 Theory and scikit-learn experiments are together in the notebook.
+
+Read one listing as three features and one target, follow the train-only scaler into a
+Ridge prediction, and compare absolute versus squared misses. Then hold probabilities
+fixed while moving a flagging threshold, and vary polynomial degree on size alone.
+The printed test MAE belongs to the fixed Ridge baseline, not the later degree selection.
 
 **Before this:** [Math Foundations](../01-math-foundations/README.md).
 **Contents:** [lesson map](CONTENTS.md).

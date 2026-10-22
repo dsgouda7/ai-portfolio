@@ -3,6 +3,21 @@
 Read alongside [02A's notebook](02A-tokenization-and-embeddings-theory.ipynb).
 Then try [02B's lab](02B-tokenization-and-embeddings-pytorch-lab.ipynb).
 
+**Carry-in:** the piano lab already trained note rows with an LSTM. Here we open
+up lookup; returning to hand-picked numbers is a close-up, not a step backward.
+Text replaces notes because choosing pieces now needs explanation.
+
+Keep two named examples apart. The **lookup microscope**, **the ___ sat**,
+uses hand-picked rows to expose selection. The **learning game**,
+**cat/dog -> sat/slept; bird -> flew/sang**, motivates useful shared features;
+the next lab will train its six supplied cards. The longer sentence remains
+**the sleepy cat sat on the mat**.
+
+Our map is text -> pieces -> IDs -> fetched rows -> context processing ->
+scores -> checked answer. This chapter opens pieces, IDs, and rows. Compactness
+is one job; learning useful contents is another. No saved weights or ID numbers
+transfer between notebooks.
+
 ## 1. A note is not yet a model input
 
 Start with **the sleepy cat sat on the mat**. You can read it immediately;
@@ -39,10 +54,14 @@ Learning those joins and applying them to new text are separate jobs.
 
 **Complaint:** shorter strings are useful, but the model still needs numeric inputs.
 
-## 3. An ID opens a drawer
+## 3. An ID selects a sensor profile
 
-Give each piece an integer address. The ID selects a row; its size does not
-measure meaning.
+Think of an ID as a celestial object's registry number, not a measurement.
+Its embedding is a stored profile across a common array of abstract sensor
+channels. Keep the readings separate, not summed into one score. Training
+learns their values; they are not literal temperature or mass measurements
+and need not have human-readable meanings. In code, one matrix row stores
+one profile. Lookup retrieves it; it does not measure the sentence afresh.
 
 Both notebooks use this exact miniature table:
 

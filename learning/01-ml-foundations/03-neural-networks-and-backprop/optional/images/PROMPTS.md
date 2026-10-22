@@ -2,7 +2,8 @@
 
 **Authoring only:** reusable illustration instructions, not part of the learner route.
 
-Generate pending images manually, review them against the criteria, then embed only existing files.
+This records the existing illustration. New visual ideas are Markdown-only briefs beside
+the relevant notebook explanation; no pending image files are implied by those briefs.
 
 ## 01-melodyne-fixed-notes-adjustable-tone.png
 

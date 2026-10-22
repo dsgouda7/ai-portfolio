@@ -1,6 +1,6 @@
 """Code companion for 03A-training-skeleton-and-word-objectives.ipynb. Run from this directory."""
 
-# %% 1 - Read real stories; append one familiar probe document
+# %% 1 - Shared setup: real stories and one familiar probe document
 import math
 import sys
 import time
@@ -43,7 +43,7 @@ print(f"Documents: {len(documents)}")
 print("First tokenized document:", documents[0])
 print("Last document (appended exactly once):", documents[-1])
 
-# %% 2 - A vocabulary turns repeated strings into stable addresses
+# %% 2 - Shared setup: give each word a stable address
 items = [word for document in documents for word in document]
 
 counts = Counter(items)
@@ -68,9 +68,10 @@ print("First encoded document:", id_documents[0])
 assert len(stoi) == vocabulary_size
 assert all(itos[index] == word for word, index in stoi.items())
 
-# %% 3 - A sliding window manufactures prediction lessons
+# %% 3 - CBOW preview: slide a window to make practice questions
 CONTEXT_RADIUS = 2
 window_width = 2 * CONTEXT_RADIUS + 1
+# Reuse this cutter across this notebook's models; each objective chooses its own inputs and answers.
 windows = make_document_windows(id_documents, window_width)
 assert len(windows) == sum(max(0, len(ids) - window_width + 1) for ids in id_documents)
 assert np.array_equal(windows[-3:], make_document_windows([id_documents[-1]], window_width))
@@ -91,8 +92,69 @@ assert [[itos[index] for index in row] for row in cat_window_ids.tolist()] == [
 ]
 assert window_ids.shape == (len(windows), window_width)
 
+# %% CBOW preview - three real windows, one static storyboard
+window_story_words = tokenize(CAT_PROBE)
+window_story_frames = [
+    [itos[token_id] for token_id in row] for row in cat_window_ids.tolist()
+]
+assert window_story_frames == [
+    window_story_words[start:start + window_width]
+    for start in range(len(window_story_words) - window_width + 1)
+]
 
-# %% 4 - DataLoader changes delivery, not meaning
+
+def draw_cbow_window(axis, frame):
+    axis.clear()
+    axis.set(xlim=(-0.6, len(window_story_words) - 0.4), ylim=(-1.1, 2.0))
+    axis.axis("off")
+    axis.set_title(f"Window {frame + 1} of {len(window_story_frames)}", fontsize=11)
+    for position, word in enumerate(window_story_words):
+        active = frame <= position < frame + window_width
+        axis.text(
+            position, 1.3, word, ha="center", va="center", fontsize=10,
+            color="#111827" if active else "#9ca3af",
+            bbox=dict(boxstyle="round,pad=0.3", edgecolor="#94a3b8",
+                      facecolor="#dbeafe" if active else "#f3f4f6"),
+        )
+    row = window_story_frames[frame]
+    question = row[:CONTEXT_RADIUS] + ["___"] + row[CONTEXT_RADIUS + 1:]
+    axis.text(3, 0.6, "Shared cut: " + " ".join(row),
+              ha="center", fontsize=10, color="#1e3a8a")
+    axis.text(3, -0.05, "CBOW clues: " + " ".join(question),
+              ha="center", fontsize=10, color="#007f86")
+    axis.text(3, -0.7, "Checked answer: " + row[CONTEXT_RADIUS],
+              ha="center", fontsize=11, color="#bf5700", weight="bold")
+
+
+window_story_figure, window_story_axes = plt.subplots(
+    1, len(window_story_frames), figsize=(15, 3.2),
+)
+for window_frame, window_axis in enumerate(np.atleast_1d(window_story_axes)):
+    draw_cbow_window(window_axis, window_frame)
+window_story_figure.suptitle("Shared window, CBOW question: slide one word at a time")
+window_story_figure.tight_layout(rect=(0, 0, 1, 0.9))
+window_story_figure.savefig(
+    CHAPTER_DIRECTORY / "images" / "03a-cbow-sliding-window-storyboard.png", dpi=130,
+)
+plt.close(window_story_figure)
+print(f"Prediction check: {len(window_story_frames)} complete windows, not one per word.")
+print("CBOW answers:", [row[CONTEXT_RADIUS] for row in window_story_frames])
+
+# %% CBOW preview - animate those same three windows
+from IPython.display import HTML, display
+from matplotlib.animation import FuncAnimation
+
+print("Watch the blue window move; CBOW keeps each orange answer out of its input.")
+window_animation_figure, window_animation_axis = plt.subplots(figsize=(9, 3.2))
+window_animation = FuncAnimation(
+    window_animation_figure,
+    lambda frame: draw_cbow_window(window_animation_axis, frame),
+    frames=len(window_story_frames), interval=1300, repeat=False,
+)
+plt.close(window_animation_figure)
+display(HTML(window_animation.to_jshtml(default_mode="once")))
+
+# %% 4 - Shared setup: batch each model's own questions
 def make_dataloader(input_ids, target_ids, batch_size=512):
     dataset = TensorDataset(input_ids, target_ids)
     return DataLoader(
@@ -103,7 +165,7 @@ def make_dataloader(input_ids, target_ids, batch_size=512):
     )
 
 
-# %% 5 - See the rows before the shape letters
+# %% 5 - CBOW: fetch sensor profiles and give each clue an equal vote
 toy_table = torch.tensor([[2.0, 0.0], [1.0, 3.0], [0.0, 4.0]])
 toy_ids = torch.tensor([[0, 2], [2, 0]])
 toy_rows = torch.nn.functional.embedding(toy_ids, toy_table)
@@ -155,7 +217,7 @@ toy_figure.savefig(toy_directory / "images" / "03a-lookup-tensor-structure.png",
 plt.show()
 plt.close(toy_figure)
 
-# %% Crude attempt: give every context word an equal vote
+# %% CBOW: give every context word an equal vote
 EMBEDDING_WIDTH = 32
 probe_embedding = nn.Embedding(vocabulary_size, EMBEDDING_WIDTH)
 
@@ -177,7 +239,7 @@ print("Maximum difference after reversal:", (original_mean - reversed_mean).abs(
 
 assert torch.allclose(original_mean, reversed_mean)
 
-# %% Why drawers, and not a giant one-hot checklist?
+# %% Shared lookup: why sensor profiles, and not a giant one-hot checklist?
 scalar_cat_id = torch.tensor(1, dtype=torch.long)
 one_cat_batch = scalar_cat_id.unsqueeze(0)
 scalar_cat_row = nn.functional.embedding(scalar_cat_id, toy_table)
@@ -207,14 +269,14 @@ def row_similarity(rows, word_a, word_b):
     return torch.cosine_similarity(rows[stoi[word_a]], rows[stoi[word_b]], dim=0).item()
 
 
-print(f"\nOne checklist: {vocabulary_size} boxes. One drawer row: {EMBEDDING_WIDTH} numbers.")
+print(f"\nOne checklist: {vocabulary_size} boxes. One sensor profile: {EMBEDDING_WIDTH} channels.")
 for word_a, word_b in [("cat", "dog"), ("cat", "mat")]:
     print(f"{word_a} vs {word_b:<10}  checklist gap {checklist_gap(word_a, word_b):.3f}   "
           f"random-row similarity {row_similarity(random_rows, word_a, word_b):+.3f}")
 
 assert checklist_gap("cat", "dog") == checklist_gap("cat", "mat")
 
-# %% Where EmbeddingBag fits
+# %% CBOW: the same mean with EmbeddingBag
 embedding_bag = nn.EmbeddingBag(
     vocabulary_size,
     EMBEDDING_WIDTH,
@@ -266,7 +328,7 @@ from language_model import TrainableLanguageModel
 class CBOW(TrainableLanguageModel):
     def __init__(self, vocabulary_size, embedding_width):
         super().__init__()
-        # The chest of drawers: one learnable row of numbers per word.  [V, D]
+        # One learned sensor profile per word; rows store the profiles. [V, D]
         self.embedding = nn.Embedding(vocabulary_size, embedding_width)
         # A small "thinking" layer that squeezes the row down to D/2 features.
         self.hidden = nn.Linear(embedding_width, embedding_width // 2)
@@ -282,7 +344,7 @@ class CBOW(TrainableLanguageModel):
 
         # context_ids: the four clue words around each gap, as IDs.   [B, 4]
         # e.g. "the sleepy ___ sat on" -> [the, sleepy, sat, on]
-        # Look up each word's row in the drawers.                     [B, 4, D]
+        # Retrieve the stored profile for each clue word.             [B, 4, D]
         token_vectors = self.embedding(context_ids)
 
         # Average the four rows into one "gist of the clues" row.     [B, D]
@@ -296,7 +358,7 @@ class CBOW(TrainableLanguageModel):
         # These are raw scores (logits); cross-entropy turns them into chances.
         return self.output(hidden_features)
 
-# %% Trace one untrained batch before optimizing anything
+# %% CBOW: trace one untrained batch before optimizing anything
 torch.manual_seed(SEED)
 model = CBOW(vocabulary_size, EMBEDDING_WIDTH)
 untrained_logits = model(cbow_batch_contexts)
@@ -340,7 +402,7 @@ print("Input cbow_contexts:", tuple(cbow_batch_contexts.shape))
 print("Vocabulary logits:", tuple(untrained_logits.shape))
 assert untrained_logits.shape == (len(cbow_batch_contexts), vocabulary_size)
 
-# %% 7 - One fit loop should survive the model swap
+# %% 7 - CBOW: train and check with its own loader
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.008)
 cbow_started = time.perf_counter()
@@ -360,7 +422,7 @@ with torch.inference_mode():
         report_probe(f"CBOW missing {word!r}", cbow_before[word],
                      word_probe(cat_after_logits[row], word))
 
-# %% A falling loss is necessary evidence, not the whole story
+# %% CBOW: a falling loss is necessary evidence, not the whole story
 random_guess_loss = math.log(vocabulary_size)
 
 fig, axis = plt.subplots(figsize=(8, 4))
@@ -383,7 +445,7 @@ print(f"Final training loss: {losses[-1]:.4f}")
 assert losses[-1] < losses[0]
 assert losses[-1] < random_guess_loss
 
-# %% 8 - Follow one gradient back to the participating rows
+# %% 8 - CBOW: follow one gradient back to the participating rows
 gradient_model = deepcopy(model)
 gradient_contexts = cat_contexts[:1].clone()
 gradient_targets = torch.tensor([stoi["cat"]], dtype=torch.long)
@@ -421,7 +483,7 @@ print(f"{itos[first_id]!r} row, first three values before:", rows_before_step[fi
 print("Same ID, values fetched after:", gradient_model.embedding(gradient_contexts)[0, 0, :3].detach().tolist())
 print("Takeaway: stored embedding weights and predictor weights changed; no input or answer ID did.")
 
-# %% 9 - The learned embedding weights are the vectors
+# %% 9 - CBOW: inspect the learned embedding rows
 embedding_weights = model.embedding.weight.detach().cpu()
 # [V, 32] -> [V, 1]: keep a singleton feature axis so division normalizes EACH word row.
 embedding_norms = embedding_weights.norm(dim=1, keepdim=True).clamp_min(1e-12)
@@ -446,7 +508,7 @@ def most_similar(word, top_k=4):
 for word in ["cat", "dog", "mat", "sat"]:
     print(f"{word:>12} -> {most_similar(word)}")
 
-# %% A 2D projection is a map, not the territory
+# %% CBOW: a 2D projection is a map, not the territory
 # [V, 32] -> [visible words, 32]: keep the running example beside common words.
 visible_words = list(dict.fromkeys(tokenize(CAT_PROBE) + [w for w, _ in counts.most_common(10)]))
 visible_ids = torch.tensor([stoi[word] for word in visible_words])
@@ -514,7 +576,7 @@ assert torch.equal(
 )
 assert len(skipgram_batch_inputs) == len(skipgram_batch_targets)
 
-# %% The model swap is smaller than the objective swap
+# %% Skip-gram: define, train, and check neighbour guesses
 class SkipGram(TrainableLanguageModel):
     def __init__(self, vocabulary_size, embedding_width):
         super().__init__()
@@ -574,7 +636,7 @@ assert skipgram_losses[-1] < skipgram_losses[0]
 assert skipgram_losses[-1] < math.log(vocabulary_size)
 assert neighbour_logits.shape == (1, vocabulary_size)
 
-# %% 11 - Both static objectives still miss token roles
+# %% 11 - CBOW: verify that averaging still loses word order
 model.eval()
 ordered_context = cbow_contexts[:1]
 # [1, 4] -> [1, 4]: reorder only clue positions; their mean must stay the same.
@@ -598,7 +660,7 @@ print(f"Maximum logit difference: {logit_difference:.8f}")
 assert torch.allclose(ordered_vectors, permuted_vectors)
 assert torch.allclose(ordered_logits, permuted_logits)
 
-# %% 12A - Sequence data: ordered prefix -> continuation
+# %% 12A - Encoder-decoder: ordered prefix -> continuation
 BOS_ID = vocabulary_size
 EOS_ID = vocabulary_size + 1
 sequence_itos = itos + ["<bos>", "<eos>"]
@@ -637,11 +699,13 @@ assert torch.equal(sequence_targets[:, 1:-1], window_ids[:, 3:])
 assert bool((sequence_targets[:, 0] == BOS_ID).all())
 assert bool((sequence_targets[:, -1] == EOS_ID).all())
 
-# %% A destination preview, not a second embedding lesson
+# %% Encoder-decoder: define, train, and check the reader and writer
+# An ordered observing log becomes one briefing; the writer uses it to predict a report.
+# Here that report is a token sequence, not physical measurements or a new registry entry.
 class EncoderDecoderLM(TrainableLanguageModel):
     def __init__(self, vocabulary_size, embedding_width, hidden_width):
         super().__init__()
-        # One shared chest of drawers for reader and writer.          [V, D]
+        # Reader and writer share one registry of input profiles.     [V, D]
         self.embedding = nn.Embedding(vocabulary_size, embedding_width)
         # The reader: walks the source left to right, updating a running note.
         self.encoder = nn.GRU(embedding_width, hidden_width, batch_first=True)
@@ -746,7 +810,7 @@ assert sequence_losses[-1] < math.log(sequence_vocabulary_size)
 assert teacher_forced_logits.shape == (min(4096, len(windows)), 3, sequence_vocabulary_size)
 print(f"Introductory training total: {cbow_seconds + skipgram_seconds + sequence_seconds:.1f}s")
 
-# %% Teacher forcing worked - can the decoder use its own answer?
+# %% Encoder-decoder: can the writer use its own answer?
 def greedy_decode(model, source_ids, bos_id, eos_id, max_steps):
     model.eval()
     current_ids = torch.full(
@@ -802,7 +866,7 @@ assert generated_ids.shape[0] == 1
 assert generated_ids.shape[1] >= 1
 assert hidden_difference > 0
 
-# %% 13 - More real text and held-out stories, not copies of the cat probe
+# %% 13 - Comparison: CBOW, Skip-gram, and encoder-decoder on new stories
 from pathlib import Path
 
 import real_text_embeddings
@@ -822,20 +886,20 @@ from real_text_embeddings import best_versus_final
 
 real_corpus = load_real_text()
 
-# %% Keep the starting rows identical; change the prediction job
+# %% Comparison: keep the starting rows identical; change the prediction job
 REAL_TEXT_EPOCHS = 16
 real_results = train_comparison(
     real_corpus, CBOW, SkipGram, EncoderDecoderLM, epochs=REAL_TEXT_EPOCHS,
 )
 
-# %% Falling practice loss can hide worse guesses on new text
+# %% Comparison: falling practice loss can hide worse guesses on new text
 chart_directory = Path(real_text_embeddings.__file__).resolve().parent / "images"
 loss_figure = plot_losses_and_geometry(real_results)
 loss_figure.savefig(chart_directory / "03a-real-text-loss-and-similarity.png", dpi=130)
 plt.show()
 plt.close(loss_figure)
 
-# %% One fixed camera for all three moving word maps
+# %% Comparison: one fixed camera for all three moving word maps
 real_probe_words, real_coordinates, real_pca_fraction = project_snapshots(
     real_corpus, real_results,
 )
@@ -844,13 +908,13 @@ map_figure.savefig(chart_directory / "03a-real-text-word-maps.png", dpi=130)
 plt.show()
 plt.close(map_figure)
 
-# %% Check the full rows, not just their two-dimensional shadows
+# %% Comparison: check the full rows, not just their two-dimensional shadows
 similarity_figure = plot_similarity_heatmaps(real_corpus, real_results)
 similarity_figure.savefig(chart_directory / "03a-real-text-cosine-heatmaps.png", dpi=130)
 plt.show()
 plt.close(similarity_figure)
 
-# %% Play the recorded epochs; no invented in-between training states
+# %% Comparison: play the recorded epochs, not invented training states
 real_animation = animate_word_maps(real_probe_words, real_coordinates, real_results)
 real_animation_html = real_animation.to_jshtml()
 if "get_ipython" in globals():
@@ -860,10 +924,10 @@ if "get_ipython" in globals():
 else:
     print(f"Recorded animation rendered ({len(real_animation_html):,} HTML characters).")
 
-# %% Useful neighbours, or merely nearby dots?
+# %% Comparison: useful neighbours, or merely nearby dots?
 report_neighbours(real_corpus, real_results)
 
-# %% Your turn - change only the pair, without training again
+# %% Comparison: change only the pair, without training again
 probe_pair = ("mom", "dad")  # CHANGE THIS: try ("mom", "green"), without retraining
 for objective, record in real_results.items():
     pair_ids = [real_corpus["word_ids"][word] for word in probe_pair]
@@ -875,7 +939,7 @@ for objective, record in real_results.items():
           f"{pair_scores[0]:+.3f} -> {pair_scores[1]:+.3f}; "
           f"final across-group mean {record['across'][-1]:+.3f}")
 
-# %% Is a guess one word, or a shortlist? Ask CBOW at its best held-out epoch
+# %% CBOW: inspect a shortlist at its best held-out epoch
 cbow_best = real_results["CBOW"]["best_model"]
 for left, right in [("was so", "to have"), ("a little", "named tom"),
                     ("played with", "toys and"), ("they went", "the park")]:
@@ -893,7 +957,7 @@ print(f"  how alike 5 random words' rows are:          {shortlist['random_simila
 assert shortlist["shortlist_right"] > shortlist["first_right"]
 assert shortlist["shortlist_similarity"] > shortlist["random_similarity"]
 
-# %% Why does the writer's final map look weaker? Read the same run at its best epoch
+# %% Encoder-decoder: compare the writer's best epoch with its final epoch
 writer_check = best_versus_final(real_results)
 writer_record = writer_check["Encoder-decoder"]
 if writer_record["final_gap"] < writer_record["best_gap"]:
@@ -901,7 +965,7 @@ if writer_record["final_gap"] < writer_record["best_gap"]:
 else:
     print("This run did not show fading group separation; judge the recorded losses too.")
 
-# %% Optional: is that one lucky seed? (about two minutes per extra seed)
+# %% Comparison: optional seed check (about two minutes per extra seed)
 RUN_SEED_CHECK = False
 if RUN_SEED_CHECK:
     for check_seed in (5, 123):

@@ -8,6 +8,7 @@ Turn text into model inputs without confusing the pieces, their addresses, and t
 - [02A - Tokenization and Embeddings Theory](02A-tokenization-and-embeddings-theory.ipynb) — Split unfamiliar words into reusable pieces and distinguish piece identifiers from the learned rows they select.
 - [02B - Tokenization and Embeddings PyTorch Lab](02B-tokenization-and-embeddings-pytorch-lab.ipynb) — Build a small text splitter, inspect a real tokenizer, and check which learned rows and blank positions receive training signals.
 - [Tokenization and Embeddings: Handwritten Theory Notes](02A-tokenization-and-embeddings-theory.md) — Review why text pieces, identifiers, learned rows, and rules for ignoring blanks have different jobs.
+- [From Lookup to a Learned Shortlist: Handwritten Theory](02B-tokenization-and-embeddings-pytorch-lab-theory.md) — Follow the same table and six supplied questions into trainable rows, probability shortlists, sampling, and padding checks.
 
 ## Continue to model architectures
 

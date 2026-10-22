@@ -1,0 +1,119 @@
+[
+  {
+    "filename": "02-word-addresses-and-axes.png",
+    "semantic_anchor": "A word address is not a word feature",
+    "aspect_ratio": "16:9",
+    "prompt": "Minimal accurate cream-paper teaching illustration, navy large text, teal input, purple operations, orange scores. Only the following text is permitted. Title 'Keep the example and the position'. Left TWO sentence strips labelled 'the cat sat on' and 'the dog sat on'. Below these strips caption 'IDs (2, 4)'. A left-to-right arrow leads to a library drawer labelled 'Embedding lookup'. Next arrow leads to ONE ribbon labelled 'States (2, 4, 6)'. Next arrow leads to a purple mixing funnel labelled 'Vocabulary projection'. Next arrow leads to ONE orange card labelled 'Scores (2, 4, 10)'. At bottom three luggage tags '2 examples', '4 positions each', '6 features become 10 scores'. Footer 'IDs are addresses. Random scores are not language understanding.' No other headings, no top-row categories, no matrices, no repeated state ribbons.",
+    "acceptance_criteria": "Two exact four-word phrases; IDs then lookup then states then explicitly labelled vocabulary projection then scores; no claim that random states are learned; batch and position preserved.",
+    "prohibited_content": "Matrices, arbitrary extra words in the phrases, numeric IDs, probability or accuracy claims, attention, mixing positions, fake learned meanings.",
+    "alt_text": "Two four-word examples keep their example and position axes as IDs fetch six-feature rows and a projection produces ten candidate scores per position."
+  },
+  {
+    "filename": "02-broadcast-by-role.png",
+    "semantic_anchor": "Broadcasting repeats along missing roles",
+    "aspect_ratio": "16:9",
+    "prompt": "MINIMAL cream-paper teaching poster, navy large text and three clearly separated illustrated cards. Title 'Repeat the right thing'. LEFT card has a paint roller and EXACT text 'Feature offsets (6,)' then 'Match features' then 'Reuse across examples and positions'. CENTER card has a clock and blocked doorway, EXACT text 'Position offsets (4,)' then 'Wrong alignment' then '4 does not match final axis 6'. RIGHT card has a clock and a repaired luggage tag, EXACT text 'Position offsets (1, 4, 1)' then 'Match positions' then 'Reuse across examples and features'. Bottom shared ribbon 'States: (2 examples, 4 positions, 6 features)'. Footer 'Name the axis before adding singleton dimensions'. No other text. No arrows between cards; they are contrasting cases, not sequential transforms. No matrices or repeated numeric tensor elements.",
+    "acceptance_criteria": "Feature bias varies across features, repeats across EXAMPLES and POSITIONS, never labelled repeated across features. Position bias repair varies across positions, repeats across examples and features. Mismatch 4 vs 6 explicit.",
+    "prohibited_content": "Matrices, fake numeric measurements, suggesting direct (4,) addition works, claiming a new feature is created, more than two panels.",
+    "alt_text": "Feature offsets align with the final axis, but four position offsets need shape one by four by one to repeat across examples and features."
+  },
+  {
+    "filename": "03-parameters-need-a-home.png",
+    "semantic_anchor": "The same fuel guesser gets a home",
+    "aspect_ratio": "16:9",
+    "prompt": "Warm cream-paper educational diagram, navy large text. Title 'Same fuel guess. Better ownership.' Two side-by-side workbenches. LEFT 'Loose tensors': separate purple adjustment knobs tagged 'W' and 'b', teal input cards 'engine load' and 'temperature', orange output card 'fuel guess'. A handwritten checklist lies beside them: 'remember parameters / move / save'. RIGHT 'FuelLinearModel': the SAME two sensor cards enter a purple equipment case labelled 'nn.Linear(2, 1)', with weight and bias knobs visible inside, and one fuel-guess card exits. Under case three neat labels 'registered parameters', 'device movement', 'state_dict'. Footer 'A module organizes the calculation. It does not learn just by being called.' No equations or numeric results.",
+    "acceptance_criteria": "Same engine load, temperature and fuel example in both panels; two input features one target; ownership not new mathematics.",
+    "prohibited_content": "Automatic training inside forward, loss inside model case, fake measurements, matrices, twelve hidden features.",
+    "alt_text": "Loose fuel-model weights and bias become registered parts of FuelLinearModel without changing its two-input, one-output prediction."
+  },
+  {
+    "filename": "04-deliver-every-row.png",
+    "semantic_anchor": "Delivery order changes, row pairs do not",
+    "aspect_ratio": "16:9",
+    "prompt": "Cream background educational illustration with navy large text, teal sensor cards, orange target tags. Title 'Deliver every fuel example once'. Left a tray of paired cards labelled 'load + temperature | fuel target', with large tag '96 paired rows'. Middle a shuffled deck labelled 'Permute row IDs, keep each pair together'. Right five delivery boxes in a row, labelled '20', '20', '20', '20', '16', each containing abstract paper cards without tiny text. Bottom two separate roles: a drawer icon 'Dataset: what is row i?' and delivery trolley 'DataLoader: order, groups, remainder'. Footer 'The smaller last batch is still evidence'. Use only arrows left to right.",
+    "acceptance_criteria": "Exactly five boxes labelled 20,20,20,20,16; total 96; inputs and targets stay paired; dataset and loader roles distinct.",
+    "prohibited_content": "Dropping last batch, shuffling feature columns, fabricated scores, tensor grids, separate target shuffling.",
+    "alt_text": "Ninety-six paired fuel examples are shuffled by row and delivered in batches of twenty, twenty, twenty, twenty and sixteen."
+  },
+  {
+    "filename": "04-snapshot-is-not-recovery.png",
+    "semantic_anchor": "A saved bag is not a tested journey",
+    "aspect_ratio": "16:9",
+    "prompt": "Cream-paper teaching poster with navy legible text, teal and purple luggage, orange caution. Title 'Same prediction is not the same next update'. LEFT small equipment case 'Inference reload' holds card 'model weights' and points to two matching fuel gauges labelled 'compare predictions'. RIGHT open travel bag 'Training-state snapshot' holds exactly four large tags 'model', 'Adam state', 'epoch', 'config'. Beside it a visibly unpacked ticket labelled 'loader random state' and orange sign 'Not saved here'. Footer 'This notebook checks prediction parity and writes the bag. It does not test interrupted training.' No invented fuel numbers, no charts.",
+    "acceptance_criteria": "Four declared snapshot fields; missing loader random state explicit; no exact-resume claim; prediction parity distinct from continuation.",
+    "prohibited_content": "Recovery success checkmark, claiming all state saved, invented gradients or loss numbers, scheduler in Part 04 snapshot, matrices.",
+    "alt_text": "An inference case can reproduce predictions; the Part 04 training bag saves model, Adam, epoch and configuration but omits loader random state and is not recovery-tested."
+  },
+  {
+    "filename": "05-learning-and-exam-rooms.png",
+    "semantic_anchor": "Learning and checking need different rooms",
+    "aspect_ratio": "16:9",
+    "prompt": "Warm educational cutaway, cream paper with navy large labels, teal data, purple model, orange decisions. Title 'Practise in one room. Check in another.' Left room 'TRAIN': fuel sensor cards, adjustable model knobs and teacher feedback, label 'gradients + updates'. Right room 'VALIDATION': a copy of the model with hands off knobs and clipboard, label 'eval + no gradients'. Small train-only measuring ruler at entry labelled 'fit normalization on train only', with dashed reuse line to validation doorway. From validation clipboard arrows reach two bottom controls: trophy case 'save best' and hourglass 'patience / scheduler'. Both rooms feed no test data. A separate sealed envelope 'TEST: open after choices' sits at far right. Footer 'Validation guides choices, not parameter updates'.",
+    "acceptance_criteria": "Train fits statistics; validation measures and guides schedule/selection without updates; test remains sealed; roles clear.",
+    "prohibited_content": "Validation gradients, test-driven selection, literal human quality scores, fabricated results, more than eight labelled objects, equations.",
+    "alt_text": "Train rows fit preprocessing and update the model; validation measures without gradients and guides scheduling and selection; test evidence stays separate until choices are finished."
+  },
+  {
+    "filename": "05-two-checkpoint-jobs.png",
+    "semantic_anchor": "Two files answer different questions",
+    "aspect_ratio": "16:9",
+    "prompt": "Cream paper teaching illustration, navy large sans-serif text, teal, purple, orange. Title 'Choose a model. Record a process.' Two open folders side by side. LEFT teal 'best_model.pt' holds three cards 'weights', 'preprocessing', 'config' with a trophy icon; arrow to fuel gauge 'inference'. RIGHT purple 'resume_training.pt' holds large cards 'model', 'optimizer', 'scheduler', 'epoch', 'stopping state', 'config', with notebook icon. Below right folder orange warning 'Key check only. Not a recovery test.' Bottom strip 'Missing here: RNG / loader / scaler / preprocessing'. No arrow from right folder to a successful resumed training scene.",
+    "acceptance_criteria": "Correct filenames and included fields; preprocessing present in best and absent in snapshot; no exact continuation claim; missing state visible.",
+    "prohibited_content": "Recovery success, identical next update, invented numbers, graph grids, best weights always equal last weights.",
+    "alt_text": "The best-model file includes weights and preprocessing for inference; a separate snapshot records selected process state but lacks several recovery inputs."
+  },
+  {
+    "filename": "vision-sliding-detector.png",
+    "semantic_anchor": "One detector visits many locations",
+    "aspect_ratio": "16:9",
+    "prompt": "MINIMAL cream-paper teaching illustration with navy large labels. Title 'One local rule, reused'. LEFT one grayscale square containing EXACTLY ONE solid vertical bar. A teal magnifying window sits over one edge, labelled 'local patch'. A curved travel arrow beside the window is labelled 'move to another position'. MIDDLE one purple reusable stamp labelled 'Shared kernel'. RIGHT one large orange dot labelled 'One feature-map value'. Along bottom a simple process with three large cards linked by arrows: 'Multiply matching pixels' then 'Sum the products' then 'Write one output'. Footer 'Repeat the same kernel at every valid position'. No numeric grids, no heatmaps, no repeated bars, no other text.",
+    "acceptance_criteria": "Exactly one vertical bar; one shared kernel, local patch, multiply then sum then single value; no invented spatial response or pixel grid.",
+    "prohibited_content": "Numeric response values, exact pixel matrices, claiming whole-image position invariance, horizontal response asserted zero, learned Sobel claims.",
+    "alt_text": "The same local edge detector visits shifted vertical bars; each local patch and shared kernel combine into one response-map value."
+  },
+  {
+    "filename": "vision-shape-cnn.png",
+    "semantic_anchor": "Local clues become an image decision",
+    "aspect_ratio": "16:9",
+    "prompt": "MINIMAL cream teaching poster with navy large labels, teal images and purple operations. Title 'Keep local clues, then summarize'. Left a grayscale thumbnail containing EXACTLY ONE vertical bar, labelled 'Input: 16 x 16, one channel'. Arrows lead through exactly four simple illustrated stations: ONE stylized layered-ribbon stack labelled 'Conv + ReLU: 6 maps', then ONE smaller stack labelled 'Pool: 8 x 8', then ONE stack labelled 'Conv + ReLU: 10 maps', then ONE measuring cup icon labelled 'Average each map'. Last a single orange output card says '2 raw scores: vertical / horizontal'. No bar chart, no other image thumbnails, no individual feature-count drawings, no repeated source bars. Footer 'Shared local work. One decision per image.'",
+    "acceptance_criteria": "Input contains exactly one bar; six first maps, pooling to 8x8, ten second maps, spatial averaging, two raw class scores; no misleading drawn element counts.",
+    "prohibited_content": "Softmax before loss, flatten into 640 class scores, fabricated accuracy, labelled animal classes, exact-count pixel grids.",
+    "alt_text": "The shape CNN maps one-channel images through six filters, pooling, ten filters and spatial averaging to two vertical-or-horizontal scores."
+  },
+  {
+    "filename": "vision-residual-route.png",
+    "semantic_anchor": "A correction gets a bypass",
+    "aspect_ratio": "16:9",
+    "prompt": "Cream paper landscape diagram with navy large text, purple learned path and teal bypass. Title 'Keep the input. Add a correction.' Left input ribbon labelled 'x: 12 features' splits into two routes. Top purple route passes ONE block labelled 'Linear then tanh'. Lower teal route is an unobstructed bridge labelled 'identity: unchanged x'. Both routes meet a clearly marked plus junction leading to output ribbon '12 features'. Small backward-pointing orange arrows along BOTH routes have label 'backward can use both paths'. Footer 'Controlled probe: same transforms, with or without this bypass'. No numbers other than stable feature count.",
+    "acceptance_criteria": "One learned transform per residual addition as in code; unchanged identity route; matching feature shapes; backward route not guaranteed performance.",
+    "prohibited_content": "Two transforms per block, claiming perfect gradients, made-up route advantage, skipping loss, matrices, nonlinear activation after addition.",
+    "alt_text": "A twelve-feature input travels unchanged around a linear-and-tanh correction and the two are added, providing an additional backward route."
+  },
+  {
+    "filename": "vision-rebuild-through-a-code.png",
+    "semantic_anchor": "Rebuild without a species or shape label",
+    "aspect_ratio": "16:9",
+    "prompt": "Cream educational illustration, navy large sans-serif text, teal images, purple learned parts, orange comparison. Title 'A smaller code must preserve useful detail'. Left grayscale 16x16 thumbnail containing a simple square ring labelled 'input image'. Arrow to purple funnel 'Encoder' then compact folded ribbon 'Code: 4 x 4 x 4'. Arrow through purple expanding fan 'Decoder' to similar but slightly blurred square-ring thumbnail labelled 'reconstruction: 16 x 16'. Below a separate orange comparison tray receives dashed arrows from BOTH original and reconstructed thumbnails and reads 'Compare matching pixels'. Small caption 'Shape labels are not the training answers'. Footer 'A reconstruction task, not a sampling model'. No pixel grids and no exact loss values.",
+    "acceptance_criteria": "Code four channels at 4x4; input and reconstruction both contribute to loss; four-to-one value count compression can be inferred but no fake numeric error.",
+    "prohibited_content": "VAE sampling, random code generating guaranteed valid images, class label feeding decoder, matching grids with inaccurate counts, exact numeric loss.",
+    "alt_text": "An image passes through an encoder into a four-channel four-by-four code, then a decoder rebuilds it; matching original and rebuilt pixels supply the loss."
+  },
+  {
+    "filename": "vision-code-budget.png",
+    "semantic_anchor": "A smaller bag and a wider bag",
+    "aspect_ratio": "16:9",
+    "prompt": "Warm cream paper visual, navy large text, teal small bag, purple wider bag, orange magnifying glass. Title 'Compare the code budget and the rebuilding'. LEFT small zipped bag tagged '2 channels at 4 x 4', below '32 stored code values'. RIGHT larger bag tagged '4 channels at 4 x 4', below '64 stored code values'. Both connect to a shared source thumbnail labelled '256 input pixel values'. At bottom two checklists 'measure validation pixel error' and 'inspect original beside reconstruction'. Footer 'More room may help. The experiment decides.' Equal blank reconstruction frames under both bags, explicitly labelled 'inspect measured outputs in the notebook', not illustrative quality results.",
+    "acceptance_criteria": "Correct stable counts 32,64,256; no asserted error ranking; changed latent channel count; code value counts not bit rate.",
+    "prohibited_content": "Invented curves, smaller always worse, exact byte compression claim, changing epochs across these two conditions, numbered pixel grids.",
+    "alt_text": "Two-channel and four-channel codes hold thirty-two and sixty-four values respectively; compare both compression and measured reconstruction quality rather than assuming a winner."
+  },
+  {
+    "filename": "penguin-framework-contracts.png",
+    "semantic_anchor": "Same penguins, more visible responsibilities",
+    "aspect_ratio": "16:9",
+    "prompt": "Warm cream-paper educational illustration with navy large text and small friendly flat penguin silhouettes. Title 'Same penguins. Visible PyTorch responsibilities.' Three landscape stations. LEFT field notebook 'bill length / bill depth / flipper length / body mass' and separate tag 'species'. MIDDLE purple model box '4 measurements -> 16 features -> 3 raw scores'. RIGHT orange checking desk 'CrossEntropyLoss' receives raw scores and separate species tag; underneath a purple adjustment wheel 'clear / backward / step'. Lower row an inspection table with label 'Held-out rows guide ablations: validation, not a final exam'. Footer 'Keras snippets are reference-only. Executable math is PyTorch.' No tiny matrix grids or accuracy percentages.",
+    "acceptance_criteria": "Exactly four named physical measurements, three species scores, separate target, raw scores to cross entropy; held-out reuse caveat.",
+    "prohibited_content": "Batch loaders claimed as implemented, batch-size or regularization ablations, fake penguin metrics, TensorFlow execution, model taking species as input.",
+    "alt_text": "Four penguin measurements enter a sixteen-feature PyTorch model with three raw species scores; cross-entropy checks a separate species target and controlled ablations reuse held-out rows as validation."
+  }
+]

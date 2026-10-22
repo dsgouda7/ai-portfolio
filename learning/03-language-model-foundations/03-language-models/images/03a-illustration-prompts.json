@@ -25,5 +25,14 @@
     "acceptance_criteria": "Top panel shows rows to predictor to guess; bottom panel comparison names cat and branches to two parameter updates; IDs fixed; no guess-to-answer arrow or fabricated tokens.",
     "prohibited_content": "Updating token IDs, updating every row in one step, direct answer-to-input arrow, weight tying, suggesting lookup alone requires prediction, made-up loss values, unreadable labels.",
     "alt_text": "Input IDs fetch rows which are combined and used to make a guess. Checking against cat sends training feedback to both the predictor weights and the fetched rows, while token IDs stay fixed."
+  },
+  {
+    "filename": "03a-encoder-decoder-observatory.png",
+    "semantic_anchor": "12 - Encoder-decoder: an observing log, compact briefing, and likely report",
+    "aspect_ratio": "16:9",
+    "prompt": "Landscape educational diagram. An observatory reads an ordered log of known system objects' abstract sensor profiles. An encoder builds one compact learned briefing h, not a raw-profile average. A decoder writes a likely report about a newly observed object, one word at a time. Beneath the analogy show actual source the->sleepy->cat, final encoder state, and training answer sat->on->eos. State that this notebook predicts vocabulary tokens, not physical properties, and that only the final briefing is available without attention.",
+    "acceptance_criteria": "Keep the observation log ordered; distinguish static input profiles from learned hidden state; output is a predicted report, not a new token ID. Label sat/on/eos as the training answer, not claimed generated output. Rebuild with generate_sensor_analogy_diagrams.py.",
+    "prohibited_content": "Unordered source, claiming accurate astronomical measurements, invented model results, self-attention in the GRU implementation, writer access to all source states.",
+    "alt_text": "An ordered observing log feeds an encoder briefing, then a decoder's likely report. The actual text mapping is the sleepy cat to training answer sat on eos; only the final encoder state is handed over."
   }
 ]

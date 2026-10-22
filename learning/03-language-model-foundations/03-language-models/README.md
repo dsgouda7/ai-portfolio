@@ -18,6 +18,39 @@ Select that kernel, restart, and run each notebook independently; kernels don't 
 03A needs internet for its first TinyStories download, then reuses its checked local cache.
 03B–03D use local, generated examples and one CPU thread.
 
+## Resume the two embedding examples here
+
+03A's opening checkpoint repeats everything needed from the **lookup microscope**
+(`the ___ sat`, with hand-picked two-number rows) and the **learning game**
+(`cat/dog -> sat/slept; bird -> flew/sang`, six supplied cards). You do not need
+to reopen earlier notebooks. A side-by-side table then turns the same
+`the sleepy cat sat on` window into CBOW, Skip-gram, and reader/writer questions.
+
+Experiment-state labels distinguish arithmetic, random lookup previews, fresh
+32-number training tables, and the separate 48-number held-out comparison.
+The mechanism stays fixed; the questions and context processing change.
+
+Model-specific headings name CBOW, Skip-gram, or the encoder-decoder; shared setup
+and the three-model comparison are marked separately. Section 3 uses a short CBOW
+sliding-window animation with a static storyboard. We share `make_document_windows`
+because these lessons repeat the same cutting step, not because every language
+model needs five-word windows or a hidden middle word.
+
+The embedding intuition uses registry IDs and abstract learned sensor profiles.
+03A's forward look follows one static profile into a fleet with one craft per
+token occurrence: learned communication builds contextual working states without
+rewriting the registry during inference. The `bank`/`river` and `bank`/`money`
+examples illustrate the limitation, not a measured disambiguation result.
+The encoder-decoder becomes an observatory using known profiles, partial readings
+for a newly discovered object, and a question to write a likely report. This
+chapter's GRU passes one final briefing; later Transformer cross-attention can
+consult per-position source states. These are analogies for token prediction,
+not an astronomy model. Rebuild the existing diagrams locally without network calls:
+
+```powershell
+python .\generate_sensor_analogy_diagrams.py
+```
+
 ## Read in order
 
 | Notebook | The next complaint | Handwritten notes | Code-only view |

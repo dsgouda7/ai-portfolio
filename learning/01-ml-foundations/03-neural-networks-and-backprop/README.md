@@ -4,7 +4,12 @@
 Use XOR to see why hidden features matter, then audit a four-weight responsibility report.
 Theory and NumPy experiments are together in the notebook.
 
-**Before this:** [ML Contracts](../02-ml-basics/README.md).
+The hidden coordinates `[0,0]`, `[1,0]`, and `[2,1]` make the four cases easy to read.
+Those weights are hand-set, not trained. A separate one-case calculation traces output
+`0.68` and loss `0.0512` back to four input-weight sensitivities, then checks them numerically.
+The dropout experiment checks scaling in expectation, not a generalization improvement.
+
+**Before this:** [ML Basics](../02-ml-basics/README.md).
 **Contents:** [lesson map](CONTENTS.md).
 
 ## Setup

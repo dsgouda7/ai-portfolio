@@ -20,6 +20,11 @@ raw rows
 The notebook measures that train-only and all-data means differ. That difference is the leaked
 information an all-data normalizer would import.
 
+There are 108 training rows, 36 validation rows, and 36 test rows.
+The training-derived feature and target rulers are fitted state, not
+neural-network parameters. Validation uses those same rulers; fitting
+a fresh zero and scale on each split would change what its coordinates mean.
+
 **Complaint:** honest splits still fail if validation accidentally behaves like training.
 
 ## 2. Train and validation loops have different responsibilities
@@ -42,6 +47,22 @@ These are not cosmetic differences. Dropout produces different repeated outputs 
 and identical repeated outputs in evaluation mode. The notebook measures both behaviors on the
 same input.
 
+The model owns 65 parameters, but dropout owns none. Its 0.15 drop
+probability temporarily masks hidden **activations**, not stored weights.
+Changing mode therefore changes the calculation's behavior without
+loading a different parameter set.
+
+Think of practice and the exam as different rooms. In the practice room the
+knobs can move. In the exam room hands stay off the knobs; the score can guide
+later decisions, but this pass cannot adjust parameters.
+
+![Training updates parameters; validation guides choices without updating; test evidence stays sealed until choices finish.](../images/05-learning-and-exam-rooms.png)
+
+The notebook also copies weights and any existing gradient buffers around an
+evaluation call and asserts that both remain unchanged. An old training
+gradient may still be present after evaluation; its presence alone does not
+mean validation wrote it. Compare state before and after.
+
 ## 3. Average losses with batch size in mind
 
 If the final batch is smaller, averaging batch means equally gives that smaller batch too much
@@ -55,6 +76,17 @@ divide by total examples
 ```
 
 This preserves the per-example mean across uneven batch sizes.
+
+At batch size 24, validation delivers 24 rows then 12. If their mean
+losses were 1 and 4, the example-weighted mean would be 2; averaging the
+two batch means would incorrectly give 2.5. These are arithmetic examples,
+not reported validation losses. Training similarly keeps a 12-row
+remainder after four full batches.
+
+Training and validation scores still have different conditions: training
+uses dropout while weights change between batches; validation uses fixed
+end-of-epoch weights in evaluation mode. A gap between the curves is not
+automatically evidence of a broken loop.
 
 ## 4. Schedulers and mixed precision are conditional tools
 
@@ -89,6 +121,12 @@ The stopping rule and the best-model rule are related but different:
 - keep the state from the best validation epoch.
 
 The last epoch is not automatically the best epoch.
+
+The supplied stopping-rule drill improves from 1.0 to 0.8 at check 2,
+then gets 0.81, 0.82, 0.83, 0.84. Patience four stops at check six.
+Those numbers test a decision rule; they aren't invented training history.
+The scheduler's patience three and the stopping observer's patience ten
+are separate counters with separate decisions.
 
 ## 6. Best-model files and training-state snapshots serve different jobs
 
@@ -130,6 +168,12 @@ normalized prediction
 ```
 
 Preprocessing state is therefore part of the deployed prediction contract.
+
+The fresh best-model reload reconstructs test features using the rulers read
+from the file, rather than borrowing a live normalized array. That small
+distinction tests the artifact's contract. It then reverses the saved target
+normalization and reports absolute misses in the original synthetic fuel
+units. None of those units turns the generated dataset into a real engine test.
 
 ## 8. Automation comes after visible responsibilities
 

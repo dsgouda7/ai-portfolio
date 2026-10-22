@@ -4,24 +4,35 @@
 [Python companion](03A-training-skeleton-and-word-objectives.py) |
 [shared trainer](language_model.py) | [corpus and comparison](real_text_embeddings.py).
 
+**Carry-in:** we supplied six questions. How can ordinary text supply thousands?
+The **lookup microscope**, **the ___ sat**, keeps its hand-picked two-number
+rows; here we add averaging and expose the order it discards. The **learning
+game**, **cat/dog -> sat/slept; bird -> flew/sang**, supplied controlled cards;
+here windows from text supply the cards instead.
+
+Keep **the sleepy cat sat on the mat** as the inspection sentence, not the whole
+training diet. The map remains text -> pieces -> IDs -> fetched rows ->
+context processing -> scores -> checked answer. Objectives change the clues,
+answers, and processing, not the lookup contract.
+
+The introductory models each train a fresh 32-number table. The later held-out
+comparison resets to 48-number rows with a common initialization. Neither run
+continues the earlier lab's trained table or reuses its local ID numbers.
+
 ## 1. We can fetch word rows. What teaches their numbers?
 
-[02A's notebook](../02-tokenization-and-embeddings/02A-tokenization-and-embeddings-theory.ipynb)
-gave each word an address and checked compact lookup against a one-hot checklist.
-[02B's notebook](../02-tokenization-and-embeddings/02B-tokenization-and-embeddings-pytorch-lab.ipynb)
-repeated the three-word table in PyTorch, then trained the six `cat/dog -> sat/slept`
-and `bird -> flew/sang` questions. Its shortlist showed why a fixed chance table
-can support different sampled answers. An address distinguishes `cat` from `dog`;
-it doesn't tell a predictor what those words have in common.
+An address distinguishes `cat` from `dog`; the guessing task gives their
+separate rows a reason to develop useful features in common.
 
-Think of an embedding as a drawer. Lookup opens the drawer. Training changes its contents.
-The input is the integer address, not freshly drawn random numbers. The row starts random
-once, then is reused. It is an input to the predictor and a trainable weight of the whole
-model. Backpropagation calculates feedback for it; the optimizer changes the stored values.
-The same fixed ID then fetches the updated row. Renumbering IDs adds no meaning: keep the
-address book, matching rows, and output labels in agreement, and predictions stay the same.
+Think of a celestial object's registry number and its profile across a common sensor array.
+The token ID identifies; the embedding supplies readings across abstract, learned channels.
+They are not literal mass or temperature measurements, and we do not add all channels into
+one total. In code, a matrix row stores one profile. It starts random once, then training
+can adjust its values along with the predictor. Lookup retrieves the current profile;
+it does not redraw or remeasure it. A fixed model returns the same starting profile for
+the same ID. Renumbering the registry adds no meaning if profiles and output labels follow.
 
-A one-hot checklist multiplied by the table opens the same drawer, carrying vocabulary-sized
+A one-hot checklist multiplied by the table selects the same profile, carrying vocabulary-sized
 zeros along. Short rows solve storage; useful shared features still need learning.
 The `[V, D]` shape belongs to the shared weights. Actual lookup takes one integer per word:
 `[B]` IDs return `[B, D]` rows. A one-hot `[B, V]` input is an equivalent calculation,
@@ -46,12 +57,18 @@ independent document, **the sleepy cat sat on the mat**, at the end: **13,765 do
 **149,572 tokens**, and **94,512 five-word windows**. Its seven words supply three windows.
 No window crosses a sentence boundary. No copies, special weights, or extra sampling
 chances are given to that document.
-One shared document-safe helper builds windows for all three objectives, in both the
-introductory run and the larger comparison. Each objective still chooses its own clues
-and answers; sharing the cutter does not make the questions identical.
+Since this notebook repeats the sliding step for several models, we put it in one
+small shared helper, `make_document_windows`, instead of repeating the code.
+It only collects neighbouring words; each objective chooses its own clues and answers.
+The CBOW storyboard and short animation slide the same window across our cat sentence:
+the three checked answers are **cat, sat, on**.
+
+Choosing a stretch of text is common in language-model training; the exact five-word
+window is our teaching choice, not a universal rule. Next-word models usually read
+longer chunks and predict one step ahead, rather than cover the middle word.
 
 The vocabulary keeps common words plus every cat-probe word: **1,202 entries**.
-`mat` occurs once; reserving its drawer adds no evidence. Other rare words become unknown.
+`mat` occurs once; reserving its registry entry adds no evidence. Other rare words become unknown.
 Count words, order them by frequency, then assign unique consecutive IDs.
 The ID is a position in that ordering, not the count itself; ties keep first-appearance
 order and still get different IDs. Zero is reserved for the unknown slot.
@@ -115,8 +132,19 @@ Reuse each window as a small continuation task:
 | Writer input during practice | start, sat, on |
 | Correct next tokens | sat, on, stop |
 
-An encoder GRU reads the source into a final running note. A decoder GRU starts from that
-note and predicts one answer per step. Supplying correct previous answer words is
+Imagine an observatory trained on many planetary systems. You have known members'
+profiles, partial readings for a newly discovered member, and a question about a
+missing property. The encoder reads that evidence; the decoder writes a likely
+report, using the evidence and the report words written so far. A registry number
+or membership in a galaxy alone cannot determine an unmeasured property. The report
+is a prediction from learned patterns, not a new measurement.
+
+Here the encoder GRU reads the source profiles in order and builds that briefing:
+its final hidden state, not a simple average. The decoder starts there and writes
+one answer token at a time. A galaxy itself is not ordered, but our observing log
+is: word order matters. We are predicting text, not physical measurements or a new
+vocabulary ID. The stored profiles remain separate from this context-dependent state.
+Supplying correct previous answer words is
 **teacher forcing**. Dropping the final target from inputs and the start marker from answers
 keeps each score beside the next token it should predict.
 
@@ -131,6 +159,26 @@ floor 4.8%**. These are plausible continuations, not success at remembering `mat
 the unknown token still had the largest share, **17.4%**.
 Greedy generation produced **and, unknown, stop**, not the expected **sat, on, stop**.
 The free-running writer no longer receives correct earlier answers.
+
+The writer can only use the final briefing here. If it omitted a useful detail,
+the writer cannot reopen the log. Later cross-attention adds selective access to
+saved source states, not one averaged galaxy.
+
+For Transformer self-attention, imagine one spacecraft per token occurrence.
+The same `bank` ID starts with the same profile beside `river` or `money`; lookup
+alone cannot resolve the use. Each craft forms a learned query, scores permitted
+keys, and gathers a weighted blend of value messages. This is directional
+communication, not gravity or raw-profile averaging. Position and masks matter;
+a causal craft cannot read future words.
+
+Residual routes carry earlier state forward while messages and further processing
+refine it. The resulting contextual vector carries identity interpreted through
+selected relationships. Its width stays fixed; it is not a lossless history, a
+sum of sensor channels, or necessarily a larger-magnitude vector. During inference,
+working states change without rewriting stored profiles. In an encoder-decoder,
+the source fleet contextualizes observations; the report fleet consults its own
+prefix through self-attention and the source through cross-attention. These are
+conceptual previews here, not mechanisms implemented by this chapter's GRUs.
 
 Reversing the source changed the final note. Order matters to the computation; useful use
 of order is a separate question. The fixed-size final note also limits what the writer can

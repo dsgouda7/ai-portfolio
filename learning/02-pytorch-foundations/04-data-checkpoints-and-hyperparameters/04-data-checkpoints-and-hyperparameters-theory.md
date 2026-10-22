@@ -2,6 +2,12 @@
 
 ## 1. Batching is an experiment policy
 
+Keep the fuel task from Part 03: engine load and ambient temperature belong
+together in one input envelope, and one fuel target belongs to that same
+envelope. Reload its saved model in a fresh kernel before changing delivery.
+If the files are missing, run Part 03; silently inventing replacement weights
+would erase the handoff we are trying to test.
+
 Full-batch training uses every example for every update. Mini-batch training changes which
 examples contribute together and how often updates occur.
 
@@ -16,6 +22,12 @@ make a permutation
 
 The notebook proves that the manual groups cover every example exactly once. This matters because
 a list of plausible batch sizes can still duplicate or omit examples.
+
+There are 96 envelopes. Twenty per box gives four boxes of twenty and one of
+sixteen. Joining and sorting their addresses matches the original address list.
+That proves coverage, while a mere total of 96 could conceal duplicates.
+
+![Paired sensor rows are shuffled and delivered in four full batches and a retained remainder.](../images/04-deliver-every-row.png)
 
 **Complaint:** manual index logic mixes data access, ordering, and grouping.
 
@@ -36,6 +48,12 @@ targets exactly.
 Shuffle is not a property of the underlying examples. It is a policy for an iteration. For a fair
 comparison, seed that policy or record it.
 
+The ordered-loader audit joins feature batches along their existing example
+axis and does the same for targets. Both reconstructed tables must match their
+originals. A new stack axis would answer a different question. Peeking at a
+shuffled loader also consumes iteration state; a dedicated random generator
+does not automatically freeze the next delivery.
+
 ## 3. A model state dictionary serves inference
 
 `model.state_dict()` contains learned parameter and buffer tensors.
@@ -49,6 +67,18 @@ prediction before save
 
 The notebook reloads Part 03 in a fresh kernel and asserts zero prediction difference for the
 probe. That is stronger evidence than checking that the file exists.
+
+The two separately reconstructed models receive the same seven input rows.
+We compare the largest absolute gap, so an average cannot hide one
+changed prediction. Compatibility checks also confirm two input features and
+one output. A shape-compatible file with a different feature order would still
+be wrong, so the sensor names remain part of the contract.
+
+The test compares two reconstructions from the saved file, not a live
+object from Part 03. It checks usable saved predictions, not original
+training-loss equality. Part 04 makes noise on CPU while Part 03 used
+its selected device, so cross-device runs should not assume the noisy
+targets are bit-identical merely because the seed matches.
 
 **Complaint:** weight parity is enough for inference, but not enough to continue training.
 
@@ -72,7 +102,17 @@ snapshot. It does not reload that snapshot or compare against uninterrupted trai
 The shuffled loader's random state is missing. We keep the existing `part04_resumable.pt`
 filename for compatibility; its name does not add a recovery test.
 
+The snapshot loop trains a fresh model for 25 epochs. Five batches per
+epoch mean **125 updates**. Its saved epoch is 24 because indexing starts
+at zero; the progress message reports 25 completed passes. Neither count
+is a parameter learned by the prediction model.
+
 Variable-length sequences add another batching complaint: rows must fit a rectangle without pretending that blank slots are real observations. Filling those slots is **padding**; keeping each row's true **length** tells you where the content ends. Stage 03 applies that contract to text and distinguishes which blanks must not be read from which blanks must not be graded.
+
+Those two jobs need separate masks: an input/attention mask limits what
+the model may read, while a loss mask selects targets to grade. Ignoring
+a blank target doesn't by itself prevent padded inputs influencing a
+prediction. The fixed-width fuel rows don't need that machinery yet.
 
 ## 5. Configuration is not learned state
 

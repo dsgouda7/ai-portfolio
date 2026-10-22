@@ -1,10 +1,10 @@
 # Contents: Neural Networks and Backpropagation
 
-See why a hidden layer is needed and check which weights caused a prediction error.
+See why a hidden layer is needed and check how individual weights affect a prediction error.
 
 ## Required route
 
-- [SmartVal: Why Hidden Layers and Backpropagation Exist](01-smartval-neural-networks-and-backprop.ipynb) — See why a hidden layer is needed and check which weights caused a prediction error.
+- [SmartVal: Why Hidden Layers and Backpropagation Exist](01-smartval-neural-networks-and-backprop.ipynb) — Inspect four XOR cases in hidden space, trace one loss backward, and check four weight gradients.
 
 ## Optional
 

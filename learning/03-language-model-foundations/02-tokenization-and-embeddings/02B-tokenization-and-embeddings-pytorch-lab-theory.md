@@ -4,6 +4,19 @@ Use beside [02B's notebook](02B-tokenization-and-embeddings-pytorch-lab.ipynb).
 [02A](02A-tokenization-and-embeddings-theory.ipynb) supplied the mental models;
 this lab checks them in PyTorch.
 
+**Carry-in:** lookup works. What feedback could make the stored rows useful?
+The **lookup microscope**, **the ___ sat**, recreates the three hand-picked
+two-number rows. Its numeric predictor trace is still untrained arithmetic.
+The **learning game**, **cat/dog -> sat/slept; bird -> flew/sang**, creates a
+different seven-word vocabulary, random four-number rows, and a separate
+predictor. Those two sets of weights learn from six supplied cards.
+
+The map stays text -> pieces -> IDs -> fetched rows -> context processing ->
+scores -> checked answer. Here we expose the feedback from checking an answer.
+IDs remain fixed; stored weights change. The isolated gradient probe resets
+again so one card's effect is visible. These are explicit experiment resets,
+not weights carried forward from the microscope.
+
 ## 1. Bring the same note, not an invisible previous kernel
 
 The familiar note is **the sleepy cat sat on the mat**. The lab recreates
@@ -94,7 +107,7 @@ Those score values come from hand-picked prediction weights, not training.
 The distinctions matter: the embedding **layer** owns the full table; one
 word's embedding is the fetched row. The predictor's scores aren't another
 name for that row. Lookup can return an embedding without making any guess.
-The notebook's generated drawer illustration and actual PyTorch layers use
+The notebook's sensor-profile illustration and actual PyTorch layers use
 the same numbers, so you can check every transition.
 
 **Complaint:** what practice could give two different word rows something useful

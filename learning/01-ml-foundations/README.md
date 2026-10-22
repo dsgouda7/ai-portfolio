@@ -1,7 +1,8 @@
 # Stage 01: ML Foundations
 
-Start with a free kick, then use SmartVal to ask which predictions to trust and which weights
-caused an error. This stage owns the ideas; Stage 02 owns their PyTorch implementation.
+Start with a free kick, then use SmartVal to ask which predictions to trust and how a small
+weight change would affect an error. This stage builds the intuition; Stage 02 gives the
+training state and repeated updates explicit homes in PyTorch.
 
 **Contents:** [lesson map](CONTENTS.md). Each chapter has its own setup scripts.
 
@@ -13,6 +14,10 @@ caused an error. This stage owns the ideas; Stage 02 owns their PyTorch implemen
 
 **Optional:** [audible backpropagation lab](03-neural-networks-and-backprop/optional/README.md),
 after Chapter 03. It does not block the required route.
+
+The examples stay small on purpose: the kick follows known physics; the rental listings
+are synthetic; XOR's useful features are hand-chosen. The optional synth actually optimizes
+four controls. Each notebook separates what its code checks from what it only explains.
 
 **Next:** [Stage 02 — PyTorch Foundations](../02-pytorch-foundations/README.md).
 You can trace an error back to its weights. Next, give those weights, gradients, and updates
