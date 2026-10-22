@@ -24,6 +24,12 @@ IDs, shifted targets, and masks to study memory; here you explain and test those
    inspect probability shortlists and sampling, and take one visible optimizer step:
    stored rows change while input and answer IDs stay fixed.
 
+02B also follows one concrete value path through two actual layers:
+`cat -> ID 1 -> embedding [1, 3] -> scores [3, 1, 4]`.
+The [generated illustration](images/02-07-word-id-to-embedding-to-scores.png) and
+executable arithmetic use the same hand-picked values. It then fetches the actual
+trained model's four-number embedding separately from its seven prediction scores.
+
 ## Run it
 
 From this directory, run [`setup.ps1`](setup.ps1) on Windows or [`setup.sh`](setup.sh) on
@@ -31,6 +37,11 @@ Linux/macOS. It creates a chapter `.venv`, installs [requirements](requirements.
 and assigns kernel `stage03-language-model-02-tokenization`.
 Restart and run each notebook independently. The lab uses GPT-2's tokenizer, not its
 pretrained model weights; `tiktoken` may fetch its vocabulary on first use.
+
+The [illustration manifest](images/02-illustration-prompts.json) records each
+prompt and its accuracy checks. Regenerating an illustration uses the existing
+[image generator](../03-language-models/generate_illustrations.py), Azure CLI sign-in,
+and the deployment's normal charges. Running the notebook doesn't call an image service.
 
 **Next:** [Chapter 03 — Language Models](../03-language-models/README.md).
 [03A](../03-language-models/03A-training-skeleton-and-word-objectives.ipynb) ·

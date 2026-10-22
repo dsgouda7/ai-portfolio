@@ -44,10 +44,7 @@ print("First tokenized document:", documents[0])
 print("Last document (appended exactly once):", documents[-1])
 
 # %% 2 - A vocabulary turns repeated strings into stable addresses
-items = []
-for document in documents:
-    for word in document:
-        items.append(word)
+items = [word for document in documents for word in document]
 
 counts = Counter(items)
 itos = ["<unk>"] + [word for word, _ in counts.most_common(1_199)]
@@ -65,8 +62,10 @@ print(f"Tokens counted: {len(items)}")
 print(f"Vocabulary size: {vocabulary_size}")
 print("Cat-probe word counts (not weights):",
       {word: counts[word] for word in dict.fromkeys(tokenize(CAT_PROBE))})
-print("First 10 index-to-string entries:", itos[:10])
+print("Most common words (word, count, unique ID):",
+      [(word, count, stoi[word]) for word, count in counts.most_common(10)])
 print("First encoded document:", id_documents[0])
+assert len(stoi) == vocabulary_size
 assert all(itos[index] == word for word, index in stoi.items())
 
 # %% 3 - A sliding window manufactures prediction lessons
@@ -179,11 +178,22 @@ print("Maximum difference after reversal:", (original_mean - reversed_mean).abs(
 assert torch.allclose(original_mean, reversed_mean)
 
 # %% Why drawers, and not a giant one-hot checklist?
-one_hot_cat = nn.functional.one_hot(torch.tensor(1), num_classes=3).float()
-print("Checklist for cat:", one_hot_cat.tolist())
-print("Checklist x table: ", (one_hot_cat @ toy_table).tolist())
-print("Open drawer 1:     ", toy_table[1].tolist())
-assert torch.equal(one_hot_cat @ toy_table, toy_table[1])
+scalar_cat_id = torch.tensor(1, dtype=torch.long)
+one_cat_batch = scalar_cat_id.unsqueeze(0)
+scalar_cat_row = nn.functional.embedding(scalar_cat_id, toy_table)
+lookup_cat_row = nn.functional.embedding(one_cat_batch, toy_table)
+one_hot_cat = nn.functional.one_hot(one_cat_batch, num_classes=3).to(toy_table.dtype)
+checklist_cat_row = one_hot_cat @ toy_table
+assert scalar_cat_row.shape == (2,)
+assert lookup_cat_row.shape == checklist_cat_row.shape == (1, 2)
+assert torch.equal(lookup_cat_row, torch.tensor([[1., 3.]]))
+assert torch.equal(lookup_cat_row, checklist_cat_row)
+print("Stored table:", tuple(toy_table.shape), "= [V, D] weights")
+print("Scalar ID -> row:", tuple(scalar_cat_id.shape), "->", tuple(scalar_cat_row.shape))
+print("Actual ID batch:", one_cat_batch.tolist(), tuple(one_cat_batch.shape))
+print("Actual lookup:  ", lookup_cat_row.tolist(), tuple(lookup_cat_row.shape))
+print("One-hot check:  ", one_hot_cat.tolist(), tuple(one_hot_cat.shape))
+print("Same result:    ", checklist_cat_row.tolist(), tuple(checklist_cat_row.shape))
 
 checklists = torch.eye(vocabulary_size)
 random_rows = probe_embedding.weight.detach()

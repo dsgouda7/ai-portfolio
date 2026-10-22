@@ -75,9 +75,27 @@ The one-hot cross-check expands each ID into three checklist entries, then
 multiplies by the table. It produces the same rows. Direct lookup avoids
 constructing those zeros.
 
+The vocabulary-by-width shape describes **stored weights**, not each input.
+A one-word batch supplies one integer, shape `[1]`, and gets `[1, D]` values.
+The equivalent one-hot input would have shape `[1, V]`, but lookup never
+constructs it. A scalar ID also works, returning `[D]` without a batch axis.
+An ordinary one-input linear layer would multiply the ID as a feature instead;
+it would not select an independently stored row.
+
 These local IDs are not GPT-2 IDs. The two numbers were chosen by hand, not
 learned from the notes. A compact row solves width; useful shared features
 still need practice.
+
+Follow one word all the way through: `cat` becomes integer input `[1]`.
+The embedding layer selects row `[1, 3]`. A separate two-input, three-output
+prediction layer mixes it into scores `[3, 1, 4]` for `the`, `cat`, and `sat`.
+Those score values come from hand-picked prediction weights, not training.
+
+The distinctions matter: the embedding **layer** owns the full table; one
+word's embedding is the fetched row. The predictor's scores aren't another
+name for that row. Lookup can return an embedding without making any guess.
+The notebook's generated drawer illustration and actual PyTorch layers use
+the same numbers, so you can check every transition.
 
 **Complaint:** what practice could give two different word rows something useful
 in common?
@@ -101,6 +119,12 @@ After 250 updates, the recorded loss falls from about **2.0201 to 0.6932**.
 The cat/dog row distance changes from about **3.2438 to 3.0296**.
 The loss shows better practice answers. The distance shows movement, not a
 complete measurement of meaning.
+
+After training, the notebook fetches the four-number cat row directly from
+the embedding table, then separately prints its seven prediction scores.
+The trained row is the embedding to keep, not the score list. Discarding the
+head doesn't erase what the table learned, but using it on a new job still
+needs evidence.
 
 Shared use can teach shared features, but it doesn't require identical rows.
 A predictor can also learn around fixed random rows. Transfer to different

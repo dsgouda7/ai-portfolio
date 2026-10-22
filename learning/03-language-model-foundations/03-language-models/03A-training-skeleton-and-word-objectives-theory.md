@@ -23,6 +23,10 @@ address book, matching rows, and output labels in agreement, and predictions sta
 
 A one-hot checklist multiplied by the table opens the same drawer, carrying vocabulary-sized
 zeros along. Short rows solve storage; useful shared features still need learning.
+The `[V, D]` shape belongs to the shared weights. Actual lookup takes one integer per word:
+`[B]` IDs return `[B, D]` rows. A one-hot `[B, V]` input is an equivalent calculation,
+not something `nn.Embedding` constructs. CBOW's four IDs per question give `[B, 4, D]`
+before averaging, not a vocabulary-wide input per word.
 
 Cover `cat` in **the sleepy cat sat on**. The four visible words become the question;
 the covered word becomes its answer. Feed visible rows to a predictor and compare scores
@@ -48,6 +52,9 @@ and answers; sharing the cutter does not make the questions identical.
 
 The vocabulary keeps common words plus every cat-probe word: **1,202 entries**.
 `mat` occurs once; reserving its drawer adds no evidence. Other rare words become unknown.
+Count words, order them by frequency, then assign unique consecutive IDs.
+The ID is a position in that ordering, not the count itself; ties keep first-appearance
+order and still get different IDs. Zero is reserved for the unknown slot.
 
 The made-up table remains only a shape demonstration.
 Actual introductory training uses **32-number rows**, batches of at most **512**, and
