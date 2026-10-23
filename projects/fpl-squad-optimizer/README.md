@@ -1,17 +1,27 @@
 # EPL Fantasy Team Generator
 
+For the implemented architecture, opposition-adjustment decision, rollout gate
+and documentation/implementation reconciliation, see [DESIGN.md](DESIGN.md).
+
 ## Problem statement
 
 **Can a machine learning model — trained entirely on community-sourced, freely available data and running on a personal CPU — pick a Fantasy Premier League squad that performs at least as well as the average human manager?**
 
-The average FPL manager scores roughly 50–55 points per game week. The best managers — those in the top 10k globally — score closer to 65–70. Both groups make decisions based on intuition, recency bias, and partial information. This project sets a concrete, measurable target: build a model that, given the same £100M budget and the same FPL squad rules, assembles a team that captures at least as much of the theoretically optimal score as an experienced human manager would.
+This project asks whether position-specific models, given a £100M budget and
+FPL squad rules, can produce useful next-Gameweek advice. Manager averages vary
+substantially by Gameweek; comparisons should use that event's official average,
+not a fixed human-performance band.
 
 **Constraints we set for ourselves:**
 - Only freely available, community-maintained data — no paid APIs, no live odds, no premium scouting feeds
 - CPU-only training and inference — no GPU, no cloud compute
-- No lookahead: the model is only ever trained on data from game weeks that have already been played; prediction uses only information available before the GW kicks off
+- Completed-Gameweek training cutoffs and pre-deadline inputs are required;
+  retrospective evaluation must additionally verify feature provenance.
 
-**Result:** across 23 held-out game weeks (GW 15–37), the model averaged **70.7 actual points per XI** — capturing **52.5% of the oracle-optimal squad**, right in the range of an experienced human FPL manager (45–60%). See the [validation report](#simulation-and-traintest-split) for the full breakdown.
+**Historical report, not a current validated result:** an earlier experiment
+reported 70.7 XI points and 52.5% oracle capture. The legacy simulator has
+cutoff, hindsight-lineup and actuals-join limitations, so those figures do not
+establish current live accuracy. See [evaluation limitations](#simulation-and-traintest-split).
 
 > **Learning project** — I built this to get hands-on with the full ML lifecycle
 > end-to-end: data wrangling, feature engineering, model selection, evaluation,
@@ -33,20 +43,20 @@ The average FPL manager scores roughly 50–55 points per game week. The best ma
 
 ```powershell
 # 1. clone the FPL dataset and set up the venv
-./setup.ps1
+.\setup.ps1
 
 # 2. train — downloads every available live player-GW history and trains
-#    both model families from the same completed-Gameweek cutoff
-python train/train.py --model all
+#    all five model families from the same completed-Gameweek cutoff
+.\.venv\Scripts\python.exe train\train.py --model all
 
 # 3. start the web app and open it in your browser
-./start.ps1
+.\start.ps1
 
 # or start it without automatically opening a browser
-python fpl-generator/web.py    # → http://localhost:5000
+.\.venv\Scripts\python.exe fpl-generator\web.py    # http://localhost:5000
 
-# optional: walk-forward out-of-sample evaluation
-python simulations/simulate_season.py --test-from 15 --test-to 37
+# optional legacy report; NOT the opposition rollout validation
+.\.venv\Scripts\python.exe simulations\simulate_season.py --test-from 15 --test-to 37
 ```
 
 `start.ps1` is the recurring one-command launcher. All account input and team
@@ -78,9 +88,9 @@ squad.
   beside the button as a phase-labelled percentage bar, and the page reloads
   after publication.
   **Full advisor run** performs the same complete update and training batch,
-  then forces the calibrated ensemble and jointly optimizes the legal 15-player
+  then forces the weighted ensemble and jointly optimizes the legal 15-player
   squad plus starting XI. It maximizes combined-model XI points, uses bench
-  quality as a deterministic tiebreaker, and assigns captain and vice-captain
+  quality as a small secondary preference, and assigns captain and vice-captain
   to the two highest ensemble projections in that XI.
 2. Run `./start.ps1` to start the server and open `/generate-team` in your
   browser. The app loads the selected checkpoint (XGBoost by default), validates
@@ -120,11 +130,12 @@ squad.
 `GET /` redirects to `GET /generate-team`. That request follows this order:
 
 1. Verify the SQLite database and at least one model artifact exist.
-2. Resolve `?model=xgboost|rnn`, load the checkpoint, and reject a checkpoint
+2. Resolve `?model=xgboost|catboost|lambdarank|rnn|ensemble`, load the checkpoint, and reject a checkpoint
   whose training rows exceed its completed-Gameweek cutoff.
 3. Load `model_feature_cache` if its complete source fingerprint still matches;
   otherwise rebuild and persist the feature frame from the source tables.
-4. Score every player in the next-Gameweek snapshot and remove players who are
+4. Score individual upcoming fixtures, apply a matching validated opposition
+  policy if present, sum each player's Gameweek points, and remove players who are
   no longer in the league or currently unavailable.
 5. Load the newest local draft/commit. If it belongs to an earlier Gameweek, roll
   it forward without mutating the earlier revision. If no state exists, create
@@ -161,8 +172,8 @@ tables:
 | `fpl_entry_picks` | All 15 public picks per completed Gameweek, including order, multipliers, and captaincy |
 | `fpl_entry_transfers` | Public transfer ledger with player IDs, prices, event, and timestamp |
 
-Revisions increase within each season/Gameweek. Loading the page uses the latest
-committed version; when none exists yet, it resumes the latest draft. A legacy
+Revisions increase within each season/Gameweek. Loading the page resumes the
+working draft/current state using the latest persisted version. A legacy
 `saved_squad` table is imported once as the first committed ledger revision.
 
 Readable JSON mirrors are exported to `squads/current_squad.json`,
@@ -209,12 +220,16 @@ within-Gameweek player ordering and uses later held-out Gameweeks to calibrate
 rank scores back onto the points scale. The ranking implementation uses
 XGBoost's stable `rank:pairwise` objective. The position-specific two-layer GRUs
 consume every available distinct player-Gameweek row and use recurrent dropout
-plus gradient clipping. Every
-checkpoint enforces the same completed-data
-distinct player-Gameweek row. Every checkpoint enforces the same completed-data
+plus gradient clipping. Every checkpoint enforces the same completed-data
 cutoff and frozen feature order.
 
-Training writes `models.joblib` (XGBoost) and `models_rnn.joblib` (GRU), with environment-aware `models_current*` fallbacks. Each artifact persists its season, completed FPL Gameweek, internal cutoff, maximum training row, UTC FPL data timestamp, feature lists, FPL price coverage, Transfermarkt observation range/source, and recurrent sequence length.
+Training writes XGBoost, CatBoost, LambdaRank, GRU and ensemble artifacts.
+XGBoost uses `models.joblib` when configured/present, otherwise
+`models_current.joblib`; other families use the corresponding suffix or their
+`FPL_<MODEL>_MODELS_FILE` override. Each artifact persists its season, completed
+Gameweek, internal cutoff, training timestamp, feature order, price coverage and
+Transfermarkt provenance. GRU artifacts additionally describe their sequence
+policy.
 
 The model-ready temporal frame is persisted in SQLite as `model_feature_cache`, with source fingerprint and row/column audit data in `model_feature_cache_metadata`. Training and web inference reuse it while the underlying player-GW, roster, attribute, Transfermarkt, and refresh metadata remain unchanged; any source change invalidates and rebuilds the cache automatically. `rnn_sequence_index` records every training sample's player, first and last internal Gameweek, sequence length, cutoff, and `all_available` policy. GRU tensors are padded in memory so SQLite stays canonical and independent of a particular scaler or model checkpoint.
 
@@ -239,7 +254,57 @@ The enriched frame adds each signal once at its closest authoritative source:
 The feature cache is schema-versioned as well as source-fingerprinted, so changes
 to formulas invalidate SQLite even when the downloaded source tables are stable.
 
-**Selection** — greedy by predicted points. Flex spots (positions not constrained by formation minimums) are filled by z-score within position (`predicted_points_norm`), so an exceptional defender is correctly preferred over an average forward for the last outfield slot.
+**Selection** — web new-team generation uses a MILP maximizing the 15-player
+score, followed by controlled variations. **Full advisor run** jointly optimizes
+squad and XI using `XI points + 0.001 * squad points`; it assigns captaincy
+afterward. Existing-squad/simple XI helpers fill formation minimums and then use
+position-normalized flex scores. The older CLI/simulation selectors are greedy.
+
+### Isolated opposition experiment
+
+The final-stage layer in [opposition.py](opposition.py) reuses the same model's
+frozen forecasts for the opposing club's projected XI. Attacking forecasts
+create pressure on your GK/DEF; defensive forecasts create pressure on your
+MID/FWD. The experimental factor is bounded to at most a 25% reduction by
+default. It is applied once per fixture, after ensemble blending and before
+Gameweek aggregation. There is no new training model or recursive prediction.
+
+**It is disabled unless a matching policy passes the prospective validation
+gate.** Existing Elo and recent-goals features remain unchanged. See
+[the design and limitations](DESIGN.md#2-decision-reuse-opposition-player-forecasts-at-the-final-scoring-step)
+for the exact statistic, formula and double-counting risk.
+
+Register a candidate **before** its deadline; use the current target Gameweek:
+
+```powershell
+.\.venv\Scripts\python.exe simulations\evaluate_opposition.py `
+  --model ensemble --gameweek 8 --register `
+  --forecast simulations\results\opposition_gw8_forecast_sha256.json `
+  --report simulations\results\opposition_ensemble_trial_sha256.json
+```
+
+The initial GW8 registration has already been saved locally. Registration
+refuses to overwrite it. After FPL marks that event finished and data-checked:
+
+```powershell
+.\.venv\Scripts\python.exe simulations\evaluate_opposition.py `
+  --model ensemble --gameweek 8 `
+  --forecast simulations\results\opposition_gw8_forecast_sha256.json `
+  --report simulations\results\opposition_ensemble_trial_sha256.json `
+  --publish-if-passed
+```
+
+Publication requires at least five untouched Gameweeks, higher actual team
+points, no captain-bonus regression and no pooled player-RMSE regression.
+Use a frozen checkpoint set and fixed candidate settings throughout a trial;
+different checkpoint/component fingerprints cannot be merged into one ledger.
+A retrain invalidates an older policy. One good Gameweek or a retrospective
+replay is insufficient. No model or database is modified by these commands;
+only forecasts, evaluation reports and a gate-approved policy are written.
+
+The model-specific policy is stored beside its checkpoint, for example
+`models_current_ensemble_opposition.json`. The web header shows its status;
+active hover cards expose pre-adjustment points and the effective factor.
 
 **Confidence margin** — each selected player shows their predicted points minus the next available player at the same position. Margin < 0.5 means the model was essentially guessing between two players.
 
@@ -265,7 +330,11 @@ The same recommendation can also be replayed directly with
 
 ## Features and why we chose them
 
-All features use a **5-game-week rolling average, shifted one GW before the window** — the model never sees data from the GW it's predicting. `ict_index` is excluded because it's a linear combination of creativity, threat, and influence, all of which are already present separately.
+Player-form features use **five distinct player-Gameweek totals, shifted one
+Gameweek before windowing**. Fixture context belongs to the target fixture;
+price, market, external-appearance and historical-trajectory features are not
+all rolling averages. `ict_index` is excluded from model inputs; its components
+are available separately.
 
 ### Goalkeeper
 | Feature | Why |
@@ -293,7 +362,7 @@ All features use a **5-game-week rolling average, shifted one GW before the wind
 | `was_home`, `value`, `opponent_team` | Standard context features |
 | `tm_market_value` | Quality prior — a world-class CB returning from injury has low form stats but high underlying value |
 | `form_data_density` | `roll5_minutes / 450` — quantifies how much data the rolling window has. Low = injury returnee, high = nailed |
-| `tm_market_value_x_sparsity` | `market_value × (1 − density)` — the market value signal only matters when form data is sparse |
+| `tm_market_value_x_sparsity` | Computed diagnostic column, not a current `POS_FEATURES` model input |
 
 ### Midfielder
 | Feature | Why |
@@ -304,7 +373,7 @@ All features use a **5-game-week rolling average, shifted one GW before the wind
 | `goals_scored`, `assists`, `bonus` (roll5) | Actual returns; bonus points capture involvement not in xG/xA |
 | `minutes`, `starts` (roll5) | Rotation is the biggest risk for midfielders — Mo Salah benched is worthless |
 | `was_home`, `value`, `opponent_team` | Context |
-| `tm_market_value`, `form_data_density`, `tm_market_value_x_sparsity` | Same quality-prior pattern as DEF |
+| `tm_market_value`, `form_data_density` | Quality prior and recent-minutes proxy |
 
 ### Forward
 | Feature | Why |
@@ -316,15 +385,20 @@ All features use a **5-game-week rolling average, shifted one GW before the wind
 | `goals_scored`, `assists`, `bonus` (roll5) | Actual returns |
 | `minutes`, `starts` (roll5) | Forwards are the most-rotated position in the squad |
 | `was_home`, `value`, `opponent_team` | Context |
-| `tm_market_value`, `form_data_density`, `tm_market_value_x_sparsity` | Quality prior — crucial for elite strikers returning from long injuries |
+| `tm_market_value`, `form_data_density` | Quality prior and recent-minutes proxy |
 
 ## Metrics
 
+The tables below preserve an earlier reported experiment, not a validated
+benchmark for the current models. In particular, the legacy simulator chooses
+the evaluated XI using actual points. Do not use these figures or the legacy
+validation-report page to approve the opposition layer.
+
 | Metric | Value | What it means |
 |---|---|---|
-| **Oracle-capture rate** | **52.5% avg** (33.6–76.8% per GW) | % of the theoretically best squad score the model recovers. Human managers in the 45–60% range. |
-| Avg our XI actual pts/GW | 70.7 pts | Actual points scored by the model's starting XI, averaged over 23 held-out GWs |
-| Avg oracle XI pts/GW | 134.1 pts | Hindsight-best squad under same constraints — the performance ceiling |
+| **Reported oracle-capture rate** | **52.5% avg** (33.6–76.8% per GW) | Legacy reported ratio against a heuristic hindsight squad, not a proven optimum or human-manager benchmark |
+| Reported XI actual pts/GW | 70.7 pts | Legacy experiment; current simulator chooses this XI with hindsight |
+| Reported oracle XI pts/GW | 134.1 pts | Legacy greedy hindsight reference, not a proven performance ceiling |
 | Per-player prediction RMSE | 4.28 pts | Average prediction error per player per GW. Consistent with FPL's inherent volatility (a single rotation or clean-sheet flip swings 4–6 pts) |
 | Per-GW prediction RMSE | 15.6 pts | How far the team-level total prediction was from reality |
 
@@ -337,7 +411,9 @@ All features use a **5-game-week rolling average, shifted one GW before the wind
 | Per-player RMSE | 5.01 pts | 4.28 pts | −15% |
 | Per-GW prediction RMSE | 38.1 pts | 15.6 pts | −59% |
 
-Top feature in all 4 models: **`form_data_density`** — confirming that data sparsity (who is newly returned, newly arrived, or rotating) is more predictive than any single stat.
+An earlier checkpoint reported `form_data_density` as its leading feature.
+Feature importance varies by model, position and training run; this observation
+is not a general accuracy or causal claim.
 
 ## How we chose the number of trees
 
@@ -390,16 +466,17 @@ everything else (doubtful, no chance given)
     → treated as available (conservative default)
 ```
 
-This covers the full player pool deterministically — no external services required.
+The rules are deterministic and require no LLM. Fetching current status still
+requires the official FPL API. A failed live eligibility fetch logs a warning
+and the web path currently proceeds without that filter.
 
 **New/transferred players and data sparsity:**
 
-Players who joined mid-season appear in the live API but have sparse GW history
-(few or zero rows in `player_gw`). The rolling features for those players default
-to zero or near-zero. The model then predicts low points for them — which is the
-correct conservative behaviour: don't confidently pick a player you have no form
-data on. The 5-GW window naturally provides a data-density signal without any
-explicit handling needed.
+New arrivals can have few or no Premier League history rows. The current
+feature builder explicitly blends sparse rolling features toward active
+positional peers. Real dated Transfermarkt values provide an additional
+quality prior; missing market values are not imputed. Low minutes therefore do
+not automatically force a zero projection or establish a safe starting role.
 
 The `training_registry` table tracks which players were in each training run,
 so `new_players_since_last_run()` returns the IDs that need GW history backfilled
@@ -407,26 +484,28 @@ before the next re-train. `ingest_from_fpl_api(new_ids)` does that backfill.
 
 ## Simulation and train/test split
 
-**Train:** GWs 1–14 of the 2025-26 season (~8,400 player-GW rows across 4 position models).
-**Test (held-out):** GWs 15–37 — 23 game weeks the model never saw during training.
+An earlier experiment described a 2025-26 GW1-14 training/GW15-37 test split.
+The current `simulations/simulate_season.py` does **not** enforce or reproduce
+that split. It loads whichever XGBoost checkpoint is configured and keeps it
+fixed; it does not retrain per Gameweek.
 
-For each held-out GW the model builds the feature pool from all prior GWs, selects a squad under
-FPL constraints (£100M budget, 3-per-club cap, formation rules), and also selects an oracle squad
-using actual points as the target. The oracle is the hindsight upper bound — the best squad
-possible under the same constraints with perfect knowledge. The gap is attributable to prediction
-error alone.
+Important implementation limitations:
 
-**Simulation assumptions (what this is and isn't):**
+- It scores `Game_Week == gw - 1`, whereas current model targets and live
+  inference use the target fixture row with already-shifted rolling features.
+- It does not verify that evaluated Gameweeks follow the checkpoint cutoff.
+- Its actuals lookup filters by round, not season, and does not aggregate
+  duplicate/double-fixture player rows.
+- `_xi_actual_total` chooses the evaluated XI using **actual** points, which is
+  hindsight rather than a forecast-time lineup.
+- Its squad and "oracle" selectors are greedy, so the oracle is not an exact
+  mathematical optimum.
+- It generates independent fresh squads without a transfer/chip strategy.
 
-| Assumption | What we did | What a stricter setup would do |
-|---|---|---|
-| **Static model** | `models.joblib` is trained once on GWs 1–14, then held fixed for all 23 test GWs | Re-train at each GW using only data up to GW-1 (true rolling walk-forward) |
-| **Lag-1 features only** | All rolling features (form, bps, xG, etc.) are built from GW-1 data — no lookahead leakage | Same |
-| **No transfers or chips** | Each GW picks a fresh squad of 15 independently; no carry-forward team, no transfer cost, no wildcards or bench boost | Model a transfer budget and penalise switching costs |
-| **Oracle uses same constraints** | Oracle selects hindsight-best squad under the same £100M + 3-per-club + formation rules | Same — this is intentional so the gap measures prediction error, not rule-gaming |
-| **Single season** | Trained and evaluated entirely within 2025-26 | Multi-season rolling window to account for style/manager changes |
-
-The static-model assumption is the most consequential: because the model is not retrained per GW, later test GWs benefit from a model that has already seen the season's statistical distribution during training. The oracle-capture metric is therefore a slightly optimistic upper bound on what a live deployment would achieve.
+Consequently its CSV dashboard is a **legacy diagnostic**, not proof of
+out-of-sample live performance, and is not used for opposition-policy
+publication. These code paths have not been silently rewritten as part of
+the opposition extension.
 
 Run the simulation yourself:
 
@@ -435,7 +514,7 @@ Run the simulation yourself:
 .venv\Scripts\python.exe simulations/metrics.py
 ```
 
-In-sample training quality (reported by the model on its own training data):
+Historical in-sample training snapshot (not the current checkpoint):
 
 | Position | n rows | Top feature |
 |---|---|---|
@@ -444,10 +523,10 @@ In-sample training quality (reported by the model on its own training data):
 | MID | 8,866 | form_data_density |
 | FWD | 2,295 | form_data_density |
 
-> `form_data_density` being the top feature across all positions confirms that
-> data sparsity (injury returnees, new signings with few GW rows) is the most
-> powerful discriminator in the model — players with thin rolling-window data
-> are correctly deprioritised.
+Current model-quality cards are in-sample diagnostics. Ensemble weights use
+component in-sample inverse squared RMSE, and ensemble metrics currently average
+component metrics rather than measuring the blended predictions. Neither
+establishes unseen-Gameweek accuracy.
 
 ## Limitations
 
@@ -455,18 +534,18 @@ FPL scores are inherently noisy: clean sheets flip on a single goal, bonus point
 involve a committee, and rotation keeps minutes unpredictable. The model's job is
 to pick better players than naive form-averaging, not to nail exact point totals.
 
-No fixture difficulty weighting. The model sees `opponent_team` as a raw integer
-ID, so it learns relative difficulty from historical scores against each club —
-but it doesn't separate "hard fixture" from "player wasn't fit". Adding an FDR
-feature is the obvious next improvement.
+Opponent awareness already includes Elo and recent team/opponent goals as well
+as IDs and home/away. Its usefulness still needs out-of-sample measurement.
+The new forecast-derived opposition layer is gated because it could double-count
+this context. Captaincy lacks an explicit recent-benching safeguard; reported
+point forecasts are not calibrated haul probabilities. Shared club/fixture
+outcomes also make players' scores correlated.
 
 ## Transfermarkt market value
 
-The model currently lacks a **player quality signal** that is independent of
-recent FPL form. A player returning from injury with 5 blank GW rows will look
-cheap on rolling features despite being world-class. Transfermarkt market value
-gives the model a single continuous proxy for real-world perceived quality that
-survives blank GWs, rotation, and data sparsity for new arrivals.
+The model includes real dated Transfermarkt values as a quality signal beyond
+recent FPL form, both as direct features and a small post-model prior. It is a
+proxy for player quality, not evidence that a returning player will start.
 
 ### ID mapping
 
@@ -547,27 +626,26 @@ explicit availability flag; no current value is imputed into historical rows.
 #### Edge case: players with sparse rolling stats
 
 A fully fit Salah has 5 rich GW rows — the model should trust his rolling form
-almost exclusively. A world-class player returning from a 10-week injury has
-zero or near-zero rolling stats — the model should lean heavily on his
-market value as a quality prior. XGBoost can't be told this directly (it has
-no concept of "trust feature A more when feature B is low"), so it's encoded
-explicitly via two derived features:
+almost exclusively. For sparse histories, the implementation blends rolling
+features toward active positional peers and may apply a real market-value prior.
+Tree models can learn feature interactions; the explicit sparsity interaction
+below is computed for diagnostics but is not in current `POS_FEATURES`.
 
 ```
-form_data_density         = roll5_minutes / (5 × 90)  ∈ [0, 1]
+form_data_density         = roll5_minutes / (5 × 90)  # 90-minute mean gives 0.2
 tm_market_value_x_sparsity = tm_market_value × (1 − form_data_density)
 ```
 
 | Scenario | density | x_sparsity |
 |---|---|---|
 | Elite player, just returned from injury | 0.0 | = `tm_market_value` (full signal) |
-| Rotation player, half fit | 0.5 | = ½ × `tm_market_value` |
-| Fully fit starter (played every minute) | ~1.0 | ≈ 0 (model uses rolling form) |
-| Player with no TM data | any | 0 (graceful zero-fill) |
+| Rotation player, 45-minute rolling mean | 0.1 | = 0.9 × `tm_market_value` |
+| Full-time starter, 90-minute rolling mean | 0.2 | = 0.8 × `tm_market_value` |
+| Player with no TM data | any | Missing, with an explicit availability mask |
 
-`form_data_density` is also useful on its own: a low value tells the model
-that rolling averages are computed from very little data and should be
-treated cautiously, regardless of TM value.
+`form_data_density` is a recent-minutes proxy, not a literal count of available
+observations. Sparse-form blending uses `density * 5`, giving a full-time
+starter a blending weight of one.
 
 
 ## Model selection
@@ -584,7 +662,9 @@ The production selector now also includes CatBoost, calibrated pairwise ranking,
 position-specific two-layer GRUs, and an inverse-RMSE weighted ensemble. These
 models share the same cutoff manifest and leakage-safe feature cache.
 
-The two-tier flex-spot normalisation (z-score within position for the unconstrained slots) was a post-model design choice to prevent the selection algorithm from always filling flex spots with midfielders simply because they score the most absolute points in the dataset.
+Position z-scores remain part of simple existing-squad/legacy XI selection.
+Full-advisor joint optimization instead uses absolute predicted points under
+explicit formation constraints.
 
 The per-GW breakdown and interactive per-position RMSE are in the `/validation-report` web UI. Run the simulation first, then open `http://localhost:5000/validation-report`.
 
@@ -612,10 +692,8 @@ There is no documented public FPL write API. The application deliberately uses
 only public entry endpoints and does not accept access tokens or other private
 credentials.
 
-More importantly, the 2026/27 FPL Terms state that players must keep account
-credentials confidential and must not use automated systems to access the Game;
-a breach can result in suspension, deletion, or disqualification. The supported
-workflow is therefore human-in-the-loop: review the recommendation
+Keep account credentials confidential and review the current FPL terms before
+using automated integrations. The supported workflow is human-in-the-loop: review the recommendation
 locally, then reproduce the confirmed transfers, lineup, captaincy, and chip in
 the official FPL app or website. Do not provide passwords, MFA secrets, access
 tokens, refresh tokens, or Premier League cookies to this project.
@@ -708,7 +786,12 @@ All env vars default to local paths so local runs need no configuration.
 
 ### Hooking up to Azure ML
 
-The pipeline steps are designed to map directly onto [Azure ML CommandComponents](https://learn.microsoft.com/en-us/azure/machine-learning/component-reference/component-reference). No code changes are needed — only the AML orchestration layer (YAML definitions + pipeline script) needs to be added.
+The pipeline steps could be wrapped in
+[Azure ML command components](https://learn.microsoft.com/en-us/azure/machine-learning/component-reference/component-reference).
+That integration is not implemented or verified here. It requires orchestration,
+identity, artifact mounting and serving configuration; the web entry point
+currently binds Flask's local development server, not a production/container
+network interface.
 
 **Mapping: container step → AML component**
 

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import os
+import json
+import hashlib
+import logging
 import sqlite3
 from contextlib import closing
 from datetime import datetime, timezone
@@ -10,6 +13,12 @@ from typing import Any
 import pandas as pd
 
 from feature_cache import feature_cache_metadata
+from opposition import (
+    OPPOSITION_VERSION,
+    OppositionAdjustment,
+    apply_opposition_adjustment,
+    evaluation_gate,
+)
 from utils import (
     DB_FILE,
     MODELS_FILE,
@@ -207,12 +216,39 @@ def _aggregate_gameweek_predictions(scored: pd.DataFrame) -> pd.DataFrame:
             * fixture_rows['_has_fixture'].astype(float)
         ).groupby(fixture_rows['id']).sum()
         aggregated['model_predicted_points'] = aggregated['id'].map(raw_predictions)
+    if 'opposition_base_points' in fixture_rows:
+        base = (
+            fixture_rows['opposition_base_points'] * fixture_rows['_has_fixture']
+        ).groupby(fixture_rows['id']).sum()
+        aggregated['opposition_base_points'] = aggregated['id'].map(base)
+        aggregated['opposition_factor'] = (
+            aggregated['predicted_points'].div(aggregated['opposition_base_points'])
+            .where(aggregated['opposition_base_points'].gt(0), 1.0)
+        )
+        details = {}
+        for player_id, group in fixture_rows.groupby('id'):
+            details[player_id] = [
+                {
+                    'opponent_team': int(row['opponent_team']),
+                    'fixture': next((
+                        int(float(row[column]))
+                        for column in ('scheduled_fixture', 'fixture')
+                        if pd.notna(row.get(column)) and float(row[column]) > 0
+                    ), 0),
+                    'base_points': float(row['opposition_base_points']),
+                    'pressure': float(row['opposition_pressure']),
+                    'factor': float(row['opposition_factor']),
+                    'adjusted_points': float(row['predicted_points']),
+                }
+                for row in group[group['_has_fixture']].to_dict(orient='records')
+            ]
+        aggregated['opposition_fixtures'] = aggregated['id'].map(details)
     return aggregated.drop(
         columns=['_has_fixture', '_fixture_prediction'], errors='ignore'
     ).reset_index(drop=True)
 
 
-def score_checkpoint_snapshot(
+def score_checkpoint_fixture_rows(
     all_data: pd.DataFrame,
     checkpoint: dict[str, Any],
     snapshot_game_week: int,
@@ -237,11 +273,17 @@ def score_checkpoint_snapshot(
             ):
                 raise ValueError(f'Ensemble component cutoff mismatch: {name}')
             component_pools.append(
-                score_checkpoint_snapshot(all_data, component, snapshot_game_week)
+                score_checkpoint_fixture_rows(all_data, component, snapshot_game_week)
             )
-        scored = component_pools[0].copy()
+        keys = ['id'] + [
+            column for column in ('scheduled_fixture', 'fixture', 'kickoff_time')
+            if all(column in pool for pool in component_pools)
+        ]
+        if any(pool.duplicated(keys).any() for pool in component_pools):
+            raise ValueError('Ensemble components contain duplicate fixture predictions.')
+        scored = component_pools[0].set_index(keys).copy()
         predictions = pd.concat(
-            [pool.set_index('id')['predicted_points'] for pool in component_pools],
+            [pool.set_index(keys)['predicted_points'] for pool in component_pools],
             axis=1,
             join='inner',
         )
@@ -250,11 +292,10 @@ def score_checkpoint_snapshot(
             len(pool) != expected_players for pool in component_pools
         ):
             raise ValueError('Ensemble components do not cover the same player pool.')
-        scored = scored[scored['id'].isin(predictions.index)].copy()
-        # Component scores are already calibrated to points and receive the
+        # Component scores are already on the points scale and receive the
         # market-value adjustment exactly once inside their own scorer.
         predictions.columns = component_names
-        positions = scored.set_index('id')['element_type']
+        positions = scored['element_type']
         blended = pd.Series(index=predictions.index, dtype=float)
         for position in positions.unique():
             player_ids = positions[positions == position].index.intersection(predictions.index)
@@ -262,8 +303,8 @@ def score_checkpoint_snapshot(
             weights = pd.Series(raw_weights, dtype=float).reindex(component_names)
             weights = weights / weights.sum()
             blended.loc[player_ids] = predictions.loc[player_ids].mul(weights, axis=1).sum(axis=1)
-        scored['predicted_points'] = scored['id'].map(blended)
-        return normalize_pool_scores(scored)
+        scored['predicted_points'] = blended
+        return scored.reset_index()
     if model_type == 'rnn':
         from train.rnn_trainer import score_rnn_snapshot
         scored = score_rnn_snapshot(all_data, checkpoint, snapshot_game_week)
@@ -288,5 +329,62 @@ def score_checkpoint_snapshot(
     else:
         raise ValueError(f'Checkpoint has unsupported model type: {model_type!r}')
 
-    weighted = apply_market_value_weighting(scored)
-    return normalize_pool_scores(_aggregate_gameweek_predictions(weighted))
+    return apply_market_value_weighting(scored)
+
+
+def checkpoint_fingerprint(checkpoint: dict[str, Any]) -> str:
+    digest = hashlib.sha256()
+    path = model_artifact_path(checkpoint['model_type'])
+    digest.update(checkpoint['model_type'].encode('utf-8'))
+    digest.update(path.read_bytes())
+    if checkpoint.get('model_type') == 'ensemble':
+        for name, filename in sorted(checkpoint['component_artifacts'].items()):
+            path = Path(filename)
+            if not path.is_absolute():
+                path = model_artifact_path('ensemble').parent / path
+            digest.update(name.encode('utf-8'))
+            digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
+def opposition_policy_path(model_type: str) -> Path:
+    path = model_artifact_path(model_type)
+    return path.with_name(f'{path.stem}_opposition.json')
+
+
+def score_checkpoint_snapshot(
+    all_data: pd.DataFrame,
+    checkpoint: dict[str, Any],
+    snapshot_game_week: int,
+) -> pd.DataFrame:
+    """Apply a validated opposition policy once, before summing fixture scores."""
+    fixtures = score_checkpoint_fixture_rows(all_data, checkpoint, snapshot_game_week)
+    status = {'status': 'disabled', 'reason': 'No validated opposition policy.'}
+    path = opposition_policy_path(checkpoint['model_type'])
+    if path.exists():
+        report = json.loads(path.read_text(encoding='utf-8'))
+        if report.get('opposition_version') != OPPOSITION_VERSION:
+            raise ValueError('Unsupported opposition policy version.')
+        if report.get('model_type') != checkpoint['model_type']:
+            raise ValueError('Opposition policy belongs to a different model family.')
+        adjustment = OppositionAdjustment(**report['adjustment'])
+        if not evaluation_gate(report['gameweeks'])['passed']:
+            raise ValueError('Opposition policy has not passed its rollout gate.')
+        if report['checkpoint_fingerprint'] != checkpoint_fingerprint(checkpoint):
+            status = {
+                'status': 'stale',
+                'reason': 'Opposition policy belongs to an older checkpoint; re-evaluate it.',
+            }
+            logging.getLogger(__name__).warning(status['reason'])
+        else:
+            fixtures = apply_opposition_adjustment(fixtures, adjustment)
+            status = {
+                'status': 'active',
+                'reason': 'Frozen opponent forecasts; validated final-stage adjustment.',
+                'version': OPPOSITION_VERSION,
+                'strength': adjustment.strength,
+                'max_reduction': adjustment.max_reduction,
+            }
+    result = normalize_pool_scores(_aggregate_gameweek_predictions(fixtures))
+    result.attrs['opposition_adjustment'] = status
+    return result

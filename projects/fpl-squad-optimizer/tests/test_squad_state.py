@@ -45,6 +45,29 @@ def make_squad() -> pd.DataFrame:
 
 
 class SquadStateTests(unittest.TestCase):
+    def test_opposition_audit_persists_and_is_cleared_when_layer_is_disabled(self):
+        pool = make_squad()
+        pool['opposition_base_points'] = pool['predicted_points'] / 0.9
+        pool['opposition_factor'] = 0.9
+        pool['opposition_fixtures'] = [
+            [{'opponent_team': 2, 'factor': 0.9}] for _ in range(len(pool))
+        ]
+        state = create_state(pool, 4, '2026-27')
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / 'squad.db'
+            exports = Path(directory) / 'exports'
+            save_draft(state, database, exports)
+            restored = load_working_state(database)
+        self.assertEqual(restored['players'][0]['opposition_factor'], 0.9)
+        self.assertEqual(
+            restored['players'][0]['opposition_fixtures'],
+            [{'opponent_team': 2, 'factor': 0.9}],
+        )
+        disabled = refresh_player_data(restored, make_squad().query('id != 1'))
+        self.assertNotIn('opposition_factor', disabled['players'][0])
+        self.assertNotIn('opposition_factor', disabled['players'][1])
+        self.assertIn('opposition_factor', restored['players'][0])
+
     def test_replacement_shortlist_respects_budget_club_cap_and_ranking(self):
         squad = pd.DataFrame([
             {

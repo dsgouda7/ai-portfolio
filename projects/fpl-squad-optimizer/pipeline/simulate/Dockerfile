@@ -1,6 +1,6 @@
 # ── Pipeline Step 3: Simulate ──────────────────────────────────────────────
 #
-# Runs the walk-forward GW simulation using the trained models and the DB,
+# Runs the legacy fixed-checkpoint diagnostic using the trained models and DB,
 # and writes simulation_results.csv + player_rows.csv to FPL_RESULTS_DIR.
 #
 # Azure ML usage:

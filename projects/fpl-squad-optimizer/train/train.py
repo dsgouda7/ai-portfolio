@@ -8,12 +8,12 @@ On each run it:
   1. git pulls the vaastav Fantasy-Premier-League submodule (latest GW data)
   2. Auto-detects the current season and last played GW from the submodule
   3. Ingests players_raw.csv + per-player gw.csv + history.csv into SQLite
-    4. Fetches Understat attributes for any new players not yet cached
-    5. Persists or reuses model-ready temporal features in local SQLite
-    6. Trains XGBoost and/or full-history GRU position models
-    7. Saves separate checkpoints with metrics and temporal cutoff manifests
+  4. Attempts legacy player attributes; refreshes dated market values and external appearances
+  5. Persists or reuses model-ready temporal features in local SQLite
+  6. Trains the requested XGBoost, CatBoost, LambdaRank, GRU and/or ensemble artifacts
+  7. Saves separate checkpoints with metrics and temporal cutoff manifests
 
-Delete fantasy_football.db to force a full re-ingest of the CSV files.
+The opposition experiment is a separate, gated inference/evaluation layer.
 """
 import sys
 import pathlib

@@ -61,6 +61,7 @@ from squad_state import (
     validate_state,
 )
 from performance_reviewer import build_performance_review
+from squad_optimizer import select_best_advisor_side
 from fpl_account import (
     FplEntrySyncError,
     sync_public_entry,
@@ -176,86 +177,6 @@ def select_squad(
         margins.append(round(float(player['predicted_points']) - nb, 4))
     df_squad['selection_margin'] = margins
     return df_squad
-
-
-def select_best_advisor_side(
-    pool: pd.DataFrame,
-    max_per_team: int,
-    max_spend: int,
-    time_limit: int = 20,
-) -> tuple[pd.DataFrame, dict]:
-    """Jointly optimize a legal 15-player squad and its strongest legal XI."""
-    candidates = pool.drop_duplicates(subset='id').reset_index(drop=True)
-    player_count = len(candidates)
-    constraint_rows = []
-    lower_bounds = []
-    upper_bounds = []
-
-    def add_constraint(squad_values, starter_values, lower, upper):
-        constraint_rows.append(np.concatenate([squad_values, starter_values]))
-        lower_bounds.append(lower)
-        upper_bounds.append(upper)
-
-    zeroes = np.zeros(player_count)
-    for position, count in {'GK': 2, 'DEF': 5, 'MID': 5, 'FWD': 3}.items():
-        mask = (candidates['element_type'] == position).astype(float).to_numpy()
-        add_constraint(mask, zeroes, count, count)
-
-    add_constraint(
-        candidates['value'].astype(float).to_numpy(), zeroes, 0, max_spend
-    )
-    for team in candidates['team'].dropna().unique():
-        mask = (candidates['team'] == team).astype(float).to_numpy()
-        add_constraint(mask, zeroes, 0, max_per_team)
-
-    add_constraint(zeroes, np.ones(player_count), 11, 11)
-    starter_limits = {
-        'GK': (1, 1), 'DEF': (3, 5), 'MID': (2, 5), 'FWD': (1, 3),
-    }
-    for position, (minimum, maximum) in starter_limits.items():
-        mask = (candidates['element_type'] == position).astype(float).to_numpy()
-        add_constraint(zeroes, mask, minimum, maximum)
-
-    for index in range(player_count):
-        squad_values = np.zeros(player_count)
-        starter_values = np.zeros(player_count)
-        squad_values[index] = -1
-        starter_values[index] = 1
-        add_constraint(squad_values, starter_values, -np.inf, 0)
-
-    predictions = candidates['predicted_points'].astype(float).to_numpy()
-    objective = -np.concatenate([predictions * 0.001, predictions])
-    result = milp(
-        c=objective,
-        integrality=np.ones(player_count * 2),
-        bounds=Bounds(0, 1),
-        constraints=LinearConstraint(
-            np.vstack(constraint_rows), lower_bounds, upper_bounds
-        ),
-        options={'time_limit': time_limit},
-    )
-    if not result.success:
-        raise RuntimeError('No legal all-advisor squad and XI could be generated.')
-
-    squad = candidates.loc[result.x[:player_count] > 0.5].copy().reset_index(drop=True)
-    starter_ids = candidates.loc[
-        result.x[player_count:] > 0.5, 'id'
-    ].astype(int).tolist()
-    bench = squad[~squad['id'].astype(int).isin(starter_ids)].copy()
-    bench['bench_rank'] = bench['element_type'].ne('GK').astype(int)
-    bench = bench.sort_values(
-        ['bench_rank', 'predicted_points'], ascending=[True, False]
-    )
-    ranked_starters = squad[
-        squad['id'].astype(int).isin(starter_ids)
-    ].sort_values('predicted_points', ascending=False)
-    lineup = {
-        'starters': starter_ids,
-        'bench': bench['id'].astype(int).tolist(),
-        'captain': int(ranked_starters.iloc[0]['id']),
-        'vice_captain': int(ranked_starters.iloc[1]['id']),
-    }
-    return squad, lineup
 
 
 def _squad_quality(squad: pd.DataFrame) -> tuple[float, float]:
@@ -1206,6 +1127,7 @@ def index():
         'model_type':       requested_model,
         'available_models': list(artifacts),
         'training_manifest': checkpoint['training_manifest'],
+        'opposition_adjustment': full_pool.attrs.get('opposition_adjustment'),
         'generation':       state.get('generation'),
         'gw_saved':         gw_saved,
         'squad_mode':       squad_mode,

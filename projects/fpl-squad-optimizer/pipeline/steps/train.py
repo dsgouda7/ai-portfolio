@@ -2,7 +2,7 @@
 Pipeline Step 2 — Train
 =======================
 Reads the SQLite database produced by the ingest step, builds rolling
-features, trains selectable XGBoost and/or GRU position models, and writes
+features, trains selectable XGBoost/CatBoost/LambdaRank/GRU/ensemble artifacts, and writes
 separate joblib checkpoints with temporal cutoff manifests.
 
 I/O contract (env vars)

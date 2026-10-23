@@ -65,7 +65,7 @@ Exploratory implementations for hands-on learning and experimentation.
 
 Standalone, production-grade applications demonstrating end-to-end engineering skills.
 
-- **[fpl-squad-optimizer/](projects/fpl-squad-optimizer/)** — XGBoost Fantasy Premier League team picker; 4 position-specific regressors, walk-forward simulation, 51% oracle-capture rate
+- **[fpl-squad-optimizer/](projects/fpl-squad-optimizer/)** — Fantasy Premier League advisor with position-specific XGBoost/CatBoost/LambdaRank/GRU models, an ensemble, constrained squad/XI optimization, and a prospectively gated opposition experiment
 - **[context-optimizer/](archived/projects/context-optimizer/)** — Archived LLM corpus compression + Tree-of-Thought retrieval library; 91% token reduction, constant cost regardless of corpus size, fully local with Ollama
 - **[rag-knowledge-pipeline/](projects/rag-knowledge-pipeline/)** — Three-phase RAG: Wikipedia corpus → Delta Lake → ChromaDB → FastAPI, with Databricks ingestion and indexing extensions
 - **[riverside-ai-platform/](projects/riverside-ai-platform/docs/README.md)** — Azure production-profile source for contracts, Azure ML, APIM, Databricks integration, evaluation, telemetry, load testing, IaC, and operations

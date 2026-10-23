@@ -14,6 +14,7 @@ from typing import Any
 import pandas as pd
 
 from utils import DB_FILE, MAX_PLAYERS_PER_TEAM, MAX_SPEND, pick_starting_xi
+from opposition import SCORE_AUDIT_FIELDS
 
 SQUAD_SIZE = 15
 POSITION_LIMITS = {'GK': 2, 'DEF': 5, 'MID': 5, 'FWD': 3}
@@ -255,7 +256,7 @@ def _player_record(row: dict[str, Any]) -> dict[str, Any]:
     purchase_price = int(row.get('purchase_price', current_price))
     fixture_count = row.get('fixture_count', 1)
     fixture_count = 1 if pd.isna(fixture_count) else int(fixture_count)
-    return {
+    record = {
         'id': int(row['id']),
         'first_name': str(row.get('first_name', '')),
         'second_name': str(row.get('second_name', '')),
@@ -269,6 +270,11 @@ def _player_record(row: dict[str, Any]) -> dict[str, Any]:
         'status': str(row.get('elig_status', row.get('status', 'a'))),
         'news': str(row.get('news', '') or ''),
     }
+    if pd.notna(row.get('opposition_base_points', float('nan'))):
+        record.update({
+            key: deepcopy(row[key]) for key in SCORE_AUDIT_FIELDS if key in row
+        })
+    return record
 
 
 def _default_lineup(squad: pd.DataFrame) -> dict[str, Any]:
@@ -555,12 +561,18 @@ def refresh_player_data(
 
     def refresh_player(player: dict[str, Any]) -> None:
         current = pool_by_id.get(int(player['id']))
+        for key in SCORE_AUDIT_FIELDS:
+            player.pop(key, None)
         if current:
             player['current_price'] = int(current.get('value', player['current_price']))
             player['selling_price'] = selling_price(
                 player['purchase_price'], player['current_price']
             )
             player['predicted_points'] = round(float(current.get('predicted_points', 0)), 4)
+            if pd.notna(current.get('opposition_base_points', float('nan'))):
+                for key in SCORE_AUDIT_FIELDS:
+                    if key in current:
+                        player[key] = deepcopy(current[key])
             fixture_count = current.get('fixture_count', 1)
             player['fixture_count'] = (
                 1 if pd.isna(fixture_count) else int(fixture_count)

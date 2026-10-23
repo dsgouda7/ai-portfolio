@@ -1,9 +1,10 @@
 """
 Pipeline Step 3 — Simulate
 ===========================
-Runs the walk-forward GW simulation: for each test GW it builds the feature
+Runs the legacy fixed-checkpoint diagnostic: for each test GW it builds the feature
 snapshot, selects a squad with the trained models, and records the predicted
-vs actual points alongside the oracle-optimal squad.
+vs actual points alongside a greedy hindsight squad. It is not a verified
+out-of-sample evaluation or an opposition-policy rollout gate; see DESIGN.md.
 
 I/O contract (env vars)
 -----------------------

@@ -806,6 +806,7 @@
     Model
     <select id="model-select" title="Prediction model"></select>
     <span class="model-cutoff" id="model-cutoff"></span>
+    <span class="model-cutoff" id="opposition-status" role="status"></span>
   </label>
   <div class="training-control">
     <button class="manager-button training-button primary" id="advisor-run" type="button"
@@ -1085,6 +1086,10 @@ modelSelect.addEventListener('change', event => {
 const manifest = D.training_manifest || {};
 document.getElementById('model-cutoff').textContent =
   `through GW${manifest.latest_completed_game_week ?? '?'} · ${manifest.fpl_data_cutoff || 'date unavailable'}`;
+const oppositionStatus = D.opposition_adjustment || {status: 'disabled', reason: 'No validated opposition policy.'};
+const oppositionLabel = document.getElementById('opposition-status');
+oppositionLabel.textContent = `Opposition: ${oppositionStatus.status}`;
+oppositionLabel.title = oppositionStatus.reason;
 document.getElementById('new-team-link').href =
   `/generate-team?new_team=1&model=${encodeURIComponent(D.model_type)}`;
 if (D.generation?.seed !== undefined) {
@@ -1670,6 +1675,7 @@ function buildTip(p) {
         <span class="lbl"> ${lastGameweekLabel()} actual</span></div>
     </div>
     ${p.ep_next ? `<div class="tt-ep">FPL prediction: <span>${(+p.ep_next).toFixed(1)} pts</span></div>` : ''}
+    ${p.opposition_base_points !== undefined ? `<div class="tt-ep">Before opposition: ${(+p.opposition_base_points).toFixed(2)} pts · factor ${(+p.opposition_factor).toFixed(3)}</div>` : ''}
     <hr class="tt-divider">
     ${statsHtml}
   `;

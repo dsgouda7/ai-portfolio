@@ -1,5 +1,9 @@
 """
-simulate_season.py — Walk-forward GW simulation for FPL team selection.
+simulate_season.py — Legacy fixed-checkpoint diagnostic for FPL team selection.
+
+This does not enforce the checkpoint's training cutoff and uses hindsight XI
+selection for its actual total. It is not the opposition rollout evaluation;
+see evaluate_opposition.py and DESIGN.md before interpreting its metrics.
 
 For each test GW the script:
   1. Builds the player-feature snapshot for that GW (using GW-1 rolling data).
