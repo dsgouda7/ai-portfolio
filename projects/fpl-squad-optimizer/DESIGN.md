@@ -200,7 +200,78 @@ remains disabled. The former GW7 cache/checkpoints were replaced by a normal
 local refresh before replay; reconstructing GW7 from the new through-GW7
 checkpoint would be an in-sample evaluation and is rejected.
 
-## 4. Documentation reconciliation and known limitations
+## 4. Strict current-season sequential evaluation
+
+Implemented in [evaluate_season.py](simulations/evaluate_season.py), with the
+separate [evaluation web blueprint](evaluation_web.py) at `/season-evaluation`.
+This is not the legacy simulation and does not reuse today's trained checkpoint
+to predict earlier Gameweeks.
+
+### Information boundary and capture
+
+Each Gameweek needs a bundle at
+`simulations/snapshots/<season>/gwNN/{manifest.json,inputs.sqlite}`. Capture is
+allowed only before the official deadline, after preceding results are checked.
+It copies an explicit allowlist of public source/cache tables in a consistent
+SQLite read transaction. Account, entry and saved-squad tables are not copied.
+
+The manifest records season, target Gameweek, capture time, deadline and file
+SHA-256. Validation requires matching runtime metadata, a valid cache source
+fingerprint and row count, refresh/cache times before capture, and capture
+before the deadline. Training rows must predate the source refresh/capture and
+target deadline. Target rows must be neutral scheduled fixtures, not realized
+match outcomes. Later rows are rejected. A historical input gap is not filled
+with current injury flags or reconstructed assumptions.
+
+### Replay protocol
+
+1. Audit every week from GW1 through the selected recorded completed Gameweek.
+   Any missing or invalid bundle yields a persisted `blocked` report with no
+   metrics and no training.
+2. Copy each verified source database into a new run workspace. Point every
+   model-family artifact path at that workspace, never the live files.
+3. Retrain the selected current model recipes through that week's prior-data
+   cutoff. Ensemble requests train its four components once. Opposition
+   adjustment is explicitly disabled for this evaluation.
+4. Sample legal seeded GW1 squads without consulting predicted scores. Reuse
+   the same initial IDs across selected models. Bank is the unspent portion of
+   the GBP100M budget; GW2 begins with one free transfer, not two.
+5. Carry each squad forward using the same transfer, selling-price,
+   free-transfer, lineup and captaincy helpers used by the app. Recommend only
+   beneficial free transfers; no chips, wildcards or paid transfers.
+6. Score official checked results with captain fallback and automatic
+   substitutions. In parallel, retain the same initial squad without transfers
+   and select its lineup from the same forecasts.
+
+Official outcomes are fetched separately after the input audit. They never
+enter training/selection inputs. Reports include implementation file hashes,
+source-bundle provenance, starting IDs, weekly lineups, bank, transfers,
+official averages, seed totals, and pooled eligible-player RMSE/MAE/bias.
+Forecast errors are counted once per model/player/Gameweek, not once per seed.
+Public outcomes and detailed CSVs are retained beside the report.
+
+### UI, lifecycle and limits
+
+The page supports one or multiple model families, 1-25 starting squads and the
+last recorded completed Gameweek. Jobs run in a separate Python process.
+Training and evaluation share a compute guard; the evaluator cannot mutate
+model-path environment variables in the serving process. State distinguishes
+`running`, `succeeded`, `blocked` and `failed`; blocked/failed reports do not
+display completed-run metrics or offer prediction downloads.
+
+Frozen input bundles are immutable and local. Run workspaces and reports are
+under the configurable evaluation directory and ignored by Git. The page can
+reopen saved reports after a server restart; the in-memory job progress log is
+not a persistent scheduler. There is no automatic timer for capture.
+
+The existing local GW1-7 data is still blocked: partial archived player CSVs
+and the GW8 opposition forecast file are not complete strict input bundles.
+Future capture does not make missing early-season snapshots reappear. Synthetic
+replay tests prove program behavior, not this season's real predictive accuracy.
+Retrospective season results do not count toward the prospective opposition
+rollout gate.
+
+## 5. Documentation reconciliation and known limitations
 
 The following distinctions matter when interpreting the project:
 

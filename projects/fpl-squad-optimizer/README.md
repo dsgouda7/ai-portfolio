@@ -306,6 +306,72 @@ The model-specific policy is stored beside its checkpoint, for example
 `models_current_ensemble_opposition.json`. The web header shows its status;
 active hover cards expose pre-adjustment points and the effective factor.
 
+### Current-season evaluation page
+
+Open **Season evaluation** in the web header, or visit
+`http://localhost:5000/season-evaluation`. This is separate from saved-squad
+performance and the legacy validation dashboard.
+
+Select one or more of XGBoost, CatBoost, LambdaRank, Deep GRU and Ensemble,
+choose 1-25 seeded starting squads (default 10), and evaluate GW1 through a
+recorded completed Gameweek. The same initial squads are used across selected
+models. Each week retrains only on prior completed data, carries ownership and
+bank forward, applies beneficial free transfers, and picks the next lineup.
+GW1 purchases do not create an extra free transfer for GW2.
+
+The comparison includes actual points with captaincy/autosubs, a no-transfer
+baseline using the same original squad and model-selected lineups, official
+Gameweek averages, seed totals/range, and eligible-player RMSE/MAE/bias. There
+are no chips or paid transfers. Random starts can be substantially weaker than
+normal manager squads; ten seeds are not ten independent forecast samples.
+
+**Strict input bundles are mandatory.** Missing, late, altered, stale or
+outcome-contaminated bundles block evaluation before any training. The current
+local GW1-7 history does not supply complete pre-deadline bundles, so the page
+correctly shows a blocked report rather than invented accuracy metrics.
+Previously frozen opposition forecasts alone are not a complete season-replay
+input bundle.
+
+Capture future inputs after a normal data refresh but **before the target
+Gameweek deadline**, using **Capture current inputs** on the evaluation page or:
+
+```powershell
+.\.venv\Scripts\python.exe simulations\evaluate_season.py capture
+```
+
+Capture copies only public model-source/cache tables, not account or saved-squad
+tables, to `simulations\snapshots\<season>\gwNN`. The timestamped manifest
+contains the source database SHA-256. Existing bundles are never overwritten,
+and capture after the deadline is rejected. This cannot backfill earlier weeks.
+
+CLI examples:
+
+```powershell
+# Audit the current season without training or changing live state
+.\.venv\Scripts\python.exe simulations\evaluate_season.py check
+
+# Evaluate two models using ten identical seeded starting squads
+.\.venv\Scripts\python.exe simulations\evaluate_season.py evaluate `
+  --models xgboost ensemble --seeds 10 --through 7
+```
+
+Evaluation uses a separate process and isolated per-Gameweek databases/models.
+Ensemble selection trains all four component families once per Gameweek.
+Training/evaluation share a compute-job guard; neither evaluation nor capture
+overwrites live data, checkpoints, or squad revisions. The page shows progress,
+explicit blocked/failed states and saved reports; completed runs additionally
+offer player-prediction CSV downloads.
+
+Results default to `simulations\results\season-evaluations`; override with
+`FPL_EVALUATION_DIR`. Override bundle location with `FPL_SNAPSHOT_DIR`, or use
+CLI `--snapshots`. CLI `--database` selects the current-season metadata source,
+and `--output` selects a new run directory. `evaluate` exits with code 2 when
+blocked, 0 on completion, and nonzero on failure. Retrospective results never
+publish or enable an opposition policy.
+The Compose web service sets both new directories under its persistent `/data`
+volume; a standalone container should mount that volume as well. The existing
+development-server network-binding limitation still applies.
+
 **Confidence margin** — each selected player shows their predicted points minus the next available player at the same position. Margin < 0.5 means the model was essentially guessing between two players.
 
 ### Determinism
@@ -682,6 +748,13 @@ The per-GW breakdown and interactive per-position RMSE are in the `/validation-r
 | `POST /api/squad/commit` | Validate and append a committed revision plus readable JSON export |
 | `GET /performance-review` | Scores each final committed Gameweek squad with actual results, captaincy, chips, transfer hits, and automatic substitutions; compares it with the official average and Dream Team |
 | `GET /validation-report` | Side-by-side pitch: model team vs oracle optimal per simulated GW, with full metrics dashboard. Requires simulation results. |
+| `GET /season-evaluation` | Separate strict current-season replay page with model/squad selection, readiness, jobs and saved reports |
+| `GET /api/season-evaluation` | Current recorded season, strict bundle readiness, available model families and saved-run index |
+| `POST /api/season-evaluation/start` | Local JSON request with `models`, `seeds`, `through`; starts an isolated background evaluation |
+| `GET /api/season-evaluation/status` | Current evaluation job status and bounded progress log |
+| `POST /api/season-evaluation/capture` | Local empty-JSON action to freeze public inputs before the current target deadline |
+| `GET /api/season-evaluation/runs/<run_id>` | Saved JSON report, including explicit blocked or failed outcomes |
+| `GET /api/season-evaluation/runs/<run_id>/predictions` | Player-prediction CSV, only for a completed successful run |
 | `GET /` | Redirects to `/generate-team` |
 
 ### Syncing to an official FPL account

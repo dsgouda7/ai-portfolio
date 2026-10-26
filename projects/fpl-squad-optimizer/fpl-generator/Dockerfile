@@ -35,7 +35,9 @@ COPY . .
 # env vars to match the mount paths.
 ENV FPL_DB_FILE=/data/fantasy_football.db \
     FPL_MODELS_FILE=/data/models/models.joblib \
-    FPL_RESULTS_DIR=/data/results
+    FPL_RESULTS_DIR=/data/results \
+    FPL_SNAPSHOT_DIR=/data/snapshots \
+    FPL_EVALUATION_DIR=/data/results/season-evaluations
 
 EXPOSE 5000
 

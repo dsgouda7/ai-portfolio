@@ -165,57 +165,31 @@ def make_dataloader(input_ids, target_ids, batch_size=512):
     )
 
 
-# %% 5 - CBOW: fetch sensor profiles and give each clue an equal vote
+# %% 5 - CBOW: fetch sensor profiles and merge telemetry
+# Hand-picked lookup and predictor weights; no training.
+toy_words = ["the", "cat", "sat"]
 toy_table = torch.tensor([[2.0, 0.0], [1.0, 3.0], [0.0, 4.0]])
 toy_ids = torch.tensor([[0, 2], [2, 0]])
 toy_rows = torch.nn.functional.embedding(toy_ids, toy_table)
-# [2 questions, 2 words, 2 numbers] -> [2, 2]: combine words WITHIN each question.
 toy_averages = toy_rows.mean(dim=1)
 
-print("Two questions, two visible word IDs each:\n", toy_ids)
-print("One two-number row for each visible word:\n", toy_rows)
-print("One averaged row per question:\n", toy_averages)
+toy_head = torch.tensor([[1.0, 0.0, 0.0], [0.0, 2.0, 1.0]])
+toy_logits = toy_averages @ toy_head
+toy_targets = torch.tensor([1, 1])
+toy_probabilities = toy_logits.softmax(dim=-1)
+toy_loss = nn.functional.cross_entropy(toy_logits, toy_targets)
+
+print("Clues: the ___ sat -> IDs:", toy_ids[0].tolist())
+print("Fetched profiles:", toy_rows[0].tolist())
+print("Average fed to predictor:", toy_averages[0].tolist())
+print("Scores [the, cat, sat]:", toy_logits[0].tolist())
+print("Probabilities:", [round(value, 3) for value in toy_probabilities[0].tolist()])
+print("Predicted word:", toy_words[toy_logits[0].argmax().item()])
+print("Target: cat (ID 1); loss compares scores with this ID:", toy_loss.item())
+
 assert toy_rows.shape == (2, 2, 2)
 assert torch.equal(toy_averages, torch.tensor([[1.0, 2.0], [1.0, 2.0]]))
-
-toy_figure, toy_axes = plt.subplots(1, 3, figsize=(14, 5))
-toy_panels = [
-    (
-        "1. One shared lookup table\n3 words, 2 numbers per word",
-        ["Word (ID)", "Number 1", "Number 2"],
-        [["the (0)", 2, 0], ["cat (1)", 1, 3], ["sat (2)", 0, 4]],
-    ),
-    (
-        "2. Fetch rows for each question\n2 questions, 2 words each, 2 numbers each",
-        ["Question / visible word", "Number 1", "Number 2"],
-        [["A: the", 2, 0], ["A: sat", 0, 4],
-         ["B: sat", 0, 4], ["B: the", 2, 0]],
-    ),
-    (
-        "3. Average within EACH question\n2 questions, 2 numbers per question",
-        ["Question", "Number 1", "Number 2"],
-        [["A", *toy_averages[0].tolist()], ["B", *toy_averages[1].tolist()]],
-    ),
-]
-for toy_axis, (title, columns, cells) in zip(toy_axes, toy_panels):
-    toy_axis.axis("off")
-    toy_axis.set_title(title, fontsize=10, pad=18)
-    table = toy_axis.table(cellText=cells, colLabels=columns, loc="center",
-                           cellLoc="center", colWidths=[0.56, 0.22, 0.22])
-    table.auto_set_font_size(False)
-    table.set_fontsize(9)
-    table.scale(1, 2.4)
-    for (row, column), cell in table.get_celld().items():
-        cell.set_facecolor("#dff2ef" if row else "#b9ddd9")
-toy_figure.suptitle("A: the ___ sat     |     B: sat ___ the\n"
-                   "Different order goes in. The same average comes out.", fontsize=13)
-toy_figure.text(0.5, 0.05, "Made-up teaching numbers. "
-                "No averaging between questions. No training in this picture.", ha="center")
-toy_figure.tight_layout(rect=(0, 0.1, 1, 0.85))
-toy_directory = CHAPTER_DIRECTORY
-toy_figure.savefig(toy_directory / "images" / "03a-lookup-tensor-structure.png", dpi=130)
-plt.show()
-plt.close(toy_figure)
+assert torch.equal(toy_logits[0], toy_logits[1])
 
 # %% CBOW: give every context word an equal vote
 EMBEDDING_WIDTH = 32
@@ -458,7 +432,10 @@ gradient_optimizer.zero_grad()
 gradient_loss = gradient_model.training_loss(gradient_contexts, gradient_targets, criterion)
 gradient_loss.backward()
 
-gradient_norms = gradient_model.embedding.weight.grad.norm(dim=1)
+gradient_table = gradient_model.embedding.weight.grad
+assert gradient_table is not None
+assert gradient_table.shape == rows_before_step.shape
+gradient_norms = gradient_table.norm(dim=1)
 used_ids = set(gradient_contexts.reshape(-1).tolist())
 rows_with_gradient = set(gradient_norms.nonzero().flatten().tolist())
 gradient_optimizer.step()
@@ -476,10 +453,13 @@ assert torch.equal(
     gradient_model.embedding.weight.detach()[saved_context_ids],
 )
 print("Unchanged input IDs:", gradient_contexts.tolist(), "answer ID:", gradient_targets.tolist())
+print("Gradient ledger [vocabulary, channels]:", tuple(gradient_table.shape))
+print("Rows with zero gradient:", (gradient_norms == 0).sum().item())
 print("Fetched rows / changed rows:",
       [itos[index] for index in sorted(used_ids)], [itos[index] for index in sorted(changed_ids)])
 first_id = gradient_contexts[0, 0].item()
 print(f"{itos[first_id]!r} row, first three values before:", rows_before_step[first_id, :3].tolist())
+print("That row's gradient, first three values:", gradient_table[first_id, :3].tolist())
 print("Same ID, values fetched after:", gradient_model.embedding(gradient_contexts)[0, 0, :3].detach().tolist())
 print("Takeaway: stored embedding weights and predictor weights changed; no input or answer ID did.")
 

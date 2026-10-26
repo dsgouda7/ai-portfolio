@@ -6,6 +6,8 @@ fantasy_football*.db
 models*.joblib
 models*_opposition.json
 simulations/results/opposition*.json
+simulations/results/season-evaluations/
+simulations/snapshots/
 backtest_results.csv
 
 # dataset clone -- too large, cloned by setup.ps1

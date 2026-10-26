@@ -105,6 +105,8 @@ services:
       FPL_RNN_MODELS_FILE: /data/models/models_rnn.joblib
       FPL_ENSEMBLE_MODELS_FILE: /data/models/models_ensemble.joblib
       FPL_RESULTS_DIR: /data/results
+      FPL_SNAPSHOT_DIR: /data/snapshots
+      FPL_EVALUATION_DIR: /data/results/season-evaluations
     depends_on:
       simulate:
         condition: service_completed_successfully

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FPL Season Evaluation</title>
+  <style>
+    :root { --bg:#090d15; --panel:#111722; --line:#29354a; --text:#f2f5f8; --muted:#9aa8ba; --green:#51d88a; --amber:#f4c95d; --red:#ff6b72; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font:14px 'Segoe UI',system-ui,sans-serif; }
+    header { padding:18px max(20px,calc((100vw - 1180px)/2)); border-bottom:1px solid var(--line); display:flex; align-items:center; gap:18px; }
+    header strong { color:var(--green); } nav { margin-left:auto; display:flex; gap:14px; flex-wrap:wrap; }
+    a { color:var(--green); text-decoration:none; } a:hover { text-decoration:underline; }
+    main { max-width:1180px; margin:auto; padding:28px 20px 48px; }
+    h1 { margin:0 0 8px; font-size:28px; } h2 { margin:0 0 14px; font-size:18px; }
+    p { line-height:1.6; } .muted { color:var(--muted); } .tag { color:var(--green); font-weight:700; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin:24px 0; }
+    section { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; margin-bottom:18px; }
+    .grid section { margin:0; } .notice { border-left:4px solid var(--amber); }
+    label { display:block; margin:10px 0; } .models { display:flex; flex-wrap:wrap; gap:8px 18px; margin:14px 0; }
+    .models label { display:flex; align-items:center; gap:6px; }
+    input,select,button { font:inherit; } input[type=number],select { color:var(--text); background:var(--bg); border:1px solid var(--line); padding:9px; border-radius:5px; }
+    input[type=number] { width:90px; } .controls { display:flex; align-items:center; flex-wrap:wrap; gap:18px; margin:12px 0; }
+    button { border:1px solid var(--line); border-radius:6px; padding:10px 15px; cursor:pointer; background:var(--bg); color:var(--text); }
+    button.primary { background:var(--green); color:#07120c; font-weight:700; } button:disabled { opacity:.5; cursor:not-allowed; }
+    progress { width:100%; height:15px; margin:14px 0 8px; accent-color:var(--green); }
+    .error { color:var(--red); } .good { color:var(--green); } .warning { color:var(--amber); }
+    .scroll { overflow:auto; } table { border-collapse:collapse; width:100%; font-size:13px; }
+    th,td { text-align:left; padding:10px; border-bottom:1px solid var(--line); vertical-align:top; } th { color:var(--muted); white-space:nowrap; }
+    pre { max-height:180px; overflow:auto; font-size:12px; color:var(--muted); white-space:pre-wrap; }
+    .hidden { display:none; } .actions { display:flex; align-items:center; flex-wrap:wrap; gap:12px; }
+    @media(max-width:760px) { .grid { grid-template-columns:1fr; } header { align-items:flex-start; flex-direction:column; } nav { margin:0; } main { padding:20px 12px; } }
+  </style>
+</head>
+<body>
+<header>
+  <strong>FPL / Season evaluation</strong>
+  <nav><a href="/generate-team">Squad generator</a><a href="/performance-review">Saved-squad performance</a></nav>
+</header>
+<main>
+  <h1>How well does the model manage a season?</h1>
+  <p class="muted">Start at GW1 with reproducible random squads. Carry players, bank and free transfers forward, retrain only on prior data, and compare model transfers with keeping the original squad.</p>
+  <p id="season" class="tag">Loading current season...</p>
+  <div id="error" class="error" role="alert"></div>
+  <div class="grid">
+    <section>
+      <h2>Configure a separate evaluation</h2>
+      <form id="evaluation-form">
+        <div class="models">
+          {% for model in model_types %}
+          <label><input type="checkbox" name="model" value="{{ model }}" {% if model == 'ensemble' %}checked{% endif %}><span data-model="{{ model }}">{{ model }}</span></label>
+          {% endfor %}
+        </div>
+        <div class="controls">
+          <label>Starting squads <input id="seeds" type="number" min="1" max="25" value="10" required></label>
+          <label>GW1 through <select id="through" aria-label="Last completed Gameweek"></select></label>
+        </div>
+        <p class="muted">Strict historical inputs only. No chips or paid transfers. Selected models share the same initial squads; each model is retrained per Gameweek in isolated files. Ensemble training includes all four component families and can take substantial CPU time.</p>
+        <button id="run" class="primary" type="submit" disabled>Run season evaluation</button>
+      </form>
+    </section>
+    <section class="notice">
+      <h2>Strict data, not reconstructed results</h2>
+      <p>Each week needs a genuine input bundle captured before its deadline. Today's injury flags, current checkpoints and post-match metadata cannot fill historical gaps.</p>
+      <p id="readiness-message" class="warning">Checking frozen inputs...</p>
+      <div class="actions">
+        <button id="refresh" type="button">Refresh readiness</button>
+        <button id="capture" type="button">Capture current inputs</button>
+      </div>
+      <p id="capture-message" role="status" class="muted">Capture after a data refresh and before the target deadline. Existing bundles are never overwritten. A full GW1 replay stays blocked until every required week exists.</p>
+    </section>
+  </div>
+  <section>
+    <h2>Input readiness</h2>
+    <div class="scroll"><table><thead><tr><th>Gameweek</th><th>Status</th><th>Captured at</th><th>Explanation</th></tr></thead><tbody id="readiness"></tbody></table></div>
+  </section>
+  <section aria-live="polite">
+    <h2 id="job-phase">No evaluation running</h2>
+    <progress id="progress" max="100" value="0" aria-label="Season evaluation progress"></progress>
+    <p id="job-message" class="muted">Runs do not overwrite live models, squads or the database.</p>
+    <details><summary>Job log</summary><pre id="job-log"></pre></details>
+  </section>
+  <section>
+    <h2>Saved runs</h2>
+    <div id="saved-runs" class="actions muted">No saved runs yet.</div>
+  </section>
+  <section id="results" class="hidden">
+    <h2 id="result-title">Evaluation report</h2>
+    <p id="result-message"></p>
+    <p id="result-method" class="muted"></p>
+    <div class="actions">
+      <button id="download" type="button">Download report JSON</button>
+      <a id="predictions" class="hidden">Download player predictions CSV</a>
+    </div>
+    <div id="metrics" class="hidden scroll">
+      <h2>Model comparison</h2>
+      <table><thead><tr><th>Model</th><th>Mean total</th><th>Seed range</th><th>Hold squad</th><th>Transfer gain</th><th>Official average total</th><th>Player RMSE</th><th>MAE</th><th>Bias</th></tr></thead><tbody id="summary"></tbody></table>
+      <h2 style="margin-top:24px">Gameweek and squad detail</h2>
+      <p class="muted">Predicted totals include captaincy. Actual totals include automatic substitutions and captain fallback. The hold baseline keeps the same original players but updates its lineup using the same forecasts.</p>
+      <table><thead><tr><th>Model</th><th>Seed</th><th>GW</th><th>Predicted</th><th>Actual</th><th>Hold</th><th>Official average</th><th>Moves</th><th>Bank</th><th>Captain ID</th></tr></thead><tbody id="weekly"></tbody></table>
+    </div>
+  </section>
+</main>
+<script>
+const labels = {xgboost:'XGBoost',catboost:'CatBoost',lambdarank:'LambdaRank',rnn:'Deep GRU',ensemble:'Ensemble'};
+document.querySelectorAll('[data-model]').forEach(node => { node.textContent = labels[node.dataset.model]; });
+const element = id => document.getElementById(id);
+let currentReport = null, currentRun = null, timer = null, completed = 0;
+const number = value => Number.isFinite(value) ? value.toFixed(2) : '-';
+function rows(id, data) {
+  element(id).replaceChildren(...data.map(values => {
+    const row = document.createElement('tr');
+    values.forEach(value => { const cell = document.createElement('td'); cell.textContent = value ?? '-'; row.append(cell); });
+    return row;
+  }));
+}
+async function api(url, options) {
+  const response = await fetch(url, options);
+  const result = await response.json();
+  if (!response.ok || result.ok === false) throw new Error(result.error || `Request failed (${response.status})`);
+  return result;
+}
+function showError(error) { element('error').textContent = error.message; }
+function job(data) {
+  element('job-phase').textContent = `${data.status}: ${data.phase || ''}`;
+  element('job-message').textContent = data.message;
+  element('progress').value = data.progress;
+  element('job-log').textContent = (data.log || []).join('\n');
+  element('run').disabled = data.status === 'running' || completed === 0;
+  if (data.status === 'running') {
+    if (!timer) timer = setInterval(poll, 1500);
+  } else if (timer) { clearInterval(timer); timer = null; }
+}
+async function refresh() {
+  const data = await api('/api/season-evaluation');
+  const audit = data.readiness;
+  completed = audit.latest_completed;
+  element('season').textContent = `${audit.season} / recorded completed results through GW${completed} / source refreshed ${audit.data_refreshed_at}`;
+  const previous = element('through').value;
+  element('through').replaceChildren(...Array.from({length:completed}, (_, index) => {
+    const option = document.createElement('option'); option.value = index + 1; option.textContent = `GW${index + 1}`; return option;
+  }));
+  element('through').value = previous && Number(previous) <= completed ? previous : completed;
+  rows('readiness', audit.weeks.map(week => [`GW${week.game_week}`,week.status,week.captured_at,week.reason]));
+  element('readiness-message').textContent = audit.ready
+    ? 'All recorded completed Gameweeks have verified input bundles.'
+    : completed ? `Strict replay blocked: missing or invalid inputs for GW${audit.missing_gameweeks.join(', GW')}. No accuracy metrics will be fabricated.`
+    : 'No completed Gameweeks are recorded yet.';
+  const saved = data.runs.map(run => {
+    const button = document.createElement('button');
+    button.type = 'button'; button.textContent = `${run.status} / ${(run.models || []).map(model => labels[model]).join(', ')} / ${run.created_at || run.run_id}`;
+    button.addEventListener('click', () => loadReport(run.run_id).catch(showError)); return button;
+  });
+  element('saved-runs').replaceChildren(...saved);
+  if (!saved.length) element('saved-runs').textContent = 'No saved runs yet.';
+  job(data.job);
+}
+async function loadReport(runId) {
+  const data = await api(`/api/season-evaluation/runs/${encodeURIComponent(runId)}`);
+  currentReport = data.report; currentRun = runId;
+  element('results').classList.remove('hidden');
+  element('result-title').textContent = `Report: ${currentReport.status}`;
+  element('result-message').textContent = currentReport.message;
+  element('result-message').className = currentReport.status === 'succeeded' ? 'good' : 'warning';
+  element('result-method').textContent = currentReport.season
+    ? `${currentReport.season}, GW1-${currentReport.through}, ${currentReport.seeds} starting squads. Strict dated inputs; opposition experiment disabled.`
+    : 'This run failed before a complete evaluation could be produced.';
+  const succeeded = currentReport.status === 'succeeded';
+  element('metrics').classList.toggle('hidden', !succeeded);
+  element('predictions').classList.toggle('hidden', !succeeded);
+  element('predictions').href = `/api/season-evaluation/runs/${encodeURIComponent(runId)}/predictions`;
+  rows('summary', succeeded ? currentReport.summary.map(row => [
+    labels[row.model],number(row.mean_total_points),`${row.min_total_points}-${row.max_total_points}`,
+    number(row.hold_mean_total),number(row.mean_transfer_gain),row.official_average_total,
+    number(row.player_rmse),number(row.player_mae),number(row.player_bias)
+  ]) : []);
+  rows('weekly', succeeded ? currentReport.weekly.map(row => [
+    labels[row.model],row.seed, row.game_week,number(row.predicted_points),row.actual_points,
+    row.hold_points,row.official_average,row.transfer_count,`£${(row.bank/10).toFixed(1)}M`,row.captain
+  ]) : []);
+  if (currentReport.readiness && currentReport.status === 'blocked') {
+    element('result-message').textContent += ` Missing/invalid Gameweeks: ${currentReport.readiness.missing_gameweeks.join(', ')}. No training or simulation was started.`;
+  }
+}
+async function poll() {
+  try {
+    const data = await api('/api/season-evaluation/status');
+    job(data);
+    if (data.status !== 'running' && data.run_id) { await loadReport(data.run_id); await refresh(); }
+  } catch (error) { if (timer) clearInterval(timer); timer = null; showError(error); }
+}
+element('evaluation-form').addEventListener('submit', async event => {
+  event.preventDefault(); element('error').textContent = ''; element('run').disabled = true;
+  try {
+    const models = [...document.querySelectorAll('input[name=model]:checked')].map(input => input.value);
+    const data = await api('/api/season-evaluation/start', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({models,seeds:Number(element('seeds').value),through:Number(element('through').value)})
+    });
+    job(data); await poll();
+  } catch (error) { element('run').disabled = completed === 0; showError(error); }
+});
+element('capture').addEventListener('click', async () => {
+  element('capture').disabled = true; element('error').textContent = '';
+  try {
+    const data = await api('/api/season-evaluation/capture', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    element('capture-message').textContent = `Captured GW${data.manifest.game_week} at ${data.manifest.captured_at}, before ${data.manifest.deadline}.`;
+    await refresh();
+  } catch (error) { showError(error); } finally { element('capture').disabled = false; }
+});
+element('refresh').addEventListener('click', () => refresh().catch(showError));
+element('download').addEventListener('click', () => {
+  if (!currentReport) return;
+  const url = URL.createObjectURL(new Blob([JSON.stringify(currentReport,null,2)],{type:'application/json'}));
+  const link = document.createElement('a'); link.href = url; link.download = `season-evaluation-${currentRun}.json`; link.click(); URL.revokeObjectURL(url);
+});
+refresh().then(poll).catch(showError);
+</script>
+</body>
+</html>

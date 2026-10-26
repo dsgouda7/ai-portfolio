@@ -62,6 +62,7 @@ from squad_state import (
 )
 from performance_reviewer import build_performance_review
 from squad_optimizer import select_best_advisor_side
+from evaluation_web import create_evaluation_blueprint
 from fpl_account import (
     FplEntrySyncError,
     sync_public_entry,
@@ -91,6 +92,9 @@ _TRAINING_STATE = {
     'message': 'No refresh is running.',
     'log': [],
 }
+app.register_blueprint(create_evaluation_blueprint(
+    Path(DB_FILE), _TRAINING_GUARD, _ARTIFACT_LOCK
+))
 
 # FPL colour scheme (matches official app)
 POS_COLORS = {
@@ -1192,7 +1196,7 @@ def start_training():
     if not _TRAINING_GUARD.acquire(blocking=False):
         return jsonify({
             'ok': False,
-            'error': 'A refresh and training job is already running.',
+            'error': 'A training or season evaluation job is already running.',
             **_training_snapshot(),
         }), 409
     _update_training_state(

@@ -68,6 +68,14 @@ Its document-safe window builder is shared by the introductory run and held-out 
 CBOW, Skip-gram, and the writer reuse raw windows, then choose their own inputs and answers.
 03A also takes one isolated optimizer step to show that embedding weights change while
 the word IDs stay fixed.
+Section 8 opens with a [short animation](images/03a-embedding-learning-animation.gif):
+the same row index connects `weight`, `weight.grad`, and `weight` after one SGD
+step. It explicitly unpacks coordinates `[2, 0]` and `[2, 1]` of the matrix-wide
+update while the optimizer-call counter stays at one. IDs route gradients;
+the optimizer reads the gradient matrix, not the IDs. An
+[offline player](images/03a-embedding-learning-animation.html) adds Play/Pause,
+replay, and scrubbing; a [static indexed-update reference](images/03a-embedding-indexed-update.png)
+and detailed mechanics remain optional. Temporary rendering scripts are not retained.
 Read the notebook's printed budget and measured losses rather than treating a tiny CPU run
 as a model-quality benchmark. The later held-out comparison trains fresh models separately
 and keeps the limits visible. The full notebook took about 3–5 minutes on the authoring CPU;

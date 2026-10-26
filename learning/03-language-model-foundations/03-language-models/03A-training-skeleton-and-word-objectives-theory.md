@@ -87,6 +87,19 @@ CBOW removes the middle word from each five-word window. It fetches four rows an
 them into one row per question. A small network turns that row into a score for every word.
 Questions are never averaged together.
 
+Think of ground control merging visible probes' telemetry. Average each sensor channel
+with the same channel across probes, never all channels into one scalar. The two-clue
+microscope blends `[2, 0]` and `[0, 4]` into `[1, 2]`; this describes the context,
+not the target `cat`'s stored `[1, 3]`. A separate predictor must learn the answer mapping.
+The table is the shared catalogue; a batch is a stack of independent mission logs.
+`[B, C, D]` counts missions, visible context probes, and channels. Averaging removes
+`C`, leaving `[B, D]`: one fixed-width composite per question, with no cross-mission mixing.
+
+The compact arithmetic example sends `[1, 2]` through a hand-picked linear predictor,
+producing word scores `[1, 4, 2]` for `[the, cat, sat]`. Its largest score predicts
+`cat`; cross-entropy receives all three scores and target ID `1`, not the averaged
+vector or `cat`'s embedding. These chosen weights illustrate a forward pass, not learning.
+
 For missing `sat`, correct-word probability
 rose from **0.090% to 0.181%**, while rank improved from **398 to 90**. That is movement,
 not an exact answer. Missing `cat` improved in rank from **732 to 114**, but its probability
@@ -96,11 +109,50 @@ Keep probability, rank, and shortlist together.
 
 CBOW sees both sides of a blank, unlike next-word writing. Its mean erases order:
 reversing clues leaves the representation and logits unchanged.
+The flight path is lost, not the sensor-channel layout. "Continuous" names real-valued
+features; "bag" names permutation-insensitive pooling. Fusing fetch and mean through
+`EmbeddingBag` preserves that limitation. Transformers need position information as
+well as attention; the attention mechanism alone does not recover discarded word order.
 
 The feedback close-up uses the illustrated **the sleepy ___ sat on** question on a
 copy of the model. A fresh plain SGD step changes the four fetched input rows and the
 predictor, but no IDs. The answer `cat` is not another input lookup. The shorter
 **the ___ sat** table is only an arithmetic magnification, not a different training corpus.
+
+Lookup is not a read-only database: `nn.Embedding.weight` is a trainable parameter.
+Attaching the embedding layer to the model registers that parameter, so
+`model.parameters()` includes it. The integer selects `weight[2]`; the lookup
+operation keeps a computation-graph connection from the returned vector to those
+selected coordinates. PyTorch does not infer which vector belongs to an ID from
+its meaning. The indexing operation already establishes that relationship.
+A detached copy of the same numbers would lose this connection. A normal lookup
+is not detached, but neither is it a live view that changes when the stored weights
+update: the next lookup retrieves the newly learned values.
+
+Its backward operation routes each retrieved vector's gradient back to the row
+selected by the integer ID. The ID itself gets no gradient. A repeated ID contributes
+to the same row again. With default dense gradients, `.weight.grad` has the table's
+shape; input-unused rows have zero gradient from lookup. `backward()` fills that
+ledger; only `step()` applies the update.
+
+The index is used to place feedback in the gradient matrix. The optimizer does
+not receive word IDs or call `step()` once per word: plain SGD applies one
+elementwise update to the whole parameter tensor. Coordinate `[2, 0]` uses
+`weight_before[2, 0]` and `weight.grad[2, 0]`; coordinate `[2, 1]` uses the
+matching second column. Unused rows subtract zero in this controlled example.
+Highlighting those coordinates separately unpacks one operation, not multiple steps.
+
+The [indexed-update animation](images/03a-embedding-learning-animation.gif)
+([static matrix reference](images/03a-embedding-indexed-update.png)) isolates
+one input, `sat` ID 2, and target `cat` ID 1. A measured plain-SGD step at learning
+rate 0.25 changes `[0, 4]` to `[-0.2454, 3.7547]`, leaving the other two input rows
+exactly unchanged. The separate predictor also updates. This is a tiny, hand-initialized
+mechanism check, not the four-clue CBOW run.
+
+The zero rows are a consequence of lookup's derivative, not a special "zero-out gate".
+Zero current gradient does not universally mean no update: weight decay or existing
+optimizer state can move a row. Tying input and output weights can also give an
+input-unused row gradients through vocabulary scoring.
 
 **Complaint:** more epochs cannot restore a distinction discarded before prediction.
 
