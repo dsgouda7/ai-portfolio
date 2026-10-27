@@ -5,8 +5,9 @@
 [shared trainer](language_model.py) | [corpus and comparison](real_text_embeddings.py).
 
 **Carry-in:** we supplied six questions. How can ordinary text supply thousands?
-The **lookup microscope**, **the ___ sat**, keeps its hand-picked two-number
-rows; here we add averaging and expose the order it discards. The **learning
+The **lookup microscope**, **the ___ sat**, first keeps its hand-picked two-number
+rows for arithmetic, then rebuilds them randomly to expose actual learning. Averaging
+still discards order. The **learning
 game**, **cat/dog -> sat/slept; bird -> flew/sang**, supplied controlled cards;
 here windows from text supply the cards instead.
 
@@ -19,29 +20,47 @@ The introductory models each train a fresh 32-number table. The later held-out
 comparison resets to 48-number rows with a common initialization. Neither run
 continues the earlier lab's trained table or reuses its local ID numbers.
 
-## 1. We can fetch word rows. What teaches their numbers?
+## 1. Names identify; profiles describe
 
-An address distinguishes `cat` from `dog`; the guessing task gives their
-separate rows a reason to develop useful features in common.
+Imagine a catalogue of objects found by space probes. Labels such as `Object-417`
+and `Object-892` distinguish the records, but cannot tell you which objects resemble Earth.
+Equip the probes with sensors: size, temperature, and atmospheric composition now
+supply a profile of characteristics. Compare corresponding channels, accounting
+for their units and scales, rather than comparing names or catalogue numbers.
+Resembling Earth on those channels does not establish habitability.
+The [sensor-profile diagram](images/03a-object-sensor-signatures.png) illustrates
+representation and comparison, not a missing-object prediction task.
 
-Think of a celestial object's registry number and its profile across a common sensor array.
-The token ID identifies; the embedding supplies readings across abstract, learned channels.
-They are not literal mass or temperature measurements, and we do not add all channels into
-one total. In code, a matrix row stores one profile. It starts random once, then training
-can adjust its values along with the predictor. Lookup retrieves the current profile;
-it does not redraw or remeasure it. A fixed model returns the same starting profile for
-the same ID. Renumbering the registry adds no meaning if profiles and output labels follow.
+**Layout:** a registry ID selects a record; its profile supplies `D` values.
+The catalogue holds `V` profiles in `[V, D]` order. The name answers "which record?";
+the channels provide evidence about what that object is like.
 
-A one-hot checklist multiplied by the table selects the same profile, carrying vocabulary-sized
-zeros along. Short rows solve storage; useful shared features still need learning.
-The `[V, D]` shape belongs to the shared weights. Actual lookup takes one integer per word:
-`[B]` IDs return `[B, D]` rows. A one-hot `[B, V]` input is an equivalent calculation,
-not something `nn.Embedding` constructs. CBOW's four IDs per question give `[B, 4, D]`
-before averaging, not a vocabulary-wide input per word.
+**Bridge to words:** a token ID selects a word's stored profile, its **embedding**.
+Words have no physical sensors. We choose the profile width, not a hand-written
+meaning for each channel. There is no need to label words as "animal" or "action".
+Physical readings have defined meanings; learned word features may spread a useful
+property across several channels. Random starting values are not yet useful meaning.
 
-Cover `cat` in **the sleepy cat sat on**. The four visible words become the question;
-the covered word becomes its answer. Feed visible rows to a predictor and compare scores
-with `cat`. Feedback reaches both predictor and fetched rows; their weights are separate.
+**Complaint:** we have provided space for a profile. What teaches its values?
+
+**CBOW is a training exercise, not the embedding itself.** Leave the sky catalogue
+and return to **the ___ sat**. Fetch the visible words' profiles, average their
+corresponding channels, and let a separate predictor score vocabulary words.
+Keep `cat` out of the input; use it to check the scores. Backpropagation calculates
+feedback, then the optimizer adjusts the fetched rows and predictor weights while
+IDs stay fixed. The [separate training diagram](images/03a-cbow-profile-training.png)
+keeps representation, readout, and feedback distinct.
+
+Repeated text practice can shape useful shared features. This is learning from
+word usage, or **distributional semantics**, not a guarantee of synonyms or a
+well-trained profile for every rare word. Comparing two stored profiles is not
+the same operation as predicting a missing word: the predictor does not just
+look for the profile nearest the context average. Check reserved text to distinguish
+useful learning from memorization.
+
+For **the sleepy cat sat on**, hide `cat`: lookup gives `[B, 4, D]`;
+averaging leaves `[B, D]`. Fetching and combining profiles reads them;
+the later optimizer step is what changes them.
 
 **Complaint:** five hand-written phrases would let us confuse memorization with learning.
 Keep the familiar sentence for inspection, not as the entire training diet.
@@ -57,11 +76,17 @@ independent document, **the sleepy cat sat on the mat**, at the end: **13,765 do
 **149,572 tokens**, and **94,512 five-word windows**. Its seven words supply three windows.
 No window crosses a sentence boundary. No copies, special weights, or extra sampling
 chances are given to that document.
-Since this notebook repeats the sliding step for several models, we put it in one
-small shared helper, `make_document_windows`, instead of repeating the code.
-It only collects neighbouring words; each objective chooses its own clues and answers.
-The CBOW storyboard and short animation slide the same window across our cat sentence:
-the three checked answers are **cat, sat, on**.
+The notebook builds `make_document_windows` with NumPy's built-in sliding-window
+view, applied separately to each sentence. Each row holds a complete window;
+consecutive rows move one position, our window-start stride. Short sentences are
+skipped before calling NumPy; unknown IDs keep their positions. Each sentence's
+windows share its array's storage, then concatenation copies them into one array.
+No short tails or cross-sentence windows appear. The width exercise changes only
+a probe, not the training data.
+The function only collects neighbouring words; each objective chooses its own
+clues and answers. One animation connects the moving window to its start index:
+the three CBOW answers are **cat, sat, on**. Printed windows keep the result
+readable without animation playback.
 
 Choosing a stretch of text is common in language-model training; the exact five-word
 window is our teaching choice, not a universal rule. Next-word models usually read
@@ -73,7 +98,8 @@ Count words, order them by frequency, then assign unique consecutive IDs.
 The ID is a position in that ordering, not the count itself; ties keep first-appearance
 order and still get different IDs. Zero is reserved for the unknown slot.
 
-The made-up table remains only a shape demonstration.
+The hand-picked picture remains an arithmetic reference. A separate three-word
+toy now creates and trains a fresh two-number table; no toy weights carry forward.
 Actual introductory training uses **32-number rows**, batches of at most **512**, and
 **10 / 4 / 6 epochs** for CBOW / Skip-gram / the writer. One measured CPU run spent
 **66.9 seconds training**. The full cached Python lesson took **199.5 seconds**; hardware varies.
@@ -87,18 +113,39 @@ CBOW removes the middle word from each five-word window. It fetches four rows an
 them into one row per question. A small network turns that row into a score for every word.
 Questions are never averaged together.
 
-Think of ground control merging visible probes' telemetry. Average each sensor channel
-with the same channel across probes, never all channels into one scalar. The two-clue
+Average each feature channel with the same channel across words, never all channels
+into one scalar. This combines evidence; it is not the definition of an embedding. The two-clue
 microscope blends `[2, 0]` and `[0, 4]` into `[1, 2]`; this describes the context,
 not the target `cat`'s stored `[1, 3]`. A separate predictor must learn the answer mapping.
-The table is the shared catalogue; a batch is a stack of independent mission logs.
-`[B, C, D]` counts missions, visible context probes, and channels. Averaging removes
-`C`, leaving `[B, D]`: one fixed-width composite per question, with no cross-mission mixing.
+The table is the shared catalogue; a batch is a stack of independent questions.
+`[B, C, D]` counts questions, visible context words, and feature channels. Averaging removes
+`C`, leaving `[B, D]`: one fixed-width composite per question, with no cross-question mixing.
 
-The compact arithmetic example sends `[1, 2]` through a hand-picked linear predictor,
-producing word scores `[1, 4, 2]` for `[the, cat, sat]`. Its largest score predicts
-`cat`; cross-entropy receives all three scores and target ID `1`, not the averaged
-vector or `cat`'s embedding. These chosen weights illustrate a forward pass, not learning.
+The frozen picture sends `[1, 2]` through a hand-picked predictor, producing
+scores `[1, 4, 2]` for `[the, cat, sat]`. That picture explains arithmetic, not
+initialization. The runnable toy instead supplies only vocabulary size **3** and
+embedding width **2** to an embedding layer. It allocates a trainable **[3, 2]**
+table and fills it with standard-normal random values. Replaying the same random
+fill with the same seed verifies initialization without hand-writing any row.
+
+Lookup then selects existing rows: **[2, 2]** integer inputs return **[2, 2, 2]**
+vectors, not another full vocabulary table. Ordinary indexing gives identical
+values. Averaging produces **[2, 2]** context features; a separate random linear
+predictor produces **[2, 3]** scores. Cross-entropy checks those scores against
+`cat` ID **1**, not against its embedding.
+
+Backward calculates a gradient ledger without changing the table. Plain SGD
+then subtracts the learning-rate-scaled ledger; an explicit before/after check
+verifies that exact update. After **40** steps, the seeded toy loss falls from
+about **0.952 to 0.092**, and its `cat` probability rises from **38.6% to 91.2%**.
+Both fetched input rows and the predictor change; the `cat` input row stays
+fixed because it was only a label. The first top guess was already `cat`:
+learning is not restricted to initially wrong predictions.
+
+The printed row shifts show actual changes, not a promise of useful language
+features. Two repeated questions demonstrate mechanics and memorization.
+Production uses a matching tokenizer and checkpoint table; ordinary inference
+does not recreate random embeddings for each prompt.
 
 For missing `sat`, correct-word probability
 rose from **0.090% to 0.181%**, while rank improved from **398 to 90**. That is movement,
@@ -109,7 +156,7 @@ Keep probability, rank, and shortlist together.
 
 CBOW sees both sides of a blank, unlike next-word writing. Its mean erases order:
 reversing clues leaves the representation and logits unchanged.
-The flight path is lost, not the sensor-channel layout. "Continuous" names real-valued
+Word order is lost, not the feature-channel layout. "Continuous" names real-valued
 features; "bag" names permutation-insensitive pooling. Fusing fetch and mean through
 `EmbeddingBag` preserves that limitation. Transformers need position information as
 well as attention; the attention mechanism alone does not recover discarded word order.
@@ -117,7 +164,22 @@ well as attention; the attention mechanism alone does not recover discarded word
 The feedback close-up uses the illustrated **the sleepy ___ sat on** question on a
 copy of the model. A fresh plain SGD step changes the four fetched input rows and the
 predictor, but no IDs. The answer `cat` is not another input lookup. The shorter
-**the ___ sat** table is only an arithmetic magnification, not a different training corpus.
+**the ___ sat** toy is an isolated learning magnification, not another text corpus;
+the separate indexed-update pictures below still use hand-picked starting values.
+
+The toy passes the embedding object once into a model's constructor and stores
+that exact object as a child layer. Normal prediction calls pass **only integer
+IDs**. The embedding matrix is inside the model, not an external input vector
+that the network somehow decides to rewrite.
+
+The connection happens at attribute assignment. The module base class intercepts
+assigning a child layer and records it in the parent's child-module registry.
+The embedding already holds its weight in its own parameter registry.
+Recursive parameter discovery walks those children and yields the same weight
+object under the name `embedding.weight`; the optimizer retains that reference.
+The toy inspects these registries and checks object identity at each hop.
+Registration only makes the weight discoverable. It does not calculate a gradient
+or change a value.
 
 Lookup is not a read-only database: `nn.Embedding.weight` is a trainable parameter.
 Attaching the embedding layer to the model registers that parameter, so
@@ -125,6 +187,8 @@ Attaching the embedding layer to the model registers that parameter, so
 operation keeps a computation-graph connection from the returned vector to those
 selected coordinates. PyTorch does not infer which vector belongs to an ID from
 its meaning. The indexing operation already establishes that relationship.
+A normal dense network likewise updates its own parameters, not its raw inputs;
+this is the same rule, with a differentiable lookup as the first layer.
 A detached copy of the same numbers would lose this connection. A normal lookup
 is not detached, but neither is it a live view that changes when the stored weights
 update: the next lookup retrieves the newly learned values.
@@ -134,6 +198,13 @@ selected by the integer ID. The ID itself gets no gradient. A repeated ID contri
 to the same row again. With default dense gradients, `.weight.grad` has the table's
 shape; input-unused rows have zero gradient from lookup. `backward()` fills that
 ledger; only `step()` applies the update.
+
+The toy retains the fetched vectors' intermediate gradients solely for inspection.
+Each occurrence of `the` contributes to row zero, and each occurrence of `sat`
+contributes to row two. Adding those occurrence gradients into a separate zero
+table reproduces the gradient PyTorch already calculated. The equality check
+exposes lookup's scatter-add derivative without replacing autograd or applying
+another update. Retaining intermediate gradients is not required for learning.
 
 The index is used to place feedback in the gradient matrix. The optimizer does
 not receive word IDs or call `step()` once per word: plain SGD applies one

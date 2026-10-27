@@ -109,6 +109,74 @@ def learning():
     save(figure, TOKEN_IMAGES / "02-05-practice-nudges-rows.png")
 
 
+def object_signatures():
+    figure, axis = canvas("Names identify. Sensor profiles let you compare.")
+    axis.text(0.5, 0.86, "Which discovered objects resemble Earth?",
+              ha="center", color=NAVY, fontsize=16)
+    card(axis, 0.03, 0.43, 0.25, 0.35,
+         "Catalogue labels\nEarth\nObject-417\nObject-892")
+    arrow(axis, (0.30, 0.605), (0.35, 0.605))
+    table = axis.table(
+        cellText=[
+            ["Earth", "r_E", "T_E", "a_E"],
+            ["Object-417", "r_A", "T_A", "a_A"],
+            ["Object-892", "r_B", "T_B", "a_B"],
+        ],
+        colLabels=["Object", "Size", "Temperature", "Atmosphere"],
+        colWidths=[0.28, 0.20, 0.26, 0.26],
+        cellLoc="center", bbox=(0.38, 0.43, 0.59, 0.35),
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(13)
+    for (row, _), cell in table.get_celld().items():
+        cell.set_edgecolor(TEAL)
+        cell.set_text_props(color="white" if row == 0 else NAVY)
+        cell.set_facecolor(TEAL if row == 0 else "#e0f2f1" if row == 1 else "white")
+    axis.text(0.155, 0.35, "Which record?\nNot what it is like.",
+              ha="center", va="center", color=NAVY, fontsize=13)
+    axis.text(0.675, 0.35, "Symbols stand for readings, not invented measurement values.",
+              ha="center", va="center", color=NAVY, fontsize=11)
+    card(axis, 0.38, 0.13, 0.59, 0.15,
+         "Compare each candidate's readings with Earth's.\n"
+         "Match channels and account for their units and scales.", PURPLE)
+    axis.text(0.5, 0.04,
+              "A representation analogy, not a prediction task or proof of habitability.",
+              ha="center", color=ORANGE, fontsize=13)
+    save(figure, HERE / "images" / "03a-object-sensor-signatures.png")
+
+
+def cbow_profile_training():
+    table = np.array([[2., 0.], [1., 3.], [0., 4.]])
+    context = table[[0, 2]].mean(axis=0)
+    head = np.array([[1., 0., 0.], [0., 2., 1.]])
+    scores = context @ head
+    assert context.tolist() == [1., 2.] and scores.tolist() == [1., 4., 2.]
+    figure, axis = canvas("Prediction trains profiles. It is not the profile itself.")
+    axis.text(0.5, 0.85, "Word-only training question: the ___ sat",
+              ha="center", color=NAVY, fontsize=16)
+    card(axis, 0.03, 0.59, 0.25, 0.19,
+         "Fetch the and sat profiles\nAverage: [1, 2]")
+    card(axis, 0.39, 0.59, 0.23, 0.19,
+         "Separate predictor\n2 features -> 3 scores", PURPLE)
+    card(axis, 0.73, 0.59, 0.23, 0.19,
+         "Scores [the, cat, sat]\n[1, 4, 2]", PURPLE)
+    arrow(axis, (0.30, 0.685), (0.37, 0.685))
+    arrow(axis, (0.64, 0.685), (0.71, 0.685))
+    card(axis, 0.35, 0.32, 0.30, 0.14,
+         "Check scores against cat\nCalculate loss", ORANGE)
+    arrow(axis, (0.845, 0.57), (0.67, 0.39), ORANGE)
+    card(axis, 0.03, 0.09, 0.28, 0.14,
+         "Update fetched profiles\nKeep token IDs fixed")
+    card(axis, 0.69, 0.09, 0.28, 0.14,
+         "Update predictor weights", PURPLE)
+    arrow(axis, (0.42, 0.30), (0.17, 0.25), ORANGE)
+    arrow(axis, (0.58, 0.30), (0.83, 0.25), ORANGE)
+    axis.text(0.5, 0.025,
+              "Hand-picked forward-pass numbers; training feedback is schematic, not a measured update.",
+              ha="center", color=ORANGE, fontsize=12)
+    save(figure, HERE / "images" / "03a-cbow-profile-training.png")
+
+
 def observatory():
     figure, axis = canvas("Encoder-decoder: read a system, then write a likely report.")
     card(axis, 0.02, 0.47, 0.28, 0.34, "", TEAL)
@@ -136,8 +204,113 @@ def observatory():
     save(figure, HERE / "images" / "03a-encoder-decoder-observatory.png")
 
 
+def toy_embedding_lookup():
+    figure, axis = canvas("Lookup selects existing rows. It does not create another table.")
+    axis.text(0.5, 0.85, "Symbolic values stand for the random numbers printed in the toy.",
+              ha="center", color=NAVY, fontsize=14)
+    card(axis, 0.025, 0.48, 0.22, 0.24,
+         "Input IDs [B, C] = [2, 2]\nQuestion A: [0, 2]\nQuestion B: [2, 0]")
+    axis.text(0.455, 0.76, "Stored table [V, D] = [3, 2]",
+              ha="center", color=TEAL, fontsize=13, weight="bold")
+    table = axis.table(
+        cellText=[["0: the", "[t0, t1]"], ["1: cat", "[c0, c1]"], ["2: sat", "[s0, s1]"]],
+        colLabels=["ID / word", "D = 2 values"], cellLoc="center",
+        bbox=(0.32, 0.46, 0.27, 0.25),
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(13)
+    for (row, _), cell in table.get_celld().items():
+        cell.set_edgecolor(TEAL)
+        cell.set_text_props(color="white" if row == 0 else NAVY)
+        cell.set_facecolor(TEAL if row == 0 else "#f3f4f6" if row == 2 else "#e0f2f1")
+    axis.text(0.815, 0.76, "Fetched [B, C, D] = [2, 2, 2]",
+              ha="center", color=PURPLE, fontsize=13, weight="bold")
+    card(axis, 0.66, 0.53, 0.31, 0.17,
+         "Question A\n[[t0, t1], [s0, s1]]", PURPLE)
+    card(axis, 0.66, 0.27, 0.31, 0.17,
+         "Question B\n[[s0, s1], [t0, t1]]", PURPLE)
+    arrow(axis, (0.26, 0.60), (0.30, 0.60))
+    arrow(axis, (0.61, 0.60), (0.64, 0.615))
+    arrow(axis, (0.61, 0.49), (0.64, 0.355))
+    axis.text(0.455, 0.36, "cat is stored but not fetched.\n"
+              "The table has not changed.", ha="center", color=NAVY, fontsize=13)
+    axis.text(0.5, 0.14, "embedding(IDs) selects the same values as embedding.weight[IDs].",
+              ha="center", color=TEAL, fontsize=15, weight="bold")
+    axis.text(0.5, 0.06, "Each question keeps its own word order here. CBOW averaging happens later.",
+              ha="center", color=NAVY, fontsize=13)
+    save(figure, HERE / "images" / "03a-toy-embedding-lookup.png")
+
+
+def toy_model_ownership():
+    figure, axis = canvas("Fixed input IDs. Trainable model parameters.")
+    axis.add_patch(FancyBboxPatch(
+        (0.22, 0.29), 0.75, 0.53, boxstyle="round,pad=0.012",
+        edgecolor=NAVY, facecolor="#eef4fa", linewidth=2,
+    ))
+    axis.text(0.60, 0.775, "ToyCBOW owns both child layers",
+              ha="center", color=NAVY, fontsize=16, weight="bold")
+    card(axis, 0.025, 0.56, 0.15, 0.14, "Integer IDs\n[[0, 2], [2, 0]]")
+    card(axis, 0.25, 0.54, 0.20, 0.18,
+         "self.embedding\nweight [3, 2]\nTrainable Parameter")
+    card(axis, 0.51, 0.54, 0.18, 0.18,
+         "Lookup [2, 2, 2]\nMean [2, 2]\nRecorded operations", PURPLE)
+    card(axis, 0.75, 0.54, 0.19, 0.18,
+         "self.head\nTrainable weights\nScores [2, 3]", PURPLE)
+    arrow(axis, (0.19, 0.63), (0.23, 0.63))
+    arrow(axis, (0.47, 0.63), (0.49, 0.63))
+    arrow(axis, (0.71, 0.63), (0.73, 0.63))
+    card(axis, 0.25, 0.33, 0.29, 0.13,
+         "embedding.weight.grad\nAccumulate into saved ID rows\n0 and 2; row 1 gets zero", ORANGE)
+    card(axis, 0.75, 0.33, 0.19, 0.13, "Loss checks scores\nagainst cat IDs [1, 1]", ORANGE)
+    arrow(axis, (0.845, 0.52), (0.845, 0.48), ORANGE)
+    arrow(axis, (0.73, 0.395), (0.56, 0.395), ORANGE)
+    axis.text(0.645, 0.44, "backward()", ha="center", color=ORANGE, fontsize=12)
+    axis.text(0.645, 0.345, "through head,\nmean, lookup",
+              ha="center", va="center", color=ORANGE, fontsize=11)
+    axis.text(0.10, 0.44, "No gradients\nor updates\nto integer IDs",
+              ha="center", va="center", color=NAVY, fontsize=12)
+    card(axis, 0.22, 0.06, 0.75, 0.14,
+         "SGD(model.parameters()) discovers embedding.weight and head.weight.\n"
+         "step() changes stored parameters, not IDs or previously returned vectors.", PURPLE)
+    arrow(axis, (0.60, 0.27), (0.60, 0.22), PURPLE)
+    axis.text(0.5, 0.015, "The next forward call fetches updated rows from the SAME embedding object.",
+              ha="center", color=TEAL, fontsize=12)
+    save(figure, HERE / "images" / "03a-toy-model-ownership.png")
+
+
+def toy_parameter_registration():
+    figure, axis = canvas("Where does embedding.weight become a model parameter?")
+    axis.text(0.5, 0.85, "Attribute assignment calls nn.Module.__setattr__; parameter discovery follows the registries.",
+              ha="center", color=NAVY, fontsize=13)
+    card(axis, 0.025, 0.56, 0.28, 0.21,
+         "Inside nn.Embedding\nself.weight = nn.Parameter(...)\nregister_parameter('weight', ...)")
+    card(axis, 0.38, 0.56, 0.24, 0.21,
+         "embedding._parameters\n'weight' -> table [3, 2]\nNo table copy")
+    card(axis, 0.70, 0.56, 0.275, 0.21,
+         "Inside ToyCBOW\nself.embedding = embedding\nRegister child in _modules", PURPLE)
+    arrow(axis, (0.32, 0.665), (0.36, 0.665))
+    arrow(axis, (0.64, 0.665), (0.68, 0.665))
+    card(axis, 0.70, 0.23, 0.275, 0.21,
+         "model.named_parameters()\nWalk child parameter registries\nYield 'embedding.weight'", PURPLE)
+    arrow(axis, (0.835, 0.54), (0.835, 0.46), PURPLE)
+    card(axis, 0.025, 0.23, 0.595, 0.21,
+         "SGD(model.parameters())\nKeeps that SAME Parameter in optimizer.param_groups\n"
+         "step() changes its values in place", ORANGE)
+    arrow(axis, (0.68, 0.335), (0.64, 0.335), ORANGE)
+    axis.text(0.5, 0.13, "The toy checks object identity at every hop. There is only one trainable table.",
+              ha="center", color=NAVY, fontsize=14)
+    axis.text(0.5, 0.055, "Registration discovers weights. Backward fills gradients. Step changes values.",
+              ha="center", color=TEAL, fontsize=15, weight="bold")
+    save(figure, HERE / "images" / "03a-toy-parameter-registration.png")
+
+
 if __name__ == "__main__":
     registry()
     numeric_trace()
     learning()
+    object_signatures()
+    cbow_profile_training()
+    toy_embedding_lookup()
+    toy_model_ownership()
+    toy_parameter_registration()
     observatory()

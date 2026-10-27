@@ -23,7 +23,7 @@ CHAPTER_DIRECTORY = (
 )
 if str(CHAPTER_DIRECTORY) not in sys.path:
     sys.path.insert(0, str(CHAPTER_DIRECTORY))
-from real_text_embeddings import make_document_windows, read_story_sentences, tokenize
+from real_text_embeddings import read_story_sentences, tokenize
 
 SEED = 17
 torch.manual_seed(SEED)
@@ -68,7 +68,24 @@ print("First encoded document:", id_documents[0])
 assert len(stoi) == vocabulary_size
 assert all(itos[index] == word for word, index in stoi.items())
 
-# %% 3 - CBOW preview: slide a window to make practice questions
+# %% 3 - Shared windows: slide a fixed-size slice through each sentence
+def make_document_windows(id_documents, window_width):
+    """Keep complete windows in document order; never bridge document boundaries."""
+    if window_width < 1:
+        raise ValueError("window_width must be at least one.")
+
+    per_document = [
+        np.lib.stride_tricks.sliding_window_view(
+            np.asarray(document, dtype=np.int64), window_width,
+        )
+        for document in id_documents
+        if len(document) >= window_width
+    ]
+    if not per_document:
+        return np.empty((0, window_width), dtype=np.int64)
+    return np.concatenate(per_document)
+
+
 CONTEXT_RADIUS = 2
 window_width = 2 * CONTEXT_RADIUS + 1
 # Reuse this cutter across this notebook's models; each objective chooses its own inputs and answers.
@@ -92,7 +109,17 @@ assert [[itos[index] for index in row] for row in cat_window_ids.tolist()] == [
 ]
 assert window_ids.shape == (len(windows), window_width)
 
-# %% CBOW preview - three real windows, one static storyboard
+# %% Your turn - change only the probe width, not the training windows
+probe_width = 3
+probe_windows = make_document_windows([id_documents[-1]], probe_width)
+for start, row in enumerate(probe_windows):
+    print(f"start={start}: {' '.join(itos[token_id] for token_id in row)}")
+print(f"{len(probe_windows)} complete {probe_width}-word windows; training width stays {window_width}.")
+
+# %% CBOW preview - animate NumPy's three five-word windows
+from IPython.display import HTML, display
+from matplotlib.animation import FuncAnimation
+
 window_story_words = tokenize(CAT_PROBE)
 window_story_frames = [
     [itos[token_id] for token_id in row] for row in cat_window_ids.tolist()
@@ -107,7 +134,9 @@ def draw_cbow_window(axis, frame):
     axis.clear()
     axis.set(xlim=(-0.6, len(window_story_words) - 0.4), ylim=(-1.1, 2.0))
     axis.axis("off")
-    axis.set_title(f"Window {frame + 1} of {len(window_story_frames)}", fontsize=11)
+    axis.set_title(
+        f"start={frame}: document[{frame}:{frame + window_width}]", fontsize=11,
+    )
     for position, word in enumerate(window_story_words):
         active = frame <= position < frame + window_width
         axis.text(
@@ -118,7 +147,7 @@ def draw_cbow_window(axis, frame):
         )
     row = window_story_frames[frame]
     question = row[:CONTEXT_RADIUS] + ["___"] + row[CONTEXT_RADIUS + 1:]
-    axis.text(3, 0.6, "Shared cut: " + " ".join(row),
+    axis.text(3, 0.6, "Window: " + " ".join(row),
               ha="center", fontsize=10, color="#1e3a8a")
     axis.text(3, -0.05, "CBOW clues: " + " ".join(question),
               ha="center", fontsize=10, color="#007f86")
@@ -126,24 +155,8 @@ def draw_cbow_window(axis, frame):
               ha="center", fontsize=11, color="#bf5700", weight="bold")
 
 
-window_story_figure, window_story_axes = plt.subplots(
-    1, len(window_story_frames), figsize=(15, 3.2),
-)
-for window_frame, window_axis in enumerate(np.atleast_1d(window_story_axes)):
-    draw_cbow_window(window_axis, window_frame)
-window_story_figure.suptitle("Shared window, CBOW question: slide one word at a time")
-window_story_figure.tight_layout(rect=(0, 0, 1, 0.9))
-window_story_figure.savefig(
-    CHAPTER_DIRECTORY / "images" / "03a-cbow-sliding-window-storyboard.png", dpi=130,
-)
-plt.close(window_story_figure)
 print(f"Prediction check: {len(window_story_frames)} complete windows, not one per word.")
 print("CBOW answers:", [row[CONTEXT_RADIUS] for row in window_story_frames])
-
-# %% CBOW preview - animate those same three windows
-from IPython.display import HTML, display
-from matplotlib.animation import FuncAnimation
-
 print("Watch the blue window move; CBOW keeps each orange answer out of its input.")
 window_animation_figure, window_animation_axis = plt.subplots(figsize=(9, 3.2))
 window_animation = FuncAnimation(
@@ -165,31 +178,233 @@ def make_dataloader(input_ids, target_ids, batch_size=512):
     )
 
 
-# %% 5 - CBOW: fetch sensor profiles and merge telemetry
-# Hand-picked lookup and predictor weights; no training.
+# %% Toy 1 - Create an embedding object and expose its random table
+# This local vocabulary labels table rows; the layer itself receives only integer IDs.
 toy_words = ["the", "cat", "sat"]
-toy_table = torch.tensor([[2.0, 0.0], [1.0, 3.0], [0.0, 4.0]])
-toy_ids = torch.tensor([[0, 2], [2, 0]])
-toy_rows = torch.nn.functional.embedding(toy_ids, toy_table)
+# The vocabulary size sets the number of stored rows, not the current sentence length.
+toy_vocabulary_size = len(toy_words)
+# The embedding width sets how many floating-point values describe each token.
+toy_embedding_width = 2
+
+# Save and restore the CPU random state so this repeatable toy does not alter later models.
+with torch.random.fork_rng(devices=[]):
+    torch.manual_seed(SEED)
+    # Own a trainable [V, D] Parameter; default initialization draws from Normal(0, 1).
+    toy_embedding = nn.Embedding(toy_vocabulary_size, toy_embedding_width)
+    torch.manual_seed(SEED)
+    # Replay allocation and the random fill explicitly to check the default initializer.
+    toy_manual_initialization = torch.empty(toy_vocabulary_size, toy_embedding_width).normal_()
+
+# Freeze a separate copy for before/after comparisons, not a second trainable table.
+toy_initial_weights = toy_embedding.weight.detach().clone()
+print("Stored table [V, D]:", tuple(toy_embedding.weight.shape))
+print("Trainable Parameter:", isinstance(toy_embedding.weight, nn.Parameter))
+print("Requires gradients:", toy_embedding.weight.requires_grad)
+print("Initial rows [the, cat, sat]:\n", toy_initial_weights)
+print("Manual random fill matches:", torch.equal(toy_initial_weights, toy_manual_initialization))
+assert torch.equal(toy_initial_weights, toy_manual_initialization)
+print("Creation allocates random values, not learned word meanings.")
+
+# %% Toy 2 - Lookup selects rows; averaging is a separate CBOW choice
+# Two questions use the same visible words in opposite order; neither includes the answer.
+toy_ids = torch.tensor([[0, 2], [2, 0]], dtype=torch.long)
+# Keep the original integer addresses to prove that training never changes them.
+toy_initial_ids = toy_ids.clone()
+# Fetch one D-number vector per ID, preserving both the question and word axes.
+toy_rows = toy_embedding(toy_ids)
+# Ordinary indexing exposes exactly which stored rows the embedding operation selects.
+toy_indexed_rows = toy_embedding.weight[toy_ids]
+# Combine the two clues within each question; this, not lookup, erases their order.
 toy_averages = toy_rows.mean(dim=1)
 
-toy_head = torch.tensor([[1.0, 0.0, 0.0], [0.0, 2.0, 1.0]])
-toy_logits = toy_averages @ toy_head
-toy_targets = torch.tensor([1, 1])
-toy_probabilities = toy_logits.softmax(dim=-1)
-toy_loss = nn.functional.cross_entropy(toy_logits, toy_targets)
-
-print("Clues: the ___ sat -> IDs:", toy_ids[0].tolist())
-print("Fetched profiles:", toy_rows[0].tolist())
-print("Average fed to predictor:", toy_averages[0].tolist())
-print("Scores [the, cat, sat]:", toy_logits[0].tolist())
-print("Probabilities:", [round(value, 3) for value in toy_probabilities[0].tolist()])
-print("Predicted word:", toy_words[toy_logits[0].argmax().item()])
-print("Target: cat (ID 1); loss compares scores with this ID:", toy_loss.item())
-
+print("Input IDs [B, C]:", toy_ids.tolist(), tuple(toy_ids.shape))
+print("Fetched vectors [B, C, D]:\n", toy_rows.detach())
+print("Lookup equals weight[IDs]:", torch.equal(toy_rows, toy_indexed_rows))
+print("Means [B, D]:\n", toy_averages.detach())
 assert toy_rows.shape == (2, 2, 2)
-assert torch.equal(toy_averages, torch.tensor([[1.0, 2.0], [1.0, 2.0]]))
+assert torch.equal(toy_rows, toy_indexed_rows)
+assert torch.equal(toy_averages[0], toy_averages[1])
+assert torch.equal(toy_embedding.weight.detach(), toy_initial_weights)
+print("Lookup reads the existing table; reversing clues changes no CBOW mean.")
+
+# %% Toy 3 - Put the embedding inside a model; pass only IDs to forward
+# Own the lookup and predictor together so model.parameters() discovers both sets of weights.
+class ToyCBOW(nn.Module):
+    def __init__(self, embedding):
+        # Create nn.Module's empty child-layer and parameter registries before attaching layers.
+        super().__init__()
+        print("Before attaching layers, model parameters:", list(self.named_parameters()))
+        # nn.Module.__setattr__ intercepts this assignment and records the child in _modules.
+        self.embedding = embedding
+        # Turn a D-number context into V scores with separate trainable output weights.
+        self.head = nn.Linear(embedding.embedding_dim, embedding.num_embeddings, bias=False)
+
+    def forward(self, input_ids):
+        # Gather floating-point rows INSIDE the model; the integer inputs stay unchanged.
+        vectors = self.embedding(input_ids)
+        # Save this activation only for the toy's gradient trace; it is not a Parameter.
+        self.lookup_vectors = vectors
+        # Average context words independently within each question.
+        context = vectors.mean(dim=1)
+        return self.head(context)
+
+
+# Isolate the predictor's random start too, keeping later lesson experiments unchanged.
+with torch.random.fork_rng(devices=[]):
+    torch.manual_seed(SEED + 1)
+    # Pass the layer once during construction; ordinary prediction calls receive only IDs.
+    toy_model = ToyCBOW(toy_embedding)
+print("toy_model(toy_ids) receives integer addresses, not a vocabulary dict or external vectors.")
+
+# %% Toy 3b - Follow registration from the exact assignment to the optimizer
+# Read the actual registries to expose ownership; ordinary application code does not edit them.
+print("Root child-layer registry:", list(toy_model._modules))
+print("Root direct parameters:", list(toy_model.named_parameters(recurse=False)))
+print("Embedding's own parameter registry:", list(toy_embedding._parameters))
+# Recursion visits child modules and yields their existing Parameters, not copies of them.
+toy_registered_parameters = dict(toy_model.named_parameters())
+print("Model-owned parameters:",
+      {name: tuple(parameter.shape) for name, parameter in toy_registered_parameters.items()})
+assert ToyCBOW.__setattr__ is nn.Module.__setattr__
+assert toy_model._modules["embedding"] is toy_embedding
+assert toy_embedding._parameters["weight"] is toy_embedding.weight
+assert toy_registered_parameters["embedding.weight"] is toy_embedding.weight
+print("Child registry -> parameter registry -> named_parameters: the SAME weight object.")
+# Use a visible step size for the plain SGD update checked below.
+toy_learning_rate = 0.1
+# Give the optimizer the recursively discovered Parameters; it retains references to them.
+toy_optimizer = torch.optim.SGD(toy_model.parameters(), lr=toy_learning_rate)
+assert any(
+    parameter is toy_embedding.weight
+    for group in toy_optimizer.param_groups for parameter in group["params"]
+)
+print("Optimizer contains that SAME embedding.weight object, not the input IDs.")
+print("Registration discovers weights; it does not calculate gradients or train them.")
+
+# %% Toy 4 - Loss and backward fill gradients, not new input values
+# Both questions have cat (ID 1) as their label, not as another input lookup.
+toy_targets = torch.tensor([1, 1], dtype=torch.long)
+# Compare raw vocabulary scores with the correct word IDs; no softmax is needed first.
+toy_criterion = nn.CrossEntropyLoss()
+# Snapshot the predictor too, so we do not attribute joint learning to embeddings alone.
+toy_initial_head = toy_model.head.weight.detach().clone()
+# The model performs lookup, mean, and scoring internally; its only input is integer IDs.
+toy_logits = toy_model(toy_ids)
+# Intermediate gradients are normally not saved; retain these only to inspect the backward route.
+toy_model.lookup_vectors.retain_grad()
+# Keep the actual forward activations to check that updating weights does not rewrite them.
+toy_first_forward_vectors = toy_model.lookup_vectors.detach().clone()
+# This scalar connects the prediction error back through the head, mean, and lookup.
+toy_loss = toy_criterion(toy_logits, toy_targets)
+# Store a number, not a computation graph, for the later loss comparison.
+toy_loss_before = toy_loss.item()
+toy_optimizer.zero_grad()
+toy_loss.backward()
+assert toy_embedding.weight.grad is not None
+# Copy the first gradient ledger before later batches replace it.
+toy_first_gradient = toy_embedding.weight.grad.detach().clone()
+
+print("Scores [the, cat, sat]:", toy_logits[0].detach().tolist())
+print("Initial probabilities:", toy_logits[0].detach().softmax(dim=-1).tolist())
+print("Initial loss:", toy_loss_before)
+print("Embedding gradients [the, cat, sat]:\n", toy_first_gradient)
+assert torch.equal(toy_embedding.weight.detach(), toy_initial_weights)
+assert torch.count_nonzero(toy_first_gradient[1]).item() == 0
+assert torch.all(toy_first_gradient[[0, 2]].norm(dim=1) > 0)
 assert torch.equal(toy_logits[0], toy_logits[1])
+print("Backward records feedback in .weight.grad; it has not changed the table.")
+
+# %% Toy 4b - Replay lookup's backward accumulation into the embedding table
+assert toy_model.lookup_vectors.grad is not None
+# Each context-word occurrence has its own gradient before lookup accumulates by token ID.
+toy_first_vector_gradient = toy_model.lookup_vectors.grad.detach().clone()
+# Start a separate zero ledger to reconstruct, not replace, PyTorch's already-computed gradient.
+toy_scatter_gradient = torch.zeros_like(toy_initial_weights)
+toy_scatter_gradient.index_add_(
+    0, toy_ids.reshape(-1),
+    toy_first_vector_gradient.reshape(-1, toy_embedding_width),
+)
+print("Gradient per fetched occurrence [B, C, D]:\n", toy_first_vector_gradient)
+print("the row adds A/the and B/the:",
+      toy_first_vector_gradient[0, 0].tolist(), "+", toy_first_vector_gradient[1, 1].tolist())
+print("sat row adds A/sat and B/sat:",
+      toy_first_vector_gradient[0, 1].tolist(), "+", toy_first_vector_gradient[1, 0].tolist())
+print("Replayed table gradient [V, D]:\n", toy_scatter_gradient)
+torch.testing.assert_close(toy_scatter_gradient, toy_first_gradient)
+assert torch.equal(toy_embedding.weight.detach(), toy_initial_weights)
+assert "lookup_vectors" not in dict(toy_model.named_parameters())
+print("Scatter-add matches embedding.weight.grad; this replay applies no extra update.")
+
+# %% Toy 5 - One optimizer step applies the gradient ledger to the stored table
+toy_optimizer.step()
+# Record the first real update separately from the longer training run.
+toy_after_first_step = toy_embedding.weight.detach().clone()
+print("After one SGD step:\n", toy_after_first_step)
+print("Observed weight change:\n", toy_after_first_step - toy_initial_weights)
+print("Expected change = -learning_rate * gradient:\n",
+      -toy_learning_rate * toy_first_gradient)
+torch.testing.assert_close(
+    toy_after_first_step,
+    toy_initial_weights - toy_learning_rate * toy_first_gradient,
+)
+assert torch.equal(toy_after_first_step[1], toy_initial_weights[1])
+assert torch.equal(toy_model.lookup_vectors.detach(), toy_first_forward_vectors)
+print("SGD changes the and sat; cat's input row stays fixed because cat was only a label.")
+
+# %% Toy 6 - Repeat the tiny exercise and compare every row before and after
+# Include the already-completed first step in this deliberately tiny memorization budget.
+toy_training_steps = 40
+for _ in range(toy_training_steps - 1):
+    toy_optimizer.zero_grad()
+    # Rebuild predictions from current rows; old fetched vectors are not live table views.
+    toy_training_logits = toy_model(toy_ids)
+    # Rebuild the graph for each step instead of reusing the consumed first-step graph.
+    toy_training_loss = toy_criterion(toy_training_logits, toy_targets)
+    toy_training_loss.backward()
+    toy_optimizer.step()
+
+with torch.no_grad():
+    # Read the newly learned vectors without recording another training graph.
+    toy_final_rows = toy_model.embedding(toy_ids)
+    # Measure predictions after the final update, not before that update.
+    toy_final_logits = toy_model(toy_ids)
+    # Reduce the final error to a plain number for an honest before/after comparison.
+    toy_loss_after = toy_criterion(toy_final_logits, toy_targets).item()
+# Preserve the final table for row-by-row comparisons and the runnable drill below.
+toy_final_weights = toy_embedding.weight.detach().clone()
+# Coordinate differences show exactly which values shifted, including unchanged zeros.
+toy_weight_shift = toy_final_weights - toy_initial_weights
+
+for toy_id, toy_word in enumerate(toy_words):
+    print(f"{toy_word}: before={toy_initial_weights[toy_id].tolist()} "
+          f"after={toy_final_weights[toy_id].tolist()} "
+          f"shift={toy_weight_shift[toy_id].tolist()}")
+print(f"Loss after {toy_training_steps} steps: {toy_loss_before:.6f} -> {toy_loss_after:.6f}")
+print("Final probabilities [the, cat, sat]:", toy_final_logits[0].softmax(dim=-1).tolist())
+assert toy_loss_after < toy_loss_before
+assert torch.equal(toy_final_logits.argmax(dim=-1), toy_targets)
+assert torch.equal(toy_final_weights[1], toy_initial_weights[1])
+assert torch.all(toy_weight_shift[[0, 2]].norm(dim=1) > 0)
+assert not torch.equal(toy_model.head.weight.detach(), toy_initial_head)
+assert torch.equal(toy_ids, toy_initial_ids)
+assert torch.equal(toy_rows.detach(), toy_initial_weights[toy_initial_ids])
+assert not torch.equal(toy_final_rows, toy_rows.detach())
+print("Both modules learned; IDs stayed fixed. Two repeated questions prove mechanics, not language quality.")
+print("Earlier fetched vectors did not mutate; the next forward pass reads the updated stored rows.")
+
+# %% Your turn - look up a different token without changing the learned table
+# CHANGE THIS: choose 0, 1, or 2 to inspect the, cat, or sat; this is not another training run.
+toy_probe_id = 1
+# Keep a batch axis so a single token returns one D-number vector, shape [1, D].
+toy_probe_ids = torch.tensor([toy_probe_id], dtype=torch.long)
+with torch.no_grad():
+    # Retrieve the chosen row without accumulating gradients or updating any weights.
+    toy_probe_vector = toy_embedding(toy_probe_ids)
+print(f"{toy_words[toy_probe_id]} -> {toy_probe_vector.tolist()}, "
+      f"shape {tuple(toy_probe_vector.shape)}")
+assert torch.equal(toy_probe_vector[0], toy_final_weights[toy_probe_id])
+assert torch.equal(toy_embedding.weight.detach(), toy_final_weights)
+print("A different ID selects a different existing row; lookup itself changes no values.")
 
 # %% CBOW: give every context word an equal vote
 EMBEDDING_WIDTH = 32
@@ -212,43 +427,6 @@ print("After context mean:", tuple(original_mean.shape))
 print("Maximum difference after reversal:", (original_mean - reversed_mean).abs().max().item())
 
 assert torch.allclose(original_mean, reversed_mean)
-
-# %% Shared lookup: why sensor profiles, and not a giant one-hot checklist?
-scalar_cat_id = torch.tensor(1, dtype=torch.long)
-one_cat_batch = scalar_cat_id.unsqueeze(0)
-scalar_cat_row = nn.functional.embedding(scalar_cat_id, toy_table)
-lookup_cat_row = nn.functional.embedding(one_cat_batch, toy_table)
-one_hot_cat = nn.functional.one_hot(one_cat_batch, num_classes=3).to(toy_table.dtype)
-checklist_cat_row = one_hot_cat @ toy_table
-assert scalar_cat_row.shape == (2,)
-assert lookup_cat_row.shape == checklist_cat_row.shape == (1, 2)
-assert torch.equal(lookup_cat_row, torch.tensor([[1., 3.]]))
-assert torch.equal(lookup_cat_row, checklist_cat_row)
-print("Stored table:", tuple(toy_table.shape), "= [V, D] weights")
-print("Scalar ID -> row:", tuple(scalar_cat_id.shape), "->", tuple(scalar_cat_row.shape))
-print("Actual ID batch:", one_cat_batch.tolist(), tuple(one_cat_batch.shape))
-print("Actual lookup:  ", lookup_cat_row.tolist(), tuple(lookup_cat_row.shape))
-print("One-hot check:  ", one_hot_cat.tolist(), tuple(one_hot_cat.shape))
-print("Same result:    ", checklist_cat_row.tolist(), tuple(checklist_cat_row.shape))
-
-checklists = torch.eye(vocabulary_size)
-random_rows = probe_embedding.weight.detach()
-
-
-def checklist_gap(word_a, word_b):
-    return (checklists[stoi[word_a]] - checklists[stoi[word_b]]).norm().item()
-
-
-def row_similarity(rows, word_a, word_b):
-    return torch.cosine_similarity(rows[stoi[word_a]], rows[stoi[word_b]], dim=0).item()
-
-
-print(f"\nOne checklist: {vocabulary_size} boxes. One sensor profile: {EMBEDDING_WIDTH} channels.")
-for word_a, word_b in [("cat", "dog"), ("cat", "mat")]:
-    print(f"{word_a} vs {word_b:<10}  checklist gap {checklist_gap(word_a, word_b):.3f}   "
-          f"random-row similarity {row_similarity(random_rows, word_a, word_b):+.3f}")
-
-assert checklist_gap("cat", "dog") == checklist_gap("cat", "mat")
 
 # %% CBOW: the same mean with EmbeddingBag
 embedding_bag = nn.EmbeddingBag(

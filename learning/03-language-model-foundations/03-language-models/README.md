@@ -26,17 +26,41 @@ Select that kernel, restart, and run each notebook independently; kernels don't 
 to reopen earlier notebooks. A side-by-side table then turns the same
 `the sleepy cat sat on` window into CBOW, Skip-gram, and reader/writer questions.
 
-Experiment-state labels distinguish arithmetic, random lookup previews, fresh
-32-number training tables, and the separate 48-number held-out comparison.
-The mechanism stays fixed; the questions and context processing change.
+After the frozen arithmetic picture, the toy creates `nn.Embedding(3, 2)` from
+dimensions alone. Commented cells print its random table, replay the default
+initialization, prove lookup equals row indexing, and follow gradients into a real
+SGD update. Rendered diagrams follow the lookup and model-ownership code, without
+plotting code in the lesson. `ToyCBOW` registers the same embedding as a child layer;
+its forward call receives only integer IDs, while `model.parameters()` exposes
+the table to the optimizer. A registry trace follows `nn.Module.__setattr__`,
+the child's `_parameters`, recursive discovery, and the optimizer's reference
+to the very same tensor. A retained intermediate gradient then lets you replay
+lookup's scatter-add and verify it matches `embedding.weight.grad` before SGD
+changes any value. Earlier fetched vectors do not mutate when weights update.
+Before/after rows and loss show 40 tiny training steps; a one-ID drill
+checks that lookup itself changes nothing. The unused `cat` input row stays fixed
+while the separate predictor learns to score `cat`. This is a mechanics check,
+not evidence of language quality.
+
+Experiment-state labels distinguish that isolated random-start toy from random
+lookup previews, fresh 32-number training tables, and the separate 48-number
+held-out comparison. No toy weights or optimizer state transfer into those runs.
 
 Model-specific headings name CBOW, Skip-gram, or the encoder-decoder; shared setup
-and the three-model comparison are marked separately. Section 3 uses a short CBOW
-sliding-window animation with a static storyboard. We share `make_document_windows`
-because these lessons repeat the same cutting step, not because every language
-model needs five-word windows or a hidden middle word.
+and the three-model comparison are marked separately. Section 3 builds
+`make_document_windows` inline with NumPy's built-in `sliding_window_view`, explains
+its rows and one-position stride, and includes a small window-width exercise.
+One CBOW animation connects each start index to its slice; the printed windows
+remain readable without playback. Five-word windows and a hidden middle word
+are this lesson's choices, not requirements for every language model.
 
-The embedding intuition uses registry IDs and abstract learned sensor profiles.
+The embedding intuition separates representation from the training task. Catalogue
+names identify objects; [sensor profiles](images/03a-object-sensor-signatures.png)
+provide properties for comparisons such as finding objects that resemble Earth.
+Word embeddings extend the profile idea without hand-defining a meaning for each
+channel. A [separate CBOW diagram](images/03a-cbow-profile-training.png) then shows
+how prediction feedback can teach the profile values and predictor together.
+Registry IDs stay fixed. The space analogy does not predict missing celestial neighbours.
 03A's forward look follows one static profile into a fleet with one craft per
 token occurrence: learned communication builds contextual working states without
 rewriting the registry during inference. The `bank`/`river` and `bank`/`money`
@@ -64,8 +88,11 @@ python .\generate_sensor_analogy_diagrams.py
 [TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories), with a separate familiar
 cat document for the close-up examples. Its [helper](real_text_embeddings.py) downloads and
 checks the pinned corpus, builds practice pairs, and records the embedding comparison.
-Its document-safe window builder is shared by the introductory run and held-out comparison:
-CBOW, Skip-gram, and the writer reuse raw windows, then choose their own inputs and answers.
+The notebook and Python companion apply NumPy's sliding-window view separately
+to each sentence, then concatenate the rows. Offline tests check that they use
+this built-in primitive and match the shared helper used by the larger held-out
+comparison. CBOW, Skip-gram, and the writer reuse raw windows, then
+choose their own inputs and answers.
 03A also takes one isolated optimizer step to show that embedding weights change while
 the word IDs stay fixed.
 Section 8 opens with a [short animation](images/03a-embedding-learning-animation.gif):
