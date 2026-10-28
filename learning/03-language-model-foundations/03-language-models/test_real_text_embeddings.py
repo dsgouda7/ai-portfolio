@@ -5,13 +5,16 @@ from contextlib import redirect_stdout
 from io import StringIO
 import json
 from pathlib import Path
+import re
 import unittest
 from unittest.mock import patch
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from real_text_embeddings import make_document_windows, objective_pairs
+from language_model import TrainableLanguageModel
+from real_text_embeddings import make_document_windows, objective_pairs, plot_embedding_routing
 
 
 class DocumentWindowTests(unittest.TestCase):
@@ -111,155 +114,414 @@ class DocumentWindowTests(unittest.TestCase):
         self.assertEqual(targets.tolist(), [[9, 4, 5], [9, 5, 6]])
 
 
-class ToyEmbeddingTests(unittest.TestCase):
+class CBOWEmbeddingTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         chapter = Path(__file__).resolve().parent
         stem = "03A-training-skeleton-and-word-objectives"
         notebook = json.loads((chapter / f"{stem}.ipynb").read_text(encoding="utf-8"))
-        companion = (chapter / f"{stem}.py").read_text(encoding="utf-8")
-        start = companion.index("# %% Toy 1 - ")
-        stop = companion.index("# %% CBOW: give every context word an equal vote", start)
-        cls.sources = {
-            "notebook": "\n\n".join(
-                "".join(cell["source"]) for cell in notebook["cells"]
-                if cell["cell_type"] == "code" and (
-                    "".join(cell["source"]).startswith("# %% Toy ")
-                    or "".join(cell["source"]).startswith("# %% Your turn - look up a different token")
-                )
-            ),
-            "companion": companion[start:stop],
-        }
-        cls.states = {}
-        cls.rng_unchanged = {}
-        for name, source in cls.sources.items():
-            namespace = {"torch": torch, "nn": torch.nn, "SEED": 17}
-            before_rng = torch.random.get_rng_state().clone()
-            with redirect_stdout(StringIO()):
-                exec(compile(source, name, "exec"), namespace)
-            cls.states[name] = namespace
-            cls.rng_unchanged[name] = torch.equal(before_rng, torch.random.get_rng_state())
-
-    def test_notebook_and_companion_have_identical_toy_computation(self):
-        self.assertEqual(
-            ast.dump(ast.parse(self.sources["notebook"])),
-            ast.dump(ast.parse(self.sources["companion"])),
+        source = "\n\n".join(
+            "".join(cell["source"]) for cell in notebook["cells"]
+            if cell["cell_type"] == "code"
+        )
+        definitions = [
+            node for node in ast.parse(source).body
+            if isinstance(node, ast.ClassDef) and node.name == "CBOW"
+        ]
+        if len(definitions) != 1:
+            raise AssertionError("The lesson must define exactly one real CBOW model.")
+        namespace = {"nn": torch.nn, "TrainableLanguageModel": TrainableLanguageModel}
+        exec(compile(ast.Module(body=definitions, type_ignores=[]), "CBOW", "exec"), namespace)
+        cls.model_type = namespace["CBOW"]
+        cls.routing_source = next(
+            "".join(cell["source"]) for cell in notebook["cells"]
+            if cell["id"] == "ch03a-routing-record"
         )
 
-    def test_dimensions_create_a_random_trainable_parameter(self):
-        for name, state in self.states.items():
-            with self.subTest(source=name):
-                embedding = state["toy_embedding"]
-                self.assertIsInstance(embedding, torch.nn.Embedding)
-                self.assertIsInstance(embedding.weight, torch.nn.Parameter)
-                self.assertTrue(embedding.weight.requires_grad)
-                self.assertEqual(tuple(embedding.weight.shape), (3, 2))
-                torch.testing.assert_close(
-                    state["toy_initial_weights"], state["toy_manual_initialization"],
-                    rtol=0, atol=0,
-                )
-                self.assertTrue(self.rng_unchanged[name])
+    def setUp(self):
+        with torch.random.fork_rng(devices=[]):
+            torch.manual_seed(17)
+            self.model = self.model_type(7, 4)
+        self.ids = torch.tensor([[0, 2, 4, 6], [6, 4, 2, 0]], dtype=torch.long)
 
-    def test_lookup_preserves_axes_and_mean_erases_only_word_order(self):
-        for name, state in self.states.items():
-            with self.subTest(source=name):
-                self.assertEqual(tuple(state["toy_rows"].shape), (2, 2, 2))
-                self.assertEqual(tuple(state["toy_averages"].shape), (2, 2))
-                self.assertFalse(state["toy_ids"].requires_grad)
-                torch.testing.assert_close(
-                    state["toy_rows"].detach(),
-                    state["toy_initial_weights"][state["toy_ids"]],
-                    rtol=0, atol=0,
-                )
-                torch.testing.assert_close(
-                    state["toy_averages"][0], state["toy_averages"][1], rtol=0, atol=0,
-                )
-                torch.testing.assert_close(
-                    state["toy_final_rows"], state["toy_final_weights"][state["toy_ids"]],
-                    rtol=0, atol=0,
-                )
+    def _activate_features(self):
+        # Keep routing tests on an active ReLU path, rather than testing dead units.
+        with torch.no_grad():
+            rows = self.model.embedding.weight
+            rows.copy_(torch.arange(rows.numel()).reshape_as(rows) / rows.numel())
+            self.model.hidden.weight.fill_(0.25)
+            self.model.hidden.bias.fill_(1.0)
 
-    def test_model_owns_the_same_embedding_and_forward_accepts_only_ids(self):
-        for name, state in self.states.items():
-            with self.subTest(source=name):
-                model = state["toy_model"]
-                self.assertIsInstance(model, torch.nn.Module)
-                self.assertIs(model.embedding, state["toy_embedding"])
-                self.assertEqual(
-                    set(state["toy_registered_parameters"]), {"embedding.weight", "head.weight"},
-                )
-                self.assertIs(
-                    state["toy_registered_parameters"]["embedding.weight"],
-                    state["toy_embedding"].weight,
-                )
-                self.assertIs(model._modules["embedding"], state["toy_embedding"])
-                self.assertIs(
-                    state["toy_embedding"]._parameters["weight"], state["toy_embedding"].weight,
-                )
-                self.assertEqual(list(model.named_parameters(recurse=False)), [])
-                self.assertNotIn("lookup_vectors", dict(model.named_parameters()))
-                with torch.no_grad():
-                    torch.testing.assert_close(
-                        model(state["toy_ids"]),
-                        model.head(model.embedding(state["toy_ids"]).mean(dim=1)),
-                        rtol=0, atol=0,
-                    )
+    def _record_routing(self):
+        namespace = {
+            "torch": torch, "nn": torch.nn, "model": self.model,
+            "cat_contexts": self.ids,
+            "cat_window_ids": torch.tensor([[0, 2, 1, 4, 6], [6, 4, 1, 2, 0]]),
+            "CONTEXT_RADIUS": 2,
+            "itos": ["the", "cat", "sleepy", "dog", "sat", "mat", "on"],
+        }
+        with redirect_stdout(StringIO()):
+            exec(compile(self.routing_source, "routing", "exec"), namespace)
+        return namespace
 
-    def test_backward_accumulates_occurrence_gradients_into_the_selected_rows(self):
-        for name, state in self.states.items():
-            with self.subTest(source=name):
-                gradients = state["toy_first_vector_gradient"]
-                self.assertEqual(tuple(gradients.shape), (2, 2, 2))
-                torch.testing.assert_close(
-                    state["toy_first_gradient"][0], gradients[0, 0] + gradients[1, 1],
-                )
-                torch.testing.assert_close(
-                    state["toy_first_gradient"][2], gradients[0, 1] + gradients[1, 0],
-                )
-                torch.testing.assert_close(
-                    state["toy_scatter_gradient"], state["toy_first_gradient"],
-                )
-                torch.testing.assert_close(
-                    state["toy_first_forward_vectors"],
-                    state["toy_initial_weights"][state["toy_ids"]],
-                    rtol=0, atol=0,
-                )
+    def test_real_model_allocates_one_trainable_vocabulary_table(self):
+        self.assertEqual(tuple(self.model.embedding.weight.shape), (7, 4))
+        self.assertTrue(self.model.embedding.weight.requires_grad)
+        self.assertIs(
+            dict(self.model.named_parameters())["embedding.weight"],
+            self.model.embedding.weight,
+        )
 
-    def test_plain_sgd_applies_the_recorded_gradient_to_the_same_coordinates(self):
-        for name, state in self.states.items():
-            with self.subTest(source=name):
-                gradient = state["toy_first_gradient"]
-                self.assertEqual(tuple(gradient.shape), (3, 2))
-                self.assertEqual(torch.count_nonzero(gradient[1]).item(), 0)
-                self.assertTrue(torch.all(gradient[[0, 2]].norm(dim=1) > 0).item())
-                torch.testing.assert_close(
-                    state["toy_after_first_step"],
-                    state["toy_initial_weights"] - state["toy_learning_rate"] * gradient,
-                )
-                self.assertEqual(
-                    {id(parameter) for group in state["toy_optimizer"].param_groups
-                     for parameter in group["params"]},
-                    {id(state["toy_embedding"].weight), id(state["toy_model"].head.weight)},
-                )
+    def test_forward_selects_rows_and_scores_without_rewriting_ids(self):
+        before_ids = self.ids.clone()
+        before_table = self.model.embedding.weight.detach().clone()
+        with torch.no_grad():
+            rows = self.model.embedding(self.ids)
+            expected = self.model.output(
+                self.model.activation(self.model.hidden(rows.mean(dim=1))),
+            )
+            actual = self.model(self.ids)
+        self.assertEqual(tuple(rows.shape), (2, 4, 4))
+        self.assertEqual(tuple(actual.shape), (2, 7))
+        torch.testing.assert_close(rows, before_table[self.ids])
+        torch.testing.assert_close(actual, expected)
+        torch.testing.assert_close(actual[0], actual[1])
+        self.assertTrue(torch.equal(self.ids, before_ids))
+        self.assertTrue(torch.equal(self.model.embedding.weight.detach(), before_table))
 
-    def test_training_changes_used_rows_and_head_without_changing_ids(self):
-        for name, state in self.states.items():
-            with self.subTest(source=name):
-                self.assertEqual(state["toy_training_steps"], 40)
-                self.assertLess(state["toy_loss_after"], state["toy_loss_before"])
-                self.assertGreater(state["toy_final_logits"][0].softmax(dim=-1)[1].item(), 0.9)
-                torch.testing.assert_close(
-                    state["toy_final_weights"][1], state["toy_initial_weights"][1],
-                    rtol=0, atol=0,
-                )
-                self.assertTrue(
-                    torch.all(state["toy_weight_shift"][[0, 2]].norm(dim=1) > 0).item(),
-                )
-                self.assertFalse(torch.equal(
-                    state["toy_model"].head.weight.detach(), state["toy_initial_head"],
-                ))
-                self.assertTrue(torch.equal(state["toy_ids"], state["toy_initial_ids"]))
-                self.assertFalse(torch.equal(state["toy_final_rows"], state["toy_rows"].detach()))
+    def test_shared_training_updates_embeddings_and_predictor_not_input_ids(self):
+        self._activate_features()
+        before_rows = self.model.embedding.weight.detach().clone()
+        before_head = self.model.output.weight.detach().clone()
+        before_ids = self.ids.clone()
+        answers = torch.tensor([1, 1], dtype=torch.long)
+        loader = torch.utils.data.DataLoader(
+            torch.utils.data.TensorDataset(self.ids, answers), batch_size=2,
+        )
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.05)
+        losses = self.model.fit_language_model(loader, torch.nn.CrossEntropyLoss(), optimizer, 20)
+        self.assertLess(losses[-1], losses[0])
+        self.assertFalse(torch.equal(self.model.embedding.weight.detach(), before_rows))
+        self.assertFalse(torch.equal(self.model.output.weight.detach(), before_head))
+        self.assertTrue(torch.equal(self.ids, before_ids))
+
+    def test_recorded_step_routes_rows_without_touching_the_main_model_or_rng(self):
+        self._activate_features()
+        before = {name: value.detach().clone() for name, value in self.model.named_parameters()}
+        before_ids = self.ids.clone()
+        rng_before = torch.random.get_rng_state().clone()
+        state = self._record_routing()
+        trace = state["routing_trace"]
+        self.assertEqual(state["routing_gradient_rows"], {0, 2, 4, 6})
+        self.assertEqual(state["routing_changed_rows"], {0, 2, 4, 6})
+        self.assertEqual(trace["gradient"].layout, torch.strided)
+        self.assertTrue(torch.equal(trace["weights"][0], trace["weights"][1]))
+        self.assertTrue(torch.equal(trace["weights"][0], trace["weights"][2]))
+        torch.testing.assert_close(
+            trace["weights"][3], trace["weights"][0] - 0.1 * trace["gradient"],
+        )
+        for name, value in self.model.named_parameters():
+            self.assertTrue(torch.equal(value.detach(), before[name]), name)
+            self.assertIsNone(value.grad)
+        self.assertTrue(torch.equal(self.ids, before_ids))
+        self.assertTrue(torch.equal(torch.random.get_rng_state(), rng_before))
+
+    def test_checking_answer_does_not_fetch_its_input_row_but_head_receives_feedback(self):
+        self._activate_features()
+        state = self._record_routing()
+        self.assertEqual(state["routing_targets"].tolist(), [1])
+        self.assertNotIn(1, state["routing_selected"])
+        self.assertEqual(state["routing_gradient"][1].count_nonzero().item(), 0)
+        self.assertNotEqual(state["routing_head_gradient"][1].item(), 0)
+        self.assertEqual(state["routing_head_gradient"].count_nonzero().item(), 7)
+
+    def test_repeated_input_ids_accumulate_occurrence_gradients_automatically(self):
+        self._activate_features()
+        contexts = torch.tensor([[0, 0, 2, 2]])
+        activations = []
+
+        def retain_lookup(module, inputs, output):
+            output.retain_grad()
+            activations.append(output)
+
+        hook = self.model.embedding.register_forward_hook(retain_lookup)
+        try:
+            loss = self.model.training_loss(contexts, torch.tensor([1]), torch.nn.CrossEntropyLoss())
+            loss.backward()
+        finally:
+            hook.remove()
+        occurrence_gradients = activations[0].grad
+        torch.testing.assert_close(
+            self.model.embedding.weight.grad[0],
+            occurrence_gradients[0, 0] + occurrence_gradients[0, 1],
+        )
+        torch.testing.assert_close(
+            self.model.embedding.weight.grad[2],
+            occurrence_gradients[0, 2] + occurrence_gradients[0, 3],
+        )
+        self.assertEqual(self.model.embedding.weight.grad[[1, 3, 4, 5, 6]].count_nonzero().item(), 0)
+        self.assertGreater(self.model.embedding.weight.grad[[0, 2]].norm().item(), 0)
+
+    def test_adam_history_can_move_an_unread_row_with_zero_current_gradient(self):
+        self._activate_features()
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.05)
+        criterion = torch.nn.CrossEntropyLoss()
+        optimizer.zero_grad()
+        self.model.training_loss(torch.tensor([[0, 2]]), torch.tensor([1]), criterion).backward()
+        optimizer.step()
+        before = self.model.embedding.weight.detach().clone()
+        optimizer.zero_grad()
+        self.model.training_loss(torch.tensor([[4, 6]]), torch.tensor([1]), criterion).backward()
+        self.assertEqual(self.model.embedding.weight.grad[[0, 2]].count_nonzero().item(), 0)
+        optimizer.step()
+        self.assertFalse(torch.equal(self.model.embedding.weight.detach()[[0, 2]], before[[0, 2]]))
+
+    def test_static_storyboard_plots_full_row_measurements_not_only_displayed_features(self):
+        with torch.random.fork_rng(devices=[]):
+            self.model = self.model_type(7, 8)
+        self._activate_features()
+        state = self._record_routing()
+        trace = state["routing_trace"]
+        figure = plot_embedding_routing(trace, state["itos"])
+        try:
+            for axis, measurements in (
+                (figure.axes[1], trace["gradient"].norm(dim=1)),
+                (figure.axes[2], (trace["weights"][3] - trace["weights"][0]).norm(dim=1)),
+            ):
+                for bar, label in zip(axis.patches, axis.get_yticklabels()):
+                    index = state["itos"].index(label.get_text())
+                    self.assertAlmostEqual(bar.get_width(), measurements[index].item())
+            self.assertEqual(figure.axes[0].images[0].get_array().shape[1], 4)
+        finally:
+            plt.close(figure)
+
+
+class CoreLessonTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        chapter = Path(__file__).resolve().parent
+        stem = "03A-training-skeleton-and-word-objectives"
+        cls.notebook = json.loads((chapter / f"{stem}.ipynb").read_text(encoding="utf-8"))
+        cls.companion = (chapter / f"{stem}.py").read_text(encoding="utf-8")
+        cls.code = {
+            cell["id"]: "".join(cell["source"]) for cell in cls.notebook["cells"]
+            if cell["cell_type"] == "code"
+        }
+
+    def test_catalogue_scenario_and_mapping_precede_the_training_task(self):
+        opening = next(
+            "".join(cell["source"]) for cell in self.notebook["cells"]
+            if cell["cell_type"] == "markdown"
+            and "".join(cell["source"]).startswith("## 1 - ")
+        )
+        landmarks = [
+            "Imagine you are building a catalogue of objects discovered by space probes.",
+            "#### Sensors turn an identity into a descriptive profile",
+            "#### Words can have descriptive profiles too",
+            "#### A separate question: how can a prediction task teach the profiles?",
+            "1. **Prepare** integer IDs",
+        ]
+        positions = [opening.index(landmark) for landmark in landmarks]
+        self.assertEqual(positions, sorted(positions))
+        for explanation in (
+            "Object-417", "Object-892", "Earth", "size, temperature",
+            "units and scales", "| Registry identifier | Token ID:",
+            "| Sensor profile for one object | Learned embedding",
+            "| Catalogue of profiles | Embedding matrix",
+            "words do not come with physical sensors",
+            "one training exercise, not the definition of an embedding",
+        ):
+            with self.subTest(explanation=explanation):
+                self.assertIn(explanation, " ".join(opening.split()))
+        self.assertIn("images/03a-object-sensor-signatures.png", opening)
+
+    def test_analogy_reaches_relatedness_and_distinguishes_sampling(self):
+        markdown = "\n\n".join(
+            "".join(cell["source"]) for cell in self.notebook["cells"]
+            if cell["cell_type"] == "markdown"
+        )
+        for explanation in (
+            "Earth is your **query profile**",
+            "searching for semantically related words",
+            "Not in the embedding lookup.",
+            "Sampling draws from that distribution",
+            "Softmax computes probabilities; it does not itself make a random choice.",
+            "not a generated sentence",
+            "images/03a-celestial-neighborhood-principle.png",
+            "images/03a-01-shared-word-features.png",
+        ):
+            with self.subTest(explanation=explanation):
+                self.assertIn(explanation, " ".join(markdown.split()))
+
+    def test_sampling_changes_choices_without_updating_weights_or_global_rng(self):
+        with torch.random.fork_rng(devices=[]):
+            model = torch.nn.Embedding(1, 5)
+        with torch.no_grad():
+            model.weight.copy_(torch.tensor([[2.0, 1.0, 0.0, -1.0, -2.0]]))
+        before = model.weight.detach().clone()
+        rng_before = torch.random.get_rng_state().clone()
+        namespace = {
+            "torch": torch, "model": model, "cat_contexts": torch.tensor([0]),
+            "SEED": 17, "vocabulary_size": 5,
+            "itos": ["cat", "dog", "sat", "slept", "<unk>"],
+            "most_similar": lambda word: [("dog", 0.9)],
+        }
+        source = self.code["ch03a-similarity-and-sampling"]
+        with redirect_stdout(StringIO()):
+            exec(compile(source, "sampling", "exec"), namespace)
+        expected = before[0].softmax(dim=-1)
+        torch.testing.assert_close(namespace["bridge_probabilities"], expected)
+        self.assertEqual(namespace["bridge_greedy_id"], expected.argmax().item())
+        self.assertEqual(namespace["bridge_counts"].sum().item(), 2000)
+        self.assertTrue(torch.equal(namespace["bridge_samples"], namespace["bridge_replay"]))
+        self.assertGreater(namespace["bridge_samples"].unique().numel(), 1)
+        other_seed = dict(namespace, SEED=23)
+        with redirect_stdout(StringIO()):
+            exec(compile(source, "sampling", "exec"), other_seed)
+        torch.testing.assert_close(other_seed["bridge_probabilities"], expected)
+        self.assertEqual(other_seed["bridge_greedy_id"], namespace["bridge_greedy_id"])
+        self.assertFalse(torch.equal(other_seed["bridge_samples"], namespace["bridge_samples"]))
+        self.assertTrue(torch.equal(model.weight.detach(), before))
+        self.assertIsNone(model.weight.grad)
+        self.assertTrue(torch.equal(torch.random.get_rng_state(), rng_before))
+
+    def test_heading_numbers_follow_the_reading_order(self):
+        sections = []
+        subsections = {}
+        section = None
+        for cell in self.notebook["cells"]:
+            if cell["cell_type"] != "markdown":
+                continue
+            for line in "".join(cell["source"]).splitlines():
+                heading = re.match(r"## ([1-5A-D]) - ", line)
+                if heading:
+                    section = heading[1]
+                    sections.append(section)
+                    subsections[section] = 0
+                elif line.startswith("### "):
+                    heading = re.match(r"### ([1-5A-D])\.(\d+) - ", line)
+                    self.assertIsNotNone(heading, line)
+                    self.assertEqual(heading[1], section, line)
+                    subsections[section] += 1
+                    self.assertEqual(int(heading[2]), subsections[section], line)
+        self.assertEqual(sections, list("12345ABCD"))
+
+    def test_code_labels_match_headings_and_the_python_companion(self):
+        section = None
+        notebook_labels = []
+        for cell in self.notebook["cells"]:
+            source = "".join(cell["source"])
+            if cell["cell_type"] == "markdown":
+                for line in source.splitlines():
+                    heading = re.match(r"#{2,3} ([1-5A-D](?:\.\d+)?) - ", line)
+                    if heading:
+                        section = heading[1]
+            elif cell["cell_type"] == "code":
+                label = source.splitlines()[0]
+                notebook_labels.append(label)
+                if section is not None:
+                    self.assertTrue(label.startswith(f"# %% {section} - "), label)
+        self.assertEqual(
+            notebook_labels,
+            [line for line in self.companion.splitlines() if line.startswith("# %% ")],
+        )
+
+    def test_one_real_model_replaces_the_standalone_toy(self):
+        source = "\n\n".join(self.code.values())
+        self.assertNotIn("ToyCBOW", source)
+        self.assertIsNone(re.search(r"\btoy_\w+", source))
+        self.assertNotIn("ch03a-optional-arithmetic", [
+            cell["id"] for cell in self.notebook["cells"]
+        ])
+        training_flow = next(
+            "".join(cell["source"]) for cell in self.notebook["cells"]
+            if cell["id"] == "06c-12"
+        )
+        self.assertEqual(re.findall(r"^([1-6])\. ", training_flow, re.MULTILINE), list("123456"))
+        self.assertIn("embedding_before", self.code["06c-19"])
+        self.assertIn("embedding_row_shifts", self.code["06c-21"])
+
+    def test_text_precedes_training_and_extensions_follow_core(self):
+        ids = [cell["id"] for cell in self.notebook["cells"]]
+        self.assertLess(ids.index("06c-03"), ids.index("06c-17"))
+        self.assertLess(ids.index("06c-17"), ids.index("06c-21"))
+        self.assertLess(ids.index("ch03a-core-validation"), ids.index("06c-21"))
+        self.assertLess(ids.index("ch03a-next"), ids.index("ch03a-extensions"))
+        self.assertLess(ids.index("ch03a-extensions"), ids.index("06c-sg-04"))
+        self.assertLess(ids.index("ch03a-extensions"), ids.index("06c-s2s-04"))
+        self.assertLess(ids.index("ch03a-extensions"), ids.index("06c-15"))
+        self.assertNotIn("06c-13", ids)
+        self.assertNotIn("read_story", self.code["ch03a-core-setup"])
+
+    def test_notebook_and_companion_share_all_executable_code(self):
+        notebook_source = "\n\n".join(self.code.values())
+        companion = ast.parse(self.companion)
+        self.assertIsInstance(companion.body[0], ast.Expr)
+        companion.body = companion.body[1:]
+        self.assertEqual(ast.dump(ast.parse(notebook_source)), ast.dump(companion))
+
+    def test_reserved_stories_exclude_training_and_reuse_the_training_vocabulary(self):
+        stories = ["training words must not appear"] * 3 + ["the sleepy cat sat on"] * 200
+        with patch("builtins.print"), patch(
+            "real_text_embeddings.read_stories", return_value=stories,
+        ) as read_stories:
+            namespace = {
+                "torch": torch, "nn": torch.nn, "INTRO_STORIES": 3,
+                "read_stories": read_stories,
+                "story_sentences": lambda story: [story.split()],
+                "stoi": {"<unk>": 0, "the": 1, "sleepy": 2, "cat": 3, "sat": 4, "on": 5},
+                "make_document_windows": make_document_windows,
+                "window_width": 5, "CONTEXT_RADIUS": 2,
+            }
+            exec(compile(self.code["ch03a-core-validation"], "validation", "exec"), namespace)
+        read_stories.assert_called_once_with(203)
+        expected = torch.tensor([[1, 2, 3, 4, 5]]).repeat(200, 1)
+        self.assertTrue(torch.equal(namespace["validation_windows"], expected))
+        self.assertTrue(torch.equal(namespace["validation_contexts"], expected[:, [0, 1, 3, 4]]))
+        self.assertTrue(torch.equal(namespace["validation_targets"], expected[:, 2]))
+        self.assertNotIn("training", namespace["stoi"])
+
+    def test_heldout_loss_weights_the_partial_batch_and_updates_no_parameters(self):
+        class FixedScores(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.scores = torch.nn.Parameter(torch.tensor([0.1, 0.3, -0.5, 0.8, 0.0, -0.2]))
+
+            def forward(self, inputs):
+                return self.scores.expand(len(inputs), -1)
+
+        model = FixedScores()
+        contexts = torch.zeros((767, 4), dtype=torch.long)
+        targets = torch.arange(767) % 6
+        namespace = self.evaluation_namespace(contexts, targets)
+        before = model.scores.detach().clone()
+        expected = torch.nn.functional.cross_entropy(
+            model(contexts).detach(), targets,
+        ).item()
+        actual = namespace["heldout_cbow_loss"](model)
+        self.assertAlmostEqual(actual, expected, places=6)
+        self.assertTrue(torch.equal(model.scores.detach(), before))
+        self.assertIsNone(model.scores.grad)
+
+    def test_heldout_loss_rejects_an_empty_evaluation_set(self):
+        namespace = self.evaluation_namespace(
+            torch.empty((0, 4), dtype=torch.long), torch.empty(0, dtype=torch.long),
+        )
+        with self.assertRaisesRegex(ValueError, "at least one target"):
+            namespace["heldout_cbow_loss"](torch.nn.Identity())
+
+    def evaluation_namespace(self, contexts, targets):
+        functions = [
+            node for node in ast.parse(self.code["ch03a-core-validation"]).body
+            if isinstance(node, ast.FunctionDef) and node.name == "heldout_cbow_loss"
+        ]
+        self.assertEqual(len(functions), 1)
+        namespace = {
+            "torch": torch, "nn": torch.nn,
+            "validation_contexts": contexts, "validation_targets": targets,
+        }
+        exec(compile(ast.Module(body=functions, type_ignores=[]), "heldout", "exec"), namespace)
+        return namespace
 
 
 if __name__ == "__main__":

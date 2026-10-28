@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from matplotlib.animation import FuncAnimation
+from matplotlib.patches import Rectangle
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 from numpy.lib.stride_tricks import sliding_window_view
@@ -445,6 +446,118 @@ def animate_word_maps(words, coordinates, results):
         fig, update, frames=coordinates.shape[1], interval=500, repeat=False,
     )
     plt.close(fig)
+    return animation
+
+
+def _routing_visible_ids(trace):
+    visible = list(dict.fromkeys(
+        trace["contexts"].flatten().tolist() + trace["targets"].tolist()
+    ))
+    unused = [index for index in range(len(trace["weights"][0])) if index not in visible]
+    return visible + unused[:1]
+
+
+def draw_embedding_routing(axes, trace, words, stage=None):
+    """Draw recorded states; None combines forward, backward, and update in one storyboard."""
+    for axis in axes:
+        axis.clear()
+    visible = _routing_visible_ids(trace)
+    selected = set(trace["contexts"].flatten().tolist())
+    targets = set(trace["targets"].tolist())
+    phases = (1, 2, 3) if stage is None else (stage, stage, stage)
+    width = min(4, trace["weights"][0].shape[1])
+    limit = max(weight.abs().max().item() for weight in trace["weights"])
+    limit = max(limit, 1e-12)
+    table = trace["weights"][phases[0]][visible, :width].numpy()
+    axes[0].imshow(table, cmap="coolwarm", vmin=-limit, vmax=limit, aspect="auto")
+    labels = [
+        f"{words[index]} [{index}]" + (" (answer only)" if index in targets - selected else "")
+        for index in visible
+    ]
+    axes[0].set(
+        title="Forward: selected rows" if phases[0] < 3 else "After SGD: stored rows",
+        xticks=range(width), xticklabels=[f"feature {index}" for index in range(width)],
+        yticks=range(len(visible)), yticklabels=labels,
+        xlabel=f"First {width} of {trace['weights'][0].shape[1]} learned features",
+    )
+    for row, index in enumerate(visible):
+        if index in selected and phases[0] >= 1:
+            axes[0].add_patch(Rectangle(
+                (-0.5, row - 0.5), width, 1, fill=False, edgecolor="#007f86", linewidth=2.5,
+            ))
+        for column in range(width):
+            axes[0].text(column, row, f"{table[row, column]:.3f}",
+                         ha="center", va="center", fontsize=8)
+    row_gradients = trace["gradient"].norm(dim=1)
+    row_updates = (trace["weights"][phases[2]] - trace["weights"][0]).norm(dim=1)
+    for axis, values, active, title, color in (
+        (axes[1], row_gradients, phases[1] >= 2, "Backward: row gradient norms", "#bf5700"),
+        (axes[2], row_updates, phases[2] >= 3, "SGD: actual row update norms", "#007f86"),
+    ):
+        axis.set(
+            title=title, yticks=range(len(visible)),
+            yticklabels=[words[index] for index in visible],
+            ylim=(len(visible) - 0.5, -0.5),
+        )
+        if active:
+            measured = values[visible].numpy()
+            axis.barh(range(len(visible)), measured, color=[
+                color if index in selected else "#aab2bd" for index in visible
+            ])
+            axis.set_xlim(0, max(float(measured.max()) * 1.4, 1e-12))
+            for row, value in enumerate(measured):
+                axis.text(float(value), row, f" {value:.3g}", va="center", fontsize=9)
+        else:
+            axis.set_xlim(0, 1)
+            axis.text(0.5, 0.5, "Not computed yet" if axis is axes[1] else "No optimizer step yet",
+                      ha="center", va="center", transform=axis.transAxes)
+        axis.grid(axis="x", alpha=0.15)
+    descriptions = (
+        "IDs arrive. The table already exists; no input values are averaged.",
+        "Lookup fetches vectors; CBOW averages those vectors and scores the vocabulary.",
+        "backward() fills the gradient ledger. The stored weights have not changed.",
+        "Fresh plain SGD applies the gradient. Unselected input rows stay unchanged.",
+    )
+    figure = axes[0].figure
+    figure.suptitle(
+        "One real CBOW step: lookup -> backward -> optimizer update"
+        + ("" if stage is None else f"\n{stage + 1}/4: {descriptions[stage]}"),
+        fontsize=13,
+    )
+    clues = ", ".join(words[index] for index in trace["contexts"][0].tolist())
+    answer = ", ".join(words[index] for index in trace["targets"].tolist())
+    mean_values = trace["weights"][1][trace["contexts"][0]].mean(dim=0)[:width]
+    mean_label = (
+        "mean of fetched vectors (first features: "
+        + ", ".join(f"{value:.3f}" for value in mean_values.tolist()) + ")"
+        if stage is None or stage >= 1 else "mean not computed yet"
+    )
+    figure.supxlabel(
+        f"Input: {clues} -> lookup -> {mean_label}\n"
+        f"Context features -> downstream layers -> loss(answer: {answer}). "
+        f"Checked all {len(trace['weights'][0]):,} vocabulary rows; displaying {len(visible)}. "
+        "Bar norms use every feature.\n"
+        "These panels describe the INPUT embedding table; the separate vocabulary head also learns.",
+        fontsize=9, y=0.02,
+    )
+    figure.tight_layout(rect=(0, 0.18, 1, 0.85), w_pad=2)
+
+
+def plot_embedding_routing(trace, words):
+    """Static evidence for the same measured step used by the animation."""
+    figure, axes = plt.subplots(1, 3, figsize=(15, 5.5))
+    draw_embedding_routing(axes, trace, words)
+    return figure
+
+
+def animate_embedding_routing(trace, words):
+    """Replay four actual snapshots, without interpolating or inventing updates."""
+    figure, axes = plt.subplots(1, 3, figsize=(15, 5.5))
+    animation = FuncAnimation(
+        figure, lambda stage: draw_embedding_routing(axes, trace, words, stage),
+        frames=len(trace["weights"]), interval=1600, repeat=False,
+    )
+    plt.close(figure)
     return animation
 
 

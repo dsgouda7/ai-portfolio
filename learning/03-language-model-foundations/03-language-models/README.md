@@ -1,151 +1,106 @@
-# Chapter 03: Language Models — From Learned Rows to Attention
+# Chapter 03: Language Models - From Learned Rows to Attention
 
 **Contents:** [directory map](CONTENTS.md)
 
-You can fetch an embedding row and train a network. **What should it guess, and what does it
-need to see to get the answer right?** Keep that question while the training loop stays familiar.
+The core question in 03A is **how embedding values learn when their input IDs stay
+fixed**. Train one CBOW model on text, then compare its actual embedding rows
+before and after learning.
 
 ## Before you start
 
 Use [Stage 02](../../02-pytorch-foundations/README.md) for tensors and optimization,
 [Chapter 01](../01-sequence-memory/README.md) for recurrent memory, and
-[Chapter 02](../02-tokenization-and-embeddings/README.md) for pieces, IDs, and learned rows.
+[Chapter 02](../02-tokenization-and-embeddings/README.md) for pieces, IDs, and rows.
+03A builds its vocabulary and training questions inline; earlier notebook state
+is not required.
 
-From this directory, run [`setup.ps1`](setup.ps1) on Windows or [`setup.sh`](setup.sh) on
-Linux/macOS. The scripts create a local `.venv`, install [requirements](requirements.txt),
-and assign kernel `stage03-language-model-03-models` (Python 3.10+).
-Select that kernel, restart, and run each notebook independently; kernels don't share state.
-03A needs internet for its first TinyStories download, then reuses its checked local cache.
-03B–03D use local, generated examples and one CPU thread.
+Run [setup.ps1](setup.ps1) on Windows or [setup.sh](setup.sh) on Linux/macOS.
+They create a local `.venv`, install [requirements](requirements.txt), and register
+kernel `stage03-language-model-03-models` (Python 3.10+).
+Select that kernel, restart, and run notebooks independently.
 
-## Resume the two embedding examples here
+The TinyStories model needs internet for its first pinned download, then verifies
+a local cache. The conceptual explanation and static illustrations remain readable offline.
+03B-03D use generated local examples and one CPU thread.
 
-03A's opening checkpoint repeats everything needed from the **lookup microscope**
-(`the ___ sat`, with hand-picked two-number rows) and the **learning game**
-(`cat/dog -> sat/slept; bird -> flew/sang`, six supplied cards). You do not need
-to reopen earlier notebooks. A side-by-side table then turns the same
-`the sleepy cat sat on` window into CBOW, Skip-gram, and reader/writer questions.
+## 03A: one core path, then optional extensions
 
-After the frozen arithmetic picture, the toy creates `nn.Embedding(3, 2)` from
-dimensions alone. Commented cells print its random table, replay the default
-initialization, prove lookup equals row indexing, and follow gradients into a real
-SGD update. Rendered diagrams follow the lookup and model-ownership code, without
-plotting code in the lesson. `ToyCBOW` registers the same embedding as a child layer;
-its forward call receives only integer IDs, while `model.parameters()` exposes
-the table to the optimizer. A registry trace follows `nn.Module.__setattr__`,
-the child's `_parameters`, recursive discovery, and the optimizer's reference
-to the very same tensor. A retained intermediate gradient then lets you replay
-lookup's scatter-add and verify it matches `embedding.weight.grad` before SGD
-changes any value. Earlier fetched vectors do not mutate when weights update.
-Before/after rows and loss show 40 tiny training steps; a one-ID drill
-checks that lookup itself changes nothing. The unused `cat` input row stays fixed
-while the separate predictor learns to score `cat`. This is a mechanics check,
-not evidence of language quality.
+Start with the space-probe catalogue: object IDs identify records; aligned sensor
+profiles let you compare their properties with Earth's. The notebook explains
+that scenario and maps it to token IDs and learned rows before introducing CBOW
+as a separate training task. Words have no physical sensors; prediction feedback
+must teach their profiles. The rich celestial illustration and shared-word-features
+picture sit beside the explanation, with the schematic channel table retained.
+The analogy reaches semantic relatedness, reusable features, and the separate
+roles of context-based prediction and stochastic decoding.
 
-Experiment-state labels distinguish that isolated random-start toy from random
-lookup previews, fresh 32-number training tables, and the separate 48-number
-held-out comparison. No toy weights or optimizer state transfer into those runs.
+1. Follow the catalogue-to-embedding analogy and one numbered training flow.
+2. Load text and build sentence-local NumPy context/answer windows. Reserve
+   the next 200 stories with a fixed training vocabulary.
+3. Create `nn.Embedding(vocabulary_size, 32)` inside the real CBOW model.
+   Allocation and lookup shapes are annotated directly in that model's code.
+   A static storyboard and four-frame animation then record one real window:
+   IDs select vectors, CBOW averages the vectors, backward fills selected-row
+   gradients, and a separate fresh-SGD step updates the copied model.
+4. Train the model; print actual before/after embedding features and verify that
+   the input IDs stayed fixed. No standalone three-word model is required.
+5. Check reserved-story loss and neighbours. Hold one gap's probabilities
+   fixed to compare greedy selection with seeded sampling, without confusing
+   neighbours with likely answers or independent gap samples with generated text.
+6. Expose the trained model's remaining order blindness.
 
-Model-specific headings name CBOW, Skip-gram, or the encoder-decoder; shared setup
-and the three-model comparison are marked separately. Section 3 builds
-`make_document_windows` inline with NumPy's built-in `sliding_window_view`, explains
-its rows and one-position stride, and includes a small window-width exercise.
-One CBOW animation connects each start index to its slice; the printed windows
-remain readable without playback. Five-word windows and a hidden middle word
-are this lesson's choices, not requirements for every language model.
+The **Core checkpoint** marks a complete stopping point before 03B.
+Notebook subsections use `2.1`, `3.1`, and so on within core sections 1-5;
+optional extensions use A-D with subsections such as `A.1` and `D.9`.
+The Python companion's cell labels follow those same section numbers.
+There is one embedding-learning path, not a separate toy or parameter-registry tour.
+The routing animation uses a copy of that actual CBOW and leaves its training state
+and random seed untouched. Its exact unused-row result is scoped to fresh SGD,
+no weight decay, and untied weights; the text distinguishes this from Adam history.
+Running the animation cell rebuilds its PNG/GIF and displays a JavaScript replay;
+the static storyboard remains readable without JavaScript.
+The original rich illustrations remain beside the conceptual explanation.
 
-The embedding intuition separates representation from the training task. Catalogue
-names identify objects; [sensor profiles](images/03a-object-sensor-signatures.png)
-provide properties for comparisons such as finding objects that resemble Earth.
-Word embeddings extend the profile idea without hand-defining a meaning for each
-channel. A [separate CBOW diagram](images/03a-cbow-profile-training.png) then shows
-how prediction feedback can teach the profile values and predictor together.
-Registry IDs stay fixed. The space analogy does not predict missing celestial neighbours.
-03A's forward look follows one static profile into a fleet with one craft per
-token occurrence: learned communication builds contextual working states without
-rewriting the registry during inference. The `bank`/`river` and `bank`/`money`
-examples illustrate the limitation, not a measured disambiguation result.
-The encoder-decoder becomes an observatory using known profiles, partial readings
-for a newly discovered object, and a question to write a likely report. This
-chapter's GRU passes one final briefing; later Transformer cross-attention can
-consult per-position source states. These are analogies for token prediction,
-not an astronomy model. Rebuild the existing diagrams locally without network calls:
-
-```powershell
-python .\generate_sensor_analogy_diagrams.py
-```
+Extensions retain fused lookup, visualization, Skip-gram, the recurrent reader/writer,
+and the larger three-objective comparison. **Run All and the full Python script
+still execute these extensions.** The 8,000-story comparison uses fresh models
+and its own whole-story split; its losses are not the core model's evaluation.
+Attention and Transformer internals are deferred to their actual chapters.
 
 ## Read in order
 
 | Notebook | The next complaint | Handwritten notes | Code-only view |
 |---|---|---|---|
-| [03A. Training skeleton and word objectives](03A-training-skeleton-and-word-objectives.ipynb) | Lookup gives you rows, but what teaches them? Make practice questions from text and train rows with the predictor | [Theory](03A-training-skeleton-and-word-objectives-theory.md) | [Python](03A-training-skeleton-and-word-objectives.py) |
-| [03B. Counts and fixed windows](03B-counts-and-fixed-window-language-models.ipynb) | Ordered seats preserve word order, but a clue outside the window is still invisible | [Theory](03B-counts-and-fixed-window-language-models-theory.md) | [Python](03B-counts-and-fixed-window-language-models.py) |
-| [03C. Fixed windows to recurrent models](03C-fixed-windows-to-recurrent-language-models.ipynb) | A running note can carry the clue; RNN and LSTM memory still have limits | [Theory](03C-fixed-windows-to-recurrent-language-models-theory.md) | [Python](03C-fixed-windows-to-recurrent-language-models.py) |
-| [03D. Recurrent reader/writer to attention](03D-recurrent-encoder-decoder-to-attention.ipynb) | One final summary may not be enough; let the writer consult earlier source notes | [Theory](03D-recurrent-encoder-decoder-to-attention-theory.md) | [Python](03D-recurrent-encoder-decoder-to-attention.py) |
+| [03A. Training skeleton and word objectives](03A-training-skeleton-and-word-objectives.ipynb) | How do fixed IDs select rows that learn? | [Theory](03A-training-skeleton-and-word-objectives-theory.md) | [Python](03A-training-skeleton-and-word-objectives.py) |
+| [03B. Counts and fixed windows](03B-counts-and-fixed-window-language-models.ipynb) | Ordered seats preserve order, but a clue outside the window is still invisible | [Theory](03B-counts-and-fixed-window-language-models-theory.md) | [Python](03B-counts-and-fixed-window-language-models.py) |
+| [03C. Fixed windows to recurrent models](03C-fixed-windows-to-recurrent-language-models.ipynb) | A running note can carry the clue, but memory has limits | [Theory](03C-fixed-windows-to-recurrent-language-models-theory.md) | [Python](03C-fixed-windows-to-recurrent-language-models.py) |
+| [03D. Recurrent reader/writer to attention](03D-recurrent-encoder-decoder-to-attention.ipynb) | The writer needs access beyond one final summary | [Theory](03D-recurrent-encoder-decoder-to-attention-theory.md) | [Python](03D-recurrent-encoder-decoder-to-attention.py) |
 
-03A starts learning from a small sample of children's stories from
-[TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories), with a separate familiar
-cat document for the close-up examples. Its [helper](real_text_embeddings.py) downloads and
-checks the pinned corpus, builds practice pairs, and records the embedding comparison.
-The notebook and Python companion apply NumPy's sliding-window view separately
-to each sentence, then concatenate the rows. Offline tests check that they use
-this built-in primitive and match the shared helper used by the larger held-out
-comparison. CBOW, Skip-gram, and the writer reuse raw windows, then
-choose their own inputs and answers.
-03A also takes one isolated optimizer step to show that embedding weights change while
-the word IDs stay fixed.
-Section 8 opens with a [short animation](images/03a-embedding-learning-animation.gif):
-the same row index connects `weight`, `weight.grad`, and `weight` after one SGD
-step. It explicitly unpacks coordinates `[2, 0]` and `[2, 1]` of the matrix-wide
-update while the optimizer-call counter stays at one. IDs route gradients;
-the optimizer reads the gradient matrix, not the IDs. An
-[offline player](images/03a-embedding-learning-animation.html) adds Play/Pause,
-replay, and scrubbing; a [static indexed-update reference](images/03a-embedding-indexed-update.png)
-and detailed mechanics remain optional. Temporary rendering scripts are not retained.
-Read the notebook's printed budget and measured losses rather than treating a tiny CPU run
-as a model-quality benchmark. The later held-out comparison trains fresh models separately
-and keeps the limits visible. The full notebook took about 3–5 minutes on the authoring CPU;
-your machine may differ.
+03B-03C deliberately switch to short color-clue sentences; 03D uses digit
+reversal. Those controlled tasks expose information access, not competing corpora.
 
-Then we switch to eight color-clue sentences in 03B–03C: you can see exactly which word
-decides the answer and whether the model can read it. In 03D, reversing digits gives the
-reader and writer separate jobs and known source positions to check.
-These are deliberate diagnostic tasks, not competing text corpora.
+## Run and inspect
 
-## Keep the code handy
-
-The same-stem `.py` files are ordinary scripts with `# %%` sections. For example:
+The same-stem Python companions contain VS Code `# %%` cells. Run individual
+cells to stop at the core checkpoint, or execute the whole script:
 
 ```powershell
-.\.venv\Scripts\python.exe .\03C-fixed-windows-to-recurrent-language-models.py
+.\.venv\Scripts\python.exe .\03A-training-skeleton-and-word-objectives.py
 ```
 
-Set `MPLBACKEND=Agg` for noninteractive plots. The notebooks remain the best view for inline
-figures and HTML animations. Saved notebooks have no outputs; run them to see the measurements.
+Set `MPLBACKEND=Agg` for noninteractive plotting. The full cached lesson takes a
+few CPU minutes; printed timing and losses are measurements, not quality guarantees.
 
-The shared [training base](language_model.py) keeps `fit_language_model → training_loss →
-forward → loss → backward → step` in one place. 03A shows it inline, 03C reuses it for
-RNN/LSTM prediction, and 03D connects a reader/writer through a small wrapper.
-The original comparison loops stay visible too; the wrapper doesn't replace their experiments.
-
-The offline [window and objective checks](test_real_text_embeddings.py) need no corpus download:
+The [trainer](language_model.py) centralizes repeated optimization.
+The [corpus/comparison helper](real_text_embeddings.py) verifies the pinned data
+and records the extended comparison. Offline [tests](test_real_text_embeddings.py)
+cover windows, objective alignment, the real CBOW's allocation/lookup/training
+contract, repeated-ID gradient accumulation, optimizer-history boundaries, measured
+storyboard values, reading order, sampling, and reserved-story evaluation without downloading a corpus:
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest test_real_text_embeddings -v
 ```
 
-The [03A illustration manifest](images/03a-illustration-prompts.json) and
-[generator](generate_illustrations.py) are only for rebuilding the intuition sketches.
-Running the lessons doesn't call the image generator; running it separately uses Azure
-CLI sign-in and incurs the deployment's normal charges.
-
-## What comes next
-
-This route isn't a leaderboard or a mandatory family tree. The look-back model also has more
-weights, so its result isn't attention alone. Practice gets correct earlier answers;
-generation must live with its own guesses. Check both.
-
-The writer can now look back, but the reader still works one token at a time.
-Continue to [Stage 04 — Transformers](../../04-transformers/README.md):
-**what if attention does the reading too?**
+Rebuild static teaching diagrams locally with
+[`generate_sensor_analogy_diagrams.py`](generate_sensor_analogy_diagrams.py).
