@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from matplotlib.animation import FuncAnimation
-from matplotlib.patches import Rectangle
+from matplotlib.patches import FancyBboxPatch
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 from numpy.lib.stride_tricks import sliding_window_view
@@ -449,6 +449,90 @@ def animate_word_maps(words, coordinates, results):
     return animation
 
 
+def record_embedding_routing(model, contexts, targets, learning_rate=0.1):
+    """Observe the actual CBOW graph on a copy, including mean and lookup gradients."""
+    if contexts.ndim != 2 or contexts.shape[0] != 1 or contexts.shape[1] == 0:
+        raise ValueError("Routing visualization requires one nonempty context window.")
+    if targets.shape != (1,):
+        raise ValueError("Routing visualization requires one checking answer.")
+    if learning_rate <= 0:
+        raise ValueError("Routing learning rate must be positive.")
+    candidate = copy.deepcopy(model).cpu()
+    contexts = contexts.detach().cpu().clone()
+    targets = targets.detach().cpu().clone()
+    optimizer = torch.optim.SGD(candidate.parameters(), lr=learning_rate)
+    optimizer.zero_grad()
+    activations = {}
+
+    def remember(name, tensor):
+        tensor.retain_grad()
+        activations[name] = tensor
+
+    def capture_output(name):
+        def capture(module, inputs, output):
+            remember(name, output)
+        return capture
+
+    def capture_mean(module, inputs):
+        remember("mean", inputs[0])
+
+    hooks = [
+        candidate.embedding.register_forward_hook(capture_output("lookup")),
+        candidate.hidden.register_forward_pre_hook(capture_mean),
+        candidate.hidden.register_forward_hook(capture_output("linear")),
+        candidate.activation.register_forward_hook(capture_output("hidden")),
+        candidate.output.register_forward_hook(capture_output("logits")),
+    ]
+    weights = [candidate.embedding.weight.detach().clone()]
+    try:
+        logits = candidate(contexts)
+        weights.append(candidate.embedding.weight.detach().clone())
+        loss = nn.functional.cross_entropy(logits, targets)
+        loss.backward()
+        weights.append(candidate.embedding.weight.detach().clone())
+        gradient = candidate.embedding.weight.grad.detach().clone()
+        head_gradient = candidate.output.bias.grad.detach().clone()
+        if any(value.grad is None for value in activations.values()):
+            raise RuntimeError("The recorded CBOW graph did not connect every activation to loss.")
+        values = {name: value.detach().clone() for name, value in activations.items()}
+        gradients = {name: value.grad.detach().clone() for name, value in activations.items()}
+        probabilities = values["logits"].softmax(dim=-1)
+        expected_logit_gradient = probabilities.clone()
+        expected_logit_gradient[0, targets[0]] -= 1
+        torch.testing.assert_close(gradients["logits"], expected_logit_gradient)
+        torch.testing.assert_close(
+            gradients["linear"], gradients["hidden"] * values["linear"].gt(0),
+        )
+        torch.testing.assert_close(
+            gradients["mean"], gradients["linear"] @ candidate.hidden.weight.detach(),
+        )
+        optimizer.step()
+        weights.append(candidate.embedding.weight.detach().clone())
+    finally:
+        for hook in hooks:
+            hook.remove()
+
+    count = contexts.shape[1]
+    expected_occurrences = gradients["mean"][:, None, :].expand_as(values["lookup"]) / count
+    torch.testing.assert_close(gradients["lookup"], expected_occurrences)
+    reconstructed = torch.zeros_like(gradient)
+    reconstructed.index_add_(
+        0, contexts.flatten(), gradients["lookup"].reshape(-1, gradient.shape[1]),
+    )
+    torch.testing.assert_close(reconstructed, gradient)
+    assert torch.equal(weights[0], weights[1]) and torch.equal(weights[0], weights[2])
+    selected = set(contexts.flatten().tolist())
+    assert set(gradient.ne(0).any(dim=1).nonzero().flatten().tolist()) <= selected
+    assert set(weights[3].ne(weights[0]).any(dim=1).nonzero().flatten().tolist()) <= selected
+    return {
+        "contexts": contexts, "targets": targets, "saved_ids": contexts.clone(),
+        "mean_count": count, "weights": weights, "gradient": gradient,
+        "reconstructed_gradient": reconstructed, "head_gradient": head_gradient,
+        "activations": values, "activation_gradients": gradients,
+        "probabilities": probabilities, "loss": loss.item(), "learning_rate": learning_rate,
+    }
+
+
 def _routing_visible_ids(trace):
     visible = list(dict.fromkeys(
         trace["contexts"].flatten().tolist() + trace["targets"].tolist()
@@ -457,105 +541,258 @@ def _routing_visible_ids(trace):
     return visible + unused[:1]
 
 
-def draw_embedding_routing(axes, trace, words, stage=None):
-    """Draw recorded states; None combines forward, backward, and update in one storyboard."""
-    for axis in axes:
-        axis.clear()
-    visible = _routing_visible_ids(trace)
-    selected = set(trace["contexts"].flatten().tolist())
-    targets = set(trace["targets"].tolist())
-    phases = (1, 2, 3) if stage is None else (stage, stage, stage)
-    width = min(4, trace["weights"][0].shape[1])
-    limit = max(weight.abs().max().item() for weight in trace["weights"])
-    limit = max(limit, 1e-12)
-    table = trace["weights"][phases[0]][visible, :width].numpy()
-    axes[0].imshow(table, cmap="coolwarm", vmin=-limit, vmax=limit, aspect="auto")
-    labels = [
-        f"{words[index]} [{index}]" + (" (answer only)" if index in targets - selected else "")
-        for index in visible
-    ]
-    axes[0].set(
-        title="Forward: selected rows" if phases[0] < 3 else "After SGD: stored rows",
-        xticks=range(width), xticklabels=[f"feature {index}" for index in range(width)],
-        yticks=range(len(visible)), yticklabels=labels,
-        xlabel=f"First {width} of {trace['weights'][0].shape[1]} learned features",
+def embedding_routing_steps(trace):
+    """Keep every displayed input/output tied to an actual recorded tensor."""
+    values, gradients = trace["activations"], trace["activation_gradients"]
+    loss = torch.tensor(trace["loss"])
+    return (
+        ("Pick the word rows", 0, "forward", trace["saved_ids"], values["lookup"]),
+        (f"Average the {trace['mean_count']} vectors", 1, "forward", values["lookup"], values["mean"]),
+        ("Mix the features", 2, "forward", values["mean"], values["linear"]),
+        ("ReLU: negatives become zero", 3, "forward", values["linear"], values["hidden"]),
+        ("Score every vocabulary word", 4, "forward", values["hidden"], values["logits"]),
+        ("Check the answer: cross entropy", 5, "forward", values["logits"], loss),
+        ("Loss becomes score gradients", 5, "backward", loss, gradients["logits"]),
+        ("Back through the vocabulary head", 4, "backward", gradients["logits"], gradients["hidden"]),
+        ("Back through ReLU", 3, "backward", gradients["hidden"], gradients["linear"]),
+        ("Back through the first linear layer", 2, "backward", gradients["linear"], gradients["mean"]),
+        (f"Split the gradient {trace['mean_count']} ways", 1, "backward", gradients["mean"], gradients["lookup"]),
+        ("Saved IDs send gradients home", 0, "backward", gradients["lookup"], trace["gradient"]),
+        ("SGD: now the weights change", 0, "update", trace["weights"][0], trace["weights"][3]),
     )
-    for row, index in enumerate(visible):
-        if index in selected and phases[0] >= 1:
-            axes[0].add_patch(Rectangle(
-                (-0.5, row - 0.5), width, 1, fill=False, edgecolor="#007f86", linewidth=2.5,
-            ))
-        for column in range(width):
-            axes[0].text(column, row, f"{table[row, column]:.3f}",
-                         ha="center", va="center", fontsize=8)
-    row_gradients = trace["gradient"].norm(dim=1)
-    row_updates = (trace["weights"][phases[2]] - trace["weights"][0]).norm(dim=1)
-    for axis, values, active, title, color in (
-        (axes[1], row_gradients, phases[1] >= 2, "Backward: row gradient norms", "#bf5700"),
-        (axes[2], row_updates, phases[2] >= 3, "SGD: actual row update norms", "#007f86"),
-    ):
-        axis.set(
-            title=title, yticks=range(len(visible)),
-            yticklabels=[words[index] for index in visible],
-            ylim=(len(visible) - 0.5, -0.5),
+
+
+_ROUTING_COLORS = {
+    "background": "#0b1220", "panel": "#142238", "text": "#e6edf3",
+    "muted": "#91a4ba", "dim": "#293b52", "forward": "#38d9e8",
+    "backward": "#ffad5c", "update": "#69e6ab", "target": "#ffd166",
+}
+
+
+def _routing_vector(values, precision=3):
+    return "[" + ", ".join(f"{value:.{precision}g}" for value in values.flatten()[:3].tolist()) + "]"
+
+
+def draw_embedding_routing(axis, trace, words, stage=11, progress=1.0):
+    """One pipeline, a persistent vocabulary table, and one large active-layer readout."""
+    steps = embedding_routing_steps(trace)
+    if not 0 <= stage < len(steps) or not 0 <= progress <= 1:
+        raise ValueError("Routing stage or animation progress is outside its valid range.")
+    title, node, direction, incoming, outgoing = steps[stage]
+    palette = _ROUTING_COLORS
+    color = palette[direction]
+    axis.clear()
+    axis.set(xlim=(0, 1), ylim=(0, 1))
+    axis.set_axis_off()
+    axis.figure.set_facecolor(palette["background"])
+
+    def text(x, y, value, size=14, shade=None, **kwargs):
+        return axis.text(
+            x, y, value, fontsize=size, color=shade or palette["text"],
+            transform=axis.transAxes, **kwargs,
         )
-        if active:
-            measured = values[visible].numpy()
-            axis.barh(range(len(visible)), measured, color=[
-                color if index in selected else "#aab2bd" for index in visible
-            ])
-            axis.set_xlim(0, max(float(measured.max()) * 1.4, 1e-12))
-            for row, value in enumerate(measured):
-                axis.text(float(value), row, f" {value:.3g}", va="center", fontsize=9)
+
+    def box(x, y, width, height, edge, fill=None, linewidth=1.5):
+        patch = FancyBboxPatch(
+            (x, y), width, height, boxstyle="round,pad=0.008",
+            facecolor=fill or palette["panel"], edgecolor=edge, linewidth=linewidth,
+            transform=axis.transAxes,
+        )
+        axis.add_patch(patch)
+        return patch
+
+    ids = trace["saved_ids"][0].tolist()
+    selected = set(ids)
+    visible = _routing_visible_ids(trace)
+    target = trace["targets"][0].item()
+    values, gradients = trace["activations"], trace["activation_gradients"]
+    vocabulary, width = trace["weights"][0].shape
+    hidden_width = values["hidden"].shape[-1]
+    clues = [words[index] for index in ids]
+    gap = len(clues) // 2
+    text(0.025, 0.955, " ".join(clues[:gap] + ["___"] + clues[gap:]), 25, weight="bold")
+    text(0.975, 0.958, f"answer: {words[target]} [{target}]", 17,
+         palette["target"], ha="right")
+    centers = (0.09, 0.255, 0.42, 0.575, 0.74, 0.91)
+    labels = ("LOOKUP", "MEAN", "LINEAR", "ReLU", "LOGITS", "CE LOSS")
+    shapes = (
+        f"{vocabulary} x {width}", f"{trace['mean_count']} vectors -> 1",
+        f"{width} -> {hidden_width}", f"{hidden_width} -> {hidden_width}",
+        f"{hidden_width} -> {vocabulary}", "scores + answer",
+    )
+    for index, center in enumerate(centers):
+        active = index == node
+        pulse = np.sin(np.pi * progress) if active else 0
+        block_width = 0.12 + (0.012 + 0.008 * pulse if active else 0)
+        block_height = 0.1 + (0.018 if active else 0)
+        box(center - block_width / 2, 0.79 - block_height / 2, block_width,
+            block_height, color if active else palette["dim"],
+            linewidth=3 + pulse if active else 1.5)
+        text(center, 0.803, labels[index], 14 if active else 12,
+             color if active else palette["muted"], ha="center", weight="bold")
+        text(center, 0.765, shapes[index], 11, palette["muted"], ha="center")
+        if index:
+            axis.annotate(
+                "", xy=(center - 0.072, 0.79), xytext=(centers[index - 1] + 0.072, 0.79),
+                arrowprops={"arrowstyle": "->", "color": palette["dim"], "lw": 2},
+            )
+    if stage not in (0, 12):
+        previous_node = steps[stage - 1][1]
+        start, end = centers[previous_node], centers[node]
+        if start == end:
+            packet_x, packet_y = end, 0.9
         else:
-            axis.set_xlim(0, 1)
-            axis.text(0.5, 0.5, "Not computed yet" if axis is axes[1] else "No optimizer step yet",
-                      ha="center", va="center", transform=axis.transAxes)
-        axis.grid(axis="x", alpha=0.15)
-    descriptions = (
-        "IDs arrive. The table already exists; no input values are averaged.",
-        "Lookup fetches vectors; CBOW averages those vectors and scores the vocabulary.",
-        "backward() fills the gradient ledger. The stored weights have not changed.",
-        "Fresh plain SGD applies the gradient. Unselected input rows stay unchanged.",
-    )
-    figure = axes[0].figure
-    figure.suptitle(
-        "One real CBOW step: lookup -> backward -> optimizer update"
-        + ("" if stage is None else f"\n{stage + 1}/4: {descriptions[stage]}"),
-        fontsize=13,
-    )
-    clues = ", ".join(words[index] for index in trace["contexts"][0].tolist())
-    answer = ", ".join(words[index] for index in trace["targets"].tolist())
-    mean_values = trace["weights"][1][trace["contexts"][0]].mean(dim=0)[:width]
-    mean_label = (
-        "mean of fetched vectors (first features: "
-        + ", ".join(f"{value:.3f}" for value in mean_values.tolist()) + ")"
-        if stage is None or stage >= 1 else "mean not computed yet"
-    )
-    figure.supxlabel(
-        f"Input: {clues} -> lookup -> {mean_label}\n"
-        f"Context features -> downstream layers -> loss(answer: {answer}). "
-        f"Checked all {len(trace['weights'][0]):,} vocabulary rows; displaying {len(visible)}. "
-        "Bar norms use every feature.\n"
-        "These panels describe the INPUT embedding table; the separate vocabulary head also learns.",
-        fontsize=9, y=0.02,
-    )
-    figure.tight_layout(rect=(0, 0.18, 1, 0.85), w_pad=2)
+            packet_x = start + (end - start) * progress
+            packet_y = 0.9
+        if incoming.shape == values["logits"].shape:
+            sample = incoming[0, target].item()
+        else:
+            sample = incoming.item() if incoming.numel() == 1 else incoming.flatten()[0].item()
+        text(packet_x, packet_y, f"{sample:.4g}", 15, palette["background"], ha="center",
+             bbox={"boxstyle": "round,pad=0.3", "facecolor": color, "edgecolor": color})
+        if start != end:
+            axis.annotate(
+                "", xy=(end, 0.865), xytext=(start, 0.865),
+                arrowprops={"arrowstyle": "->", "color": color, "lw": 3},
+            )
+    if node == 5:
+        axis.annotate(
+            "", xy=(centers[5], 0.85), xytext=(0.965, 0.935),
+            arrowprops={"arrowstyle": "->", "color": palette["target"], "lw": 2},
+        )
+
+    text(0.025, 0.685, f"{direction.upper()}  {stage + 1}/{len(steps)}", 14, color, weight="bold")
+    text(0.38, 0.685, title, 22, color, weight="bold")
+    box(0.025, 0.115, 0.305, 0.505, palette["dim"])
+    box(0.38, 0.115, 0.595, 0.505, color, linewidth=2)
+    table_mode = "GRADIENTS" if stage == 11 else "WEIGHTS"
+    text(0.04, 0.58, f"EMBEDDING {table_mode}", 13, palette["muted"], weight="bold")
+    table_values = trace["gradient"] if stage == 11 else trace["weights"][3 if stage == 12 else 0]
+    row_y = {}
+    for index, row in enumerate(visible):
+        y = 0.525 - index * 0.058
+        row_y[row] = y
+        highlighted = row in selected
+        if stage == 0:
+            highlighted = row in set(ids[:min(len(ids), 1 + int(progress * len(ids)))])
+        row_color = color if highlighted else palette["muted"]
+        if highlighted:
+            box(0.035, y - 0.017, 0.285, 0.039, row_color,
+                fill=palette["panel"], linewidth=2)
+        text(0.045, y, f"{words[row]} [{row}]", 11, row_color, va="center")
+        formatted = "[" + ", ".join(f"{value:.6f}" for value in table_values[row, :3].tolist()) + "]"
+        text(0.157, y, formatted, 10, row_color, va="center", family="DejaVu Sans Mono")
+    unread = vocabulary - len(selected)
+    text(0.04, 0.14, f"+ {unread} unread rows", 12, palette["muted"])
+
+    logit_ids = list(dict.fromkeys([target] + values["logits"][0].topk(min(3, vocabulary)).indices.tolist()))
+    precision = 6 if direction == "update" else 3
+
+    def readout(x, label, tensor, kind):
+        text(x, 0.565, label, 13, palette["muted"], weight="bold")
+        if kind == "loss":
+            text(x, 0.39, f"{tensor.item():.4f}", 38, color, family="DejaVu Sans Mono")
+        elif kind == "words":
+            for index, word_id in enumerate(logit_ids):
+                y = 0.485 - index * 0.076
+                shade = palette["target"] if word_id == target else palette["text"]
+                text(x, y, f"{words[word_id]} [{word_id}]", 12, shade)
+                text(x + 0.12, y, f"{tensor[0, word_id].item():+.5f}", 18,
+                     shade, family="DejaVu Sans Mono")
+        elif kind == "ids":
+            for index, row in enumerate(ids):
+                text(x, 0.48 - index * 0.076, f"{words[row]}  [{row}]", 18, color)
+        elif kind in {"occurrences", "rows"}:
+            rows = ids if kind == "occurrences" else list(dict.fromkeys(ids))
+            tensors = tensor[0] if kind == "occurrences" else tensor[rows]
+            for index, (row, vector) in enumerate(zip(rows, tensors)):
+                y = 0.49 - index * 0.083
+                text(x, y, f"{words[row]} [{row}]", 10, palette["muted"])
+                text(x, y - 0.034, _routing_vector(vector, precision), 14, color,
+                     family="DejaVu Sans Mono")
+        else:
+            for index, value in enumerate(tensor.flatten()[:3]):
+                text(x, 0.47 - index * 0.095, f"f{index}  {value.item():+.6f}",
+                     21, color, family="DejaVu Sans Mono")
+
+    input_kind, output_kind = "features", "features"
+    if stage == 0:
+        input_kind, output_kind = "ids", "occurrences"
+    elif stage == 1:
+        input_kind = "occurrences"
+    elif stage == 4:
+        output_kind = "words"
+    elif stage == 5:
+        input_kind, output_kind = "words", "loss"
+    elif stage == 6:
+        input_kind, output_kind = "loss", "words"
+    elif stage == 7:
+        input_kind = "words"
+    elif stage == 10:
+        output_kind = "occurrences"
+    elif stage == 11:
+        input_kind, output_kind = "occurrences", "rows"
+    elif stage == 12:
+        input_kind = output_kind = "rows"
+    in_label, out_label = ("IN", "OUT") if direction == "forward" else ("GRADIENT IN", "GRADIENT OUT")
+    if stage == 12:
+        in_label, out_label = "BEFORE", "AFTER"
+    readout(0.405, in_label, incoming, input_kind)
+    readout(0.72, out_label, outgoing, output_kind)
+    text(0.68, 0.39, ">", 28, color, ha="center", weight="bold")
+    if stage == 5:
+        probability = trace["probabilities"][0, target].item()
+        text(0.405, 0.15, f"p({words[target]}) = {probability:.6f}    loss = -log p({words[target]})", 13, color)
+    elif stage == 6:
+        text(0.405, 0.15, "cross-entropy gradient = probability - target", 13, color)
+    elif stage == 10:
+        text(0.405, 0.15, f"each occurrence receives gradient / {trace['mean_count']}", 14, color)
+    elif stage == 11:
+        text(0.405, 0.15, "saved addresses route the gradient; weights are still unchanged", 12, color)
+    elif stage == 12:
+        text(0.405, 0.15, f"one SGD step: weight - {trace['learning_rate']:g} x gradient", 14, color)
+    elif stage in (3, 8):
+        text(0.405, 0.15, "negative forward inputs block this route", 13, palette["muted"])
+    text(0.025, 0.065, "SAVED IDS", 11, palette["muted"])
+    for index, row in enumerate(ids):
+        x = 0.12 + index * 0.105
+        text(x, 0.065, str(row), 14, color if stage in (0, 11) else palette["muted"],
+             bbox={"boxstyle": "round,pad=0.25", "facecolor": palette["panel"],
+                   "edgecolor": color if stage in (0, 11) else palette["dim"]})
+    text(0.975, 0.065, "3 features / selected scores shown; full tensors used",
+         11, palette["muted"], ha="right")
+    if stage in (0, 11):
+        row = ids[min(len(ids) - 1, int(progress * len(ids)))]
+        if row in row_y:
+            axis.annotate(
+                "", xy=(0.325, row_y[row]), xytext=(0.37, 0.36),
+                arrowprops={"arrowstyle": "->" if stage == 11 else "<-",
+                            "color": color, "lw": 3},
+            )
+    axis.figure.subplots_adjust(left=0, right=1, bottom=0, top=1)
 
 
 def plot_embedding_routing(trace, words):
-    """Static evidence for the same measured step used by the animation."""
-    figure, axes = plt.subplots(1, 3, figsize=(15, 5.5))
-    draw_embedding_routing(axes, trace, words)
+    """A compact static checkpoint of the same pipeline at lookup backward."""
+    figure, axis = plt.subplots(figsize=(18, 8))
+    draw_embedding_routing(axis, trace, words)
     return figure
 
 
 def animate_embedding_routing(trace, words):
-    """Replay four actual snapshots, without interpolating or inventing updates."""
-    figure, axes = plt.subplots(1, 3, figsize=(15, 5.5))
+    """Move recorded values forward, then gradients backward, through one cat-probe pass."""
+    figure, axis = plt.subplots(figsize=(18, 8))
+    frames_per_step = 5
+
+    def update(frame):
+        draw_embedding_routing(
+            axis, trace, words, stage=frame // frames_per_step,
+            progress=(frame % frames_per_step) / (frames_per_step - 1),
+        )
+
     animation = FuncAnimation(
-        figure, lambda stage: draw_embedding_routing(axes, trace, words, stage),
-        frames=len(trace["weights"]), interval=1600, repeat=False,
+        figure, update, frames=len(embedding_routing_steps(trace)) * frames_per_step,
+        interval=500, repeat=False,
     )
     plt.close(figure)
     return animation

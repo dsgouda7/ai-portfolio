@@ -5,7 +5,7 @@ Follow the failures that lead from counting continuations to a writer that can l
 ## Required route
 
 - [Chapter 03 Route Guide](README.md) — Follow the four lessons from fetching word rows to a writer that can look back.
-- [03A - Training Skeleton and Word Objectives](03A-training-skeleton-and-word-objectives.ipynb) — Make practice questions from text, train word rows and a predictor together, and reuse one training loop.
+- [03A - Training Skeleton and Word Objectives](03A-training-skeleton-and-word-objectives.ipynb) — Watch CBOW learn in section 3.3; section 6 trains a reader/writer and retains the independent three-model comparison.
 - [03A - Theory Notes](03A-training-skeleton-and-word-objectives-theory.md) — Keep lookup, word guessing, running notes, and reading/writing jobs straight.
 - [Counts and Fixed-Window Language Models](03B-counts-and-fixed-window-language-models.ipynb) — Compare counted continuations with a learned fixed-size text window and expose a clue that neither window can see.
 - [Counts and Fixed-Window Theory Notes](03B-counts-and-fixed-window-language-models-theory.md) — Review why learning reusable features does not remove a fixed context boundary.
@@ -17,7 +17,7 @@ Follow the failures that lead from counting continuations to a writer that can l
 ## Code-only companions
 
 - [Common training base](language_model.py) — Keep one practice loop while each model chooses how to guess and which answers to grade.
-- [03A - Python](03A-training-skeleton-and-word-objectives.py) — Word objectives, the reader/writer preview, and the story-trained embedding comparison.
+- [03A - Python](03A-training-skeleton-and-word-objectives.py) — Visible word-objective training, section 6 reader/writer training, and the retained story-trained embedding comparison.
 - [Real-text experiment helper](real_text_embeddings.py) — Cache the checked TinyStories file, build practice questions, and record losses and embedding diagnostics.
 - [Window and objective checks](test_real_text_embeddings.py) — Check document boundaries, short documents, unknown slots, and each objective's question/answer alignment offline.
 - [03B - Python](03B-counts-and-fixed-window-language-models.py) — Counts and an ordered fixed-window predictor.

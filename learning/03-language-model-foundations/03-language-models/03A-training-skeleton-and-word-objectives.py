@@ -139,14 +139,14 @@ cbow_dataloader = make_dataloader(cbow_contexts, cbow_targets)
 cbow_batch_contexts, cbow_batch_targets = next(iter(cbow_dataloader))
 
 print("CBOW: neighbours -> middle word")
-print("Questions:", len(cbow_contexts))
-print("Batch inputs:", tuple(cbow_batch_contexts.shape))
-print("Batch answers:", tuple(cbow_batch_targets.shape))
 print(
     "Illustrated cat-document pair:",
     [itos[index] for index in cbow_contexts[-3].tolist()],
     "->", itos[cbow_targets[-3]],
 )
+print("Questions:", len(cbow_contexts))
+print("Batch inputs:", tuple(cbow_batch_contexts.shape))
+print("Batch answers:", tuple(cbow_batch_targets.shape))
 
 # %% 3 - Create one embedding table inside CBOW
 from language_model import TrainableLanguageModel
@@ -173,15 +173,26 @@ class CBOW(TrainableLanguageModel):
         hidden_features = self.activation(self.hidden(pooled_context))
         return self.output(hidden_features)  # [B, V] vocabulary scores
 
-# %% 3.1 - Inspect the untrained model
+# %% 3.1 - Create the untrained model and check score shapes
 torch.manual_seed(SEED)
+
+# initialize the model
 model = CBOW(vocabulary_size, EMBEDDING_WIDTH)
+
+# the initial embedding table is random, do a deep clone so we can
+# compare it with the trained table later.
 embedding_before = model.embedding.weight.detach().clone()
+
 print("Trainable embedding table [V, D]:", tuple(embedding_before.shape))
-assert embedding_before.shape == (vocabulary_size, EMBEDDING_WIDTH)
+
+# run the untrained model on the CBOW contexts
 untrained_logits = model(cbow_batch_contexts)
 
+print("Input cbow_contexts:", tuple(cbow_batch_contexts.shape))
+print("Vocabulary logits:", tuple(untrained_logits.shape))
+assert untrained_logits.shape == (len(cbow_batch_contexts), vocabulary_size)
 
+# %% 3.1 - Define prediction diagnostics, not training
 def word_probe(logits, expected_word, words=itos):
     """Keep probability, rank, and the actual shortlist; never force the answer."""
     # [V] -> [V]: softmax changes scores to shares without changing the word axis.
@@ -208,8 +219,9 @@ def report_probe(label, before, after):
     print(f"  Probability {probability_change}; rank {rank_change}. "
           + ("The expected word is top-ranked." if after["rank"] == 1 else "Not the first guess."))
 
-
+# %% 3.1 - Before training: inspect three familiar questions
 # [3, 5] -> [3, 4]: the same missing-center job, now on the familiar cat document.
+# Before running the whole training loop, inspect the model's predictions for the familiar cat document.
 cat_contexts = cat_window_ids[:, [0, 1, 3, 4]]
 cat_contexts_before = cat_contexts.clone()
 with torch.inference_mode():
@@ -217,56 +229,41 @@ with torch.inference_mode():
     cbow_before = {word: word_probe(cat_before_logits[row], word)
                    for row, word in enumerate(("cat", "sat", "on"))}
 
-print("Input cbow_contexts:", tuple(cbow_batch_contexts.shape))
-print("Vocabulary logits:", tuple(untrained_logits.shape))
-assert untrained_logits.shape == (len(cbow_batch_contexts), vocabulary_size)
+for row, expected_word in enumerate(("cat", "sat", "on")):
+    print("Clues:", [itos[index] for index in cat_contexts[row].tolist()],
+          "-> expected:", expected_word)
+    print("Before training:", cbow_before[expected_word])
 
 # %% 3.1 - Record one real CBOW step without changing the model being trained
-from copy import deepcopy
+import importlib
+import real_text_embeddings
+
+# Running kernels can retain helper definitions from before the local file was edited.
+importlib.reload(real_text_embeddings)
+from real_text_embeddings import record_embedding_routing
 
 routing_question_index = 0  # CHANGE THIS to 1 or 2 to inspect another real window.
 routing_contexts = cat_contexts[routing_question_index:routing_question_index + 1].clone()
 routing_targets = cat_window_ids[routing_question_index:routing_question_index + 1, CONTEXT_RADIUS].clone()
-routing_model = deepcopy(model)
-routing_optimizer = torch.optim.SGD(routing_model.parameters(), lr=0.1)
-routing_optimizer.zero_grad()
-routing_weights = [routing_model.embedding.weight.detach().clone()]
-routing_logits = routing_model(routing_contexts)
-routing_weights.append(routing_model.embedding.weight.detach().clone())
-routing_loss = nn.functional.cross_entropy(routing_logits, routing_targets)
-routing_loss.backward()
-routing_weights.append(routing_model.embedding.weight.detach().clone())
-routing_gradient = routing_model.embedding.weight.grad.detach().clone()
-routing_head_gradient = routing_model.output.bias.grad.detach().clone()
-assert torch.equal(routing_weights[0], routing_weights[1])
-assert torch.equal(routing_weights[0], routing_weights[2])
-routing_optimizer.step()
-routing_weights.append(routing_model.embedding.weight.detach().clone())
+routing_trace = record_embedding_routing(model, routing_contexts, routing_targets)
+routing_weights = routing_trace["weights"]
+routing_gradient = routing_trace["gradient"]
+routing_head_gradient = routing_trace["head_gradient"]
 routing_selected = set(routing_contexts.flatten().tolist())
 routing_gradient_rows = set(routing_gradient.ne(0).any(dim=1).nonzero().flatten().tolist())
 routing_changed_rows = set(routing_weights[3].ne(routing_weights[0]).any(dim=1).nonzero().flatten().tolist())
-assert routing_gradient_rows <= routing_selected
-assert routing_changed_rows <= routing_selected
-routing_trace = {
-    "contexts": routing_contexts, "targets": routing_targets,
-    "weights": routing_weights, "gradient": routing_gradient,
-}
-print("Forward lookup rows:", [itos[index] for index in sorted(routing_selected)])
-print("Rows with input-embedding gradients:", [itos[index] for index in sorted(routing_gradient_rows)])
-print("Embedding rows changed by SGD:", [itos[index] for index in sorted(routing_changed_rows)])
-print("Separate output-bias entries with gradients:", routing_head_gradient.ne(0).sum().item())
-print("backward() left weights unchanged; step() applied the update.")
+print(f"Recorded cat probe: loss {routing_trace['loss']:.4f}; "
+      f"{len(routing_changed_rows)} input rows changed by one fresh-SGD step.")
 
-# %% 3.1 - Replay the measured step as a static storyboard and animation
+# %% 3.1 - Follow values forward and gradients backward in one animation
 from IPython.display import HTML, display
 from real_text_embeddings import plot_embedding_routing, animate_embedding_routing
 
 routing_figure = plot_embedding_routing(routing_trace, itos)
 routing_figure.savefig(CHAPTER_DIRECTORY / "images" / "03a-embedding-forward-backward.png", dpi=140)
-plt.show()
 plt.close(routing_figure)
 routing_animation = animate_embedding_routing(routing_trace, itos)
-routing_animation.save(CHAPTER_DIRECTORY / "images" / "03a-embedding-forward-backward.gif", writer="pillow", fps=1)
+routing_animation.save(CHAPTER_DIRECTORY / "images" / "03a-embedding-forward-backward.gif", writer="pillow", fps=2)
 display(HTML(routing_animation.to_jshtml()))
 
 # %% 3.2 - Reserve later stories and keep their vocabulary fixed
@@ -311,21 +308,41 @@ print(f"Reserved stories: {INTRO_STORIES + 1} through "
       f"{INTRO_STORIES + VALIDATION_STORIES}; windows: {len(validation_windows)}")
 print(f"Reserved unknown slots: {validation_windows.eq(0).float().mean():.1%}")
 
-# %% 3.3 - Compare practice, probe, and reserved-story loss
+# %% 3.3 - Train this CBOW now and watch each epoch
 validation_loss_before = heldout_cbow_loss(model)
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.008)
 cbow_started = time.perf_counter()
-losses = model.fit_language_model(
-    cbow_dataloader,
-    criterion,
-    optimizer,
-    epochs=10,
-)
+losses = []
+cbow_learning_history = [{
+    "epoch": 0, "train_loss": None, "heldout_loss": validation_loss_before,
+    "cat_probability": cbow_before["cat"]["probability"],
+    "cat_rank": cbow_before["cat"]["rank"], "cat_row_shift": 0.0,
+}]
+print("CBOW epoch | practice loss | reserved loss | P(cat) | cat rank | cat row change")
+print(f"0 | not trained | {validation_loss_before:.4f} | "
+      f"{cbow_before['cat']['probability']:.3%} | {cbow_before['cat']['rank']} | 0")
+for epoch in range(1, 11):
+    # Keep the SAME model, optimizer state, and shuffled loader across epochs.
+    epoch_loss = model.fit_language_model(cbow_dataloader, criterion, optimizer, epochs=1)[0]
+    losses.append(epoch_loss)
+    with torch.inference_mode():
+        epoch_cat = word_probe(model(cat_contexts[:1])[0], "cat")
+        cat_row_shift = (
+            model.embedding.weight[stoi["cat"]] - embedding_before[stoi["cat"]]
+        ).norm().item()
+    epoch_heldout = heldout_cbow_loss(model)
+    cbow_learning_history.append({
+        "epoch": epoch, "train_loss": epoch_loss, "heldout_loss": epoch_heldout,
+        "cat_probability": epoch_cat["probability"], "cat_rank": epoch_cat["rank"],
+        "cat_row_shift": cat_row_shift,
+    })
+    print(f"{epoch} | {epoch_loss:.4f} | {epoch_heldout:.4f} | "
+          f"{epoch_cat['probability']:.3%} | {epoch_cat['rank']} | {cat_row_shift:.4f}")
 cbow_seconds = time.perf_counter() - cbow_started
 
 print(f"Loss: {losses[0]:.4f} -> {losses[-1]:.4f}")
-print(f"CBOW: {cbow_seconds:.1f}s on one CPU thread (10 epochs)")
+print(f"CBOW: {cbow_seconds:.1f}s on one CPU thread (10 epochs, including progress checks)")
 with torch.inference_mode():
     cat_after_logits = model(cat_contexts)
     for row, word in enumerate(("cat", "sat", "on")):
@@ -354,14 +371,22 @@ print("The learned values changed; the integer input IDs did not.")
 random_guess_loss = math.log(vocabulary_size)
 
 fig, axis = plt.subplots(figsize=(8, 4))
-axis.plot(losses, color="#2a6f97", linewidth=2)
+axis.plot(range(1, len(losses) + 1), losses, color="#2a6f97", linewidth=2,
+          label="Practice: average loss during each epoch")
+axis.plot(
+    [record["epoch"] for record in cbow_learning_history],
+    [record["heldout_loss"] for record in cbow_learning_history],
+    color="#007f86", linewidth=2, marker="o",
+    label="Reserved stories: evaluate after each epoch",
+)
 axis.axhline(
     random_guess_loss,
     color="#d97706",
     linestyle="--",
     label=f"random guess log(V) = {random_guess_loss:.2f}",
 )
-axis.set(title="CBOW training loss", xlabel="epoch", ylabel="cross-entropy")
+axis.set(title="This CBOW is learning here, before the later comparison",
+         xlabel="epoch (0 = before training)", ylabel="cross-entropy")
 axis.legend(frameon=False)
 axis.grid(alpha=0.2)
 plt.tight_layout()
@@ -397,58 +422,6 @@ def most_similar(word, top_k=4):
 
 for word in ["cat", "dog", "mat", "sat"]:
     print(f"{word:>12} -> {most_similar(word)}")
-
-# %% 4.1 - Keep probabilities fixed; change only the selection rule
-model.eval()
-with torch.inference_mode():
-    bridge_probabilities = model(cat_contexts[:1])[0].softmax(dim=-1).cpu()
-bridge_greedy_id = bridge_probabilities.argmax().item()
-# CHANGE THIS: change only the sampling seed; weights and context stay fixed.
-bridge_sampling_seed = SEED
-bridge_sample_count = 2000
-bridge_samples = torch.multinomial(
-    bridge_probabilities, bridge_sample_count, replacement=True,
-    generator=torch.Generator().manual_seed(bridge_sampling_seed),
-)
-bridge_replay = torch.multinomial(
-    bridge_probabilities, bridge_sample_count, replacement=True,
-    generator=torch.Generator().manual_seed(bridge_sampling_seed),
-)
-bridge_counts = torch.bincount(bridge_samples, minlength=vocabulary_size)
-assert torch.equal(bridge_samples, bridge_replay)
-assert bridge_counts.sum().item() == bridge_sample_count
-print("Embedding neighbours of cat:", most_similar("cat"))
-print("Greedy answer to the same gap:", itos[bridge_greedy_id])
-print("Different sampled answers:", bridge_samples.unique().numel())
-print("Word | model probability | observed sample share")
-for index in bridge_probabilities.topk(5).indices.tolist():
-    print(f"{itos[index]:>12} | {bridge_probabilities[index]:.2%} | "
-          f"{bridge_counts[index].item() / bridge_sample_count:.2%}")
-print("The same seed replays the draws. Sampling changed choices, not learned rows.")
-
-# %% 5 - Permute clues after training
-model.eval()
-ordered_context = cbow_contexts[:1]
-# [1, 4] -> [1, 4]: reorder only clue positions; their mean must stay the same.
-permuted_context = ordered_context[:, torch.tensor([3, 1, 0, 2])]
-
-with torch.no_grad():
-    # Both [1, 4, 32] lookups -> [1, 32] means: only word order changed, not membership.
-    ordered_vectors = model.embedding(ordered_context).mean(dim=1)
-    permuted_vectors = model.embedding(permuted_context).mean(dim=1)
-    ordered_logits = model(ordered_context)
-    permuted_logits = model(permuted_context)
-
-representation_difference = (ordered_vectors - permuted_vectors).abs().max().item()
-logit_difference = (ordered_logits - permuted_logits).abs().max().item()
-
-print("Ordered:", [itos[index] for index in ordered_context[0].tolist()])
-print("Permuted:", [itos[index] for index in permuted_context[0].tolist()])
-print(f"Maximum representation difference: {representation_difference:.8f}")
-print(f"Maximum logit difference: {logit_difference:.8f}")
-
-assert torch.allclose(ordered_vectors, permuted_vectors)
-assert torch.allclose(ordered_logits, permuted_logits)
 
 # %% A.1 - Compare fused lookup with the same trained rows
 preview_contexts = cbow_contexts[:3]
@@ -649,7 +622,7 @@ assert skipgram_losses[-1] < skipgram_losses[0]
 assert skipgram_losses[-1] < math.log(vocabulary_size)
 assert neighbour_logits.shape == (1, vocabulary_size)
 
-# %% C.1 - Build aligned source and target sequences
+# %% 6.1 - Build aligned source and target sequences
 BOS_ID = vocabulary_size
 EOS_ID = vocabulary_size + 1
 sequence_itos = itos + ["<bos>", "<eos>"]
@@ -688,7 +661,7 @@ assert torch.equal(sequence_targets[:, 1:-1], window_ids[:, 3:])
 assert bool((sequence_targets[:, 0] == BOS_ID).all())
 assert bool((sequence_targets[:, -1] == EOS_ID).all())
 
-# %% C.2 - Define and train the reader/writer
+# %% 6.2 - Define the reader, writer, and shared embedding
 class EncoderDecoderLM(TrainableLanguageModel):
     def __init__(self, vocabulary_size, embedding_width, hidden_width):
         super().__init__()
@@ -741,12 +714,14 @@ class EncoderDecoderLM(TrainableLanguageModel):
         return target_ids[:, 1:]
 
 
+# %% 6.3 - Train the reader/writer and inspect its embedding changes
 torch.manual_seed(SEED)
 sequence_model = EncoderDecoderLM(
     sequence_vocabulary_size,
     embedding_width=EMBEDDING_WIDTH,
     hidden_width=48,
 )
+sequence_embedding_before = sequence_model.embedding.weight.detach().clone()
 # [3, 5] -> two [3, 3/4] probe tensors using the same preparation as the full dataset.
 cat_sources = source_sequences[-3:]
 cat_answers = sequence_targets[-3:]
@@ -759,13 +734,40 @@ with torch.inference_mode():
 sequence_optimizer = torch.optim.Adam(sequence_model.parameters(), lr=0.008)
 assert EncoderDecoderLM.fit_language_model is TrainableLanguageModel.fit_language_model
 sequence_started = time.perf_counter()
-sequence_losses = sequence_model.fit_language_model(
-    sequence_dataloader,
-    criterion,
-    sequence_optimizer,
-    epochs=6,
-)
+sequence_losses = []
+sequence_learning_history = [{
+    "epoch": 0, "train_loss": None, "sat_probability": writer_before["sat"]["probability"],
+    "embedding_shift": 0.0,
+}]
+print("Reader/writer epoch | practice loss | P(sat | source, <bos>) | shared table change")
+print(f"0 | not trained | {writer_before['sat']['probability']:.3%} | 0")
+for epoch in range(1, 7):
+    epoch_loss = sequence_model.fit_language_model(
+        sequence_dataloader, criterion, sequence_optimizer, epochs=1,
+    )[0]
+    sequence_losses.append(epoch_loss)
+    with torch.inference_mode():
+        epoch_writer = word_probe(sequence_model(cat_sources[:1], cat_answers[:1])[0, 0],
+                                  "sat", sequence_itos)
+        sequence_shift = (sequence_model.embedding.weight - sequence_embedding_before).norm().item()
+    sequence_learning_history.append({
+        "epoch": epoch, "train_loss": epoch_loss,
+        "sat_probability": epoch_writer["probability"], "embedding_shift": sequence_shift,
+    })
+    print(f"{epoch} | {epoch_loss:.4f} | {epoch_writer['probability']:.3%} | {sequence_shift:.4f}")
 sequence_seconds = time.perf_counter() - sequence_started
+sequence_embedding_after = sequence_model.embedding.weight.detach().clone()
+sequence_embedding_shifts = (sequence_embedding_after - sequence_embedding_before).norm(dim=1)
+for word in ("the", "sleepy", "cat", "sat", "on", "<bos>", "<eos>"):
+    index = sequence_itos.index(word)
+    print(f"{word} (fixed ID {index}), first three shared features: "
+          f"{sequence_embedding_before[index, :3].tolist()} -> "
+          f"{sequence_embedding_after[index, :3].tolist()}; "
+          f"row change {sequence_embedding_shifts[index].item():.4f}")
+assert torch.any(sequence_embedding_shifts > 0)
+# EOS is checked as an answer but is never looked up by this untied model.
+assert torch.equal(sequence_embedding_after[EOS_ID], sequence_embedding_before[EOS_ID])
+print("Encoder and decoder input rows learned together; the unread EOS input row stayed unchanged.")
 
 with torch.inference_mode():
     # [N, ...] -> first at most 4096 rows: bounded diagnostic avoids a huge [N, 3, V] allocation.
@@ -797,7 +799,7 @@ assert sequence_losses[-1] < math.log(sequence_vocabulary_size)
 assert teacher_forced_logits.shape == (min(4096, len(windows)), 3, sequence_vocabulary_size)
 print(f"Introductory training total: {cbow_seconds + skipgram_seconds + sequence_seconds:.1f}s")
 
-# %% C.3 - Generate without correct previous answers
+# %% 6.4 - Generate without correct previous answers
 def greedy_decode(model, source_ids, bos_id, eos_id, max_steps):
     model.eval()
     current_ids = torch.full(
@@ -853,7 +855,7 @@ assert generated_ids.shape[0] == 1
 assert generated_ids.shape[1] >= 1
 assert hidden_difference > 0
 
-# %% D.1 - Load the independent comparison split
+# %% 6.5 - Load the independent comparison split
 from pathlib import Path
 
 import real_text_embeddings
@@ -873,20 +875,20 @@ from real_text_embeddings import best_versus_final
 
 real_corpus = load_real_text()
 
-# %% D.2 - Record all three training histories
+# %% 6.6 - Record all three training histories
 REAL_TEXT_EPOCHS = 16
 real_results = train_comparison(
     real_corpus, CBOW, SkipGram, EncoderDecoderLM, epochs=REAL_TEXT_EPOCHS,
 )
 
-# %% D.3 - Plot recorded loss and geometry
+# %% 6.7 - Plot recorded loss and geometry
 chart_directory = Path(real_text_embeddings.__file__).resolve().parent / "images"
 loss_figure = plot_losses_and_geometry(real_results)
 loss_figure.savefig(chart_directory / "03a-real-text-loss-and-similarity.png", dpi=130)
 plt.show()
 plt.close(loss_figure)
 
-# %% D.4 - Project all histories through one camera
+# %% 6.8 - Project all histories through one camera
 real_probe_words, real_coordinates, real_pca_fraction = project_snapshots(
     real_corpus, real_results,
 )
@@ -895,13 +897,13 @@ map_figure.savefig(chart_directory / "03a-real-text-word-maps.png", dpi=130)
 plt.show()
 plt.close(map_figure)
 
-# %% D.5 - Compare complete stored rows
+# %% 6.9 - Compare complete stored rows
 similarity_figure = plot_similarity_heatmaps(real_corpus, real_results)
 similarity_figure.savefig(chart_directory / "03a-real-text-cosine-heatmaps.png", dpi=130)
 plt.show()
 plt.close(similarity_figure)
 
-# %% D.6 - Play the recorded snapshots
+# %% 6.10 - Play the recorded snapshots
 real_animation = animate_word_maps(real_probe_words, real_coordinates, real_results)
 real_animation_html = real_animation.to_jshtml()
 if "get_ipython" in globals():
@@ -911,10 +913,10 @@ if "get_ipython" in globals():
 else:
     print(f"Recorded animation rendered ({len(real_animation_html):,} HTML characters).")
 
-# %% D.7 - Print actual neighbour changes
+# %% 6.11 - Print actual neighbour changes
 report_neighbours(real_corpus, real_results)
 
-# %% D.7 - Your turn: Inspect another pair
+# %% 6.11 - Your turn: Inspect another pair
 probe_pair = ("mom", "dad")  # CHANGE THIS: try ("mom", "green"), without retraining
 for objective, record in real_results.items():
     pair_ids = [real_corpus["word_ids"][word] for word in probe_pair]
@@ -926,7 +928,7 @@ for objective, record in real_results.items():
           f"{pair_scores[0]:+.3f} -> {pair_scores[1]:+.3f}; "
           f"final across-group mean {record['across'][-1]:+.3f}")
 
-# %% D.8 - Check held-out answer shortlists
+# %% 6.12 - Check held-out answer shortlists
 cbow_best = real_results["CBOW"]["best_model"]
 for left, right in [("was so", "to have"), ("a little", "named tom"),
                     ("played with", "toys and"), ("they went", "the park")]:
@@ -944,7 +946,7 @@ print(f"  how alike 5 random words' rows are:          {shortlist['random_simila
 assert shortlist["shortlist_right"] > shortlist["first_right"]
 assert shortlist["shortlist_similarity"] > shortlist["random_similarity"]
 
-# %% D.9 - Check best versus final without retraining
+# %% 6.13 - Check best versus final without retraining
 writer_check = best_versus_final(real_results)
 writer_record = writer_check["Encoder-decoder"]
 if writer_record["final_gap"] < writer_record["best_gap"]:
@@ -952,7 +954,7 @@ if writer_record["final_gap"] < writer_record["best_gap"]:
 else:
     print("This run did not show fading group separation; judge the recorded losses too.")
 
-# %% D.9 - Optional extra-seed robustness check
+# %% 6.13 - Optional extra-seed robustness check
 RUN_SEED_CHECK = False
 if RUN_SEED_CHECK:
     for check_seed in (5, 123):

@@ -2,10 +2,15 @@
 
 import ast
 from contextlib import redirect_stdout
+from copy import deepcopy
 from io import StringIO
 import json
+import math
 from pathlib import Path
 import re
+import sys
+from types import ModuleType
+import time
 import unittest
 from unittest.mock import patch
 
@@ -14,7 +19,15 @@ import numpy as np
 import torch
 
 from language_model import TrainableLanguageModel
-from real_text_embeddings import make_document_windows, objective_pairs, plot_embedding_routing
+from real_text_embeddings import (
+    animate_embedding_routing,
+    draw_embedding_routing,
+    embedding_routing_steps,
+    make_document_windows,
+    objective_pairs,
+    plot_embedding_routing,
+    record_embedding_routing,
+)
 
 
 class DocumentWindowTests(unittest.TestCase):
@@ -186,6 +199,7 @@ class CBOWEmbeddingTests(unittest.TestCase):
         torch.testing.assert_close(rows, before_table[self.ids])
         torch.testing.assert_close(actual, expected)
         torch.testing.assert_close(actual[0], actual[1])
+        self.assertEqual(actual[0].argmax().item(), actual[1].argmax().item())
         self.assertTrue(torch.equal(self.ids, before_ids))
         self.assertTrue(torch.equal(self.model.embedding.weight.detach(), before_table))
 
@@ -226,6 +240,27 @@ class CBOWEmbeddingTests(unittest.TestCase):
         self.assertTrue(torch.equal(self.ids, before_ids))
         self.assertTrue(torch.equal(torch.random.get_rng_state(), rng_before))
 
+    def test_recorder_refreshes_helpers_cached_before_the_notebook_was_updated(self):
+        self._activate_features()
+        for missing_helper in (True, False):
+            with self.subTest(missing_helper=missing_helper):
+                cached = ModuleType("real_text_embeddings")
+                cached.__file__ = str(Path(__file__).with_name("real_text_embeddings.py"))
+                if not missing_helper:
+                    cached.record_embedding_routing = lambda: None
+                original_module = sys.modules["real_text_embeddings"]
+                try:
+                    sys.modules["real_text_embeddings"] = cached
+                    if missing_helper:
+                        with self.assertRaisesRegex(ImportError, "record_embedding_routing"):
+                            exec("from real_text_embeddings import record_embedding_routing", {})
+                    state = self._record_routing()
+                    self.assertTrue(callable(cached.animate_embedding_routing))
+                finally:
+                    sys.modules["real_text_embeddings"] = original_module
+                self.assertEqual(state["routing_gradient_rows"], {0, 2, 4, 6})
+                self.assertEqual(state["routing_changed_rows"], {0, 2, 4, 6})
+
     def test_checking_answer_does_not_fetch_its_input_row_but_head_receives_feedback(self):
         self._activate_features()
         state = self._record_routing()
@@ -262,6 +297,52 @@ class CBOWEmbeddingTests(unittest.TestCase):
         self.assertEqual(self.model.embedding.weight.grad[[1, 3, 4, 5, 6]].count_nonzero().item(), 0)
         self.assertGreater(self.model.embedding.weight.grad[[0, 2]].norm().item(), 0)
 
+    def test_saved_count_splits_by_occurrences_not_unique_ids(self):
+        self._activate_features()
+        contexts = torch.tensor([[0, 0, 2, 2]])
+        trace = record_embedding_routing(self.model, contexts, torch.tensor([1]))
+        gradients = trace["activation_gradients"]
+        self.assertEqual(trace["mean_count"], 4)
+        self.assertEqual(trace["saved_ids"].tolist(), [[0, 0, 2, 2]])
+        torch.testing.assert_close(
+            gradients["mean"], gradients["linear"] @ self.model.hidden.weight.detach(),
+        )
+        torch.testing.assert_close(
+            gradients["lookup"],
+            gradients["mean"][:, None, :].expand(1, 4, 4) / 4,
+        )
+        torch.testing.assert_close(trace["gradient"][0], gradients["mean"][0] / 2)
+        torch.testing.assert_close(trace["gradient"][2], gradients["mean"][0] / 2)
+        torch.testing.assert_close(trace["gradient"], trace["reconstructed_gradient"])
+        contexts.fill_(6)
+        self.assertEqual(trace["saved_ids"].tolist(), [[0, 0, 2, 2]])
+        self.assertGreater(trace["gradient"].norm().item(), 0)
+
+    def test_four_ids_reach_exactly_four_rows_of_a_hundred_by_three_table(self):
+        with torch.random.fork_rng(devices=[]):
+            self.model = self.model_type(100, 3)
+        self._activate_features()
+        trace = record_embedding_routing(
+            self.model, torch.tensor([[7, 21, 64, 90]]), torch.tensor([1]),
+        )
+        gradient = trace["gradient"]
+        nonzero_rows = set(gradient.ne(0).any(dim=1).nonzero().flatten().tolist())
+        self.assertEqual(tuple(gradient.shape), (100, 3))
+        self.assertEqual(nonzero_rows, {7, 21, 64, 90})
+        self.assertEqual(100 - len(nonzero_rows), 96)
+        self.assertEqual(tuple(trace["activations"]["mean"].shape), (1, 3))
+        self.assertEqual(tuple(trace["activations"]["lookup"].shape), (1, 4, 3))
+        self.assertEqual(tuple(trace["activation_gradients"]["logits"].shape), (1, 100))
+
+    def test_recorder_rejects_empty_or_multiwindow_inputs_and_invalid_step_size(self):
+        for contexts in (torch.empty((1, 0), dtype=torch.long), self.ids, self.ids[0]):
+            with self.subTest(shape=contexts.shape), self.assertRaisesRegex(ValueError, "one nonempty"):
+                record_embedding_routing(self.model, contexts, torch.tensor([1]))
+        with self.assertRaisesRegex(ValueError, "one checking answer"):
+            record_embedding_routing(self.model, self.ids[:1], torch.tensor([1, 2]))
+        with self.assertRaisesRegex(ValueError, "positive"):
+            record_embedding_routing(self.model, self.ids[:1], torch.tensor([1]), learning_rate=0)
+
     def test_adam_history_can_move_an_unread_row_with_zero_current_gradient(self):
         self._activate_features()
         optimizer = torch.optim.Adam(self.model.parameters(), lr=0.05)
@@ -276,7 +357,44 @@ class CBOWEmbeddingTests(unittest.TestCase):
         optimizer.step()
         self.assertFalse(torch.equal(self.model.embedding.weight.detach()[[0, 2]], before[[0, 2]]))
 
-    def test_static_storyboard_plots_full_row_measurements_not_only_displayed_features(self):
+    def test_flow_stages_follow_actual_forward_values_and_reverse_gradients(self):
+        self._activate_features()
+        trace = self._record_routing()["routing_trace"]
+        steps = embedding_routing_steps(trace)
+        self.assertEqual(len(steps), 13)
+        self.assertEqual([step[1] for step in steps], [0, 1, 2, 3, 4, 5, 5, 4, 3, 2, 1, 0, 0])
+        self.assertEqual([step[2] for step in steps], ["forward"] * 6 + ["backward"] * 6 + ["update"])
+        torch.testing.assert_close(steps[0][3], trace["saved_ids"])
+        torch.testing.assert_close(steps[1][4], trace["activations"]["mean"])
+        torch.testing.assert_close(steps[3][4], trace["activations"]["hidden"])
+        torch.testing.assert_close(steps[4][4], trace["activations"]["logits"])
+        self.assertAlmostEqual(steps[5][4].item(), trace["loss"])
+        torch.testing.assert_close(steps[6][4], trace["activation_gradients"]["logits"])
+        torch.testing.assert_close(steps[9][4], trace["activation_gradients"]["mean"])
+        torch.testing.assert_close(steps[10][4], trace["activation_gradients"]["lookup"])
+        torch.testing.assert_close(steps[11][4], trace["gradient"])
+        torch.testing.assert_close(steps[12][4], trace["weights"][3])
+
+    def test_cross_entropy_starts_the_measured_backward_flow_and_relu_blocks_negative_inputs(self):
+        self._activate_features()
+        with torch.no_grad():
+            self.model.hidden.bias[0] = -3
+        trace = self._record_routing()["routing_trace"]
+        probabilities = trace["activations"]["logits"].softmax(dim=-1)
+        expected = probabilities.clone()
+        expected[0, trace["targets"][0]] -= 1
+        torch.testing.assert_close(trace["probabilities"], probabilities)
+        torch.testing.assert_close(trace["activation_gradients"]["logits"], expected)
+        self.assertAlmostEqual(trace["loss"], -probabilities[0, trace["targets"][0]].log().item(), places=6)
+        self.assertLess(trace["activations"]["linear"][0, 0].item(), 0)
+        self.assertEqual(trace["activations"]["hidden"][0, 0].item(), 0)
+        self.assertEqual(trace["activation_gradients"]["linear"][0, 0].item(), 0)
+        torch.testing.assert_close(
+            trace["activation_gradients"]["linear"],
+            trace["activation_gradients"]["hidden"] * trace["activations"]["linear"].gt(0),
+        )
+
+    def test_single_pipeline_enlarges_active_layer_and_displays_measured_values(self):
         with torch.random.fork_rng(devices=[]):
             self.model = self.model_type(7, 8)
         self._activate_features()
@@ -284,16 +402,199 @@ class CBOWEmbeddingTests(unittest.TestCase):
         trace = state["routing_trace"]
         figure = plot_embedding_routing(trace, state["itos"])
         try:
-            for axis, measurements in (
-                (figure.axes[1], trace["gradient"].norm(dim=1)),
-                (figure.axes[2], (trace["weights"][3] - trace["weights"][0]).norm(dim=1)),
-            ):
-                for bar, label in zip(axis.patches, axis.get_yticklabels()):
-                    index = state["itos"].index(label.get_text())
-                    self.assertAlmostEqual(bar.get_width(), measurements[index].item())
-            self.assertEqual(figure.axes[0].images[0].get_array().shape[1], 4)
+            self.assertEqual(len(figure.axes), 1)
+            axis = figure.axes[0]
+            draw_embedding_routing(axis, trace, state["itos"], stage=5, progress=0.5)
+            texts = [artist.get_text() for artist in axis.texts]
+            self.assertIn(f"{trace['loss']:.4f}", texts)
+            widths = [patch.get_width() for patch in axis.patches[:6]]
+            self.assertEqual(widths.index(max(widths)), 5)
+            draw_embedding_routing(axis, trace, state["itos"], stage=10)
+            texts = [artist.get_text() for artist in axis.texts]
+            values = trace["activation_gradients"]["lookup"][0, 0, :3]
+            expected = "[" + ", ".join(f"{value:.3g}" for value in values.tolist()) + "]"
+            self.assertIn(expected, texts)
+            self.assertIn("each occurrence receives gradient / 4", texts)
+            draw_embedding_routing(axis, trace, state["itos"], stage=12)
+            texts = [artist.get_text() for artist in axis.texts]
+            values = trace["weights"][3][state["routing_contexts"][0, 0], :3]
+            expected = "[" + ", ".join(f"{value:.6g}" for value in values.tolist()) + "]"
+            self.assertIn(expected, texts)
         finally:
             plt.close(figure)
+
+    def test_single_cat_animation_contains_forward_backward_and_optimizer_phases(self):
+        self._activate_features()
+        trace = record_embedding_routing(self.model, self.ids[:1], torch.tensor([1]))
+        animation = animate_embedding_routing(
+            trace, ["the", "cat", "sleepy", "dog", "sat", "mat", "on"],
+        )
+        self.assertEqual(list(animation.new_frame_seq()), list(range(65)))
+        self.assertIn("frames[64]", animation.to_jshtml())
+
+
+class VisibleLearningTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        chapter = Path(__file__).resolve().parent
+        notebook = json.loads(
+            (chapter / "03A-training-skeleton-and-word-objectives.ipynb").read_text(encoding="utf-8")
+        )
+        cls.code = {
+            cell["id"]: "".join(cell["source"]) for cell in notebook["cells"]
+            if cell["cell_type"] == "code"
+        }
+        definitions = [
+            node for node in ast.parse("\n\n".join(cls.code.values())).body
+            if isinstance(node, ast.ClassDef) and node.name in {"CBOW", "EncoderDecoderLM"}
+        ]
+        namespace = {"nn": torch.nn, "TrainableLanguageModel": TrainableLanguageModel}
+        exec(compile(ast.Module(body=definitions, type_ignores=[]), "models", "exec"), namespace)
+        cls.cbow_type = namespace["CBOW"]
+        cls.sequence_type = namespace["EncoderDecoderLM"]
+
+    def namespace(self):
+        words = ["<unk>", "the", "sleepy", "cat", "sat", "on", "mat"]
+        windows = torch.tensor([[1, 2, 3, 4, 5], [2, 3, 4, 5, 1], [3, 4, 5, 1, 6]])
+        namespace = {
+            "torch": torch, "nn": torch.nn, "time": time, "math": math, "SEED": 17,
+            "itos": words, "stoi": {word: index for index, word in enumerate(words)},
+            "vocabulary_size": 7, "EMBEDDING_WIDTH": 4, "windows": windows,
+            "cat_contexts": windows[:, [0, 1, 3, 4]],
+            "cat_contexts_before": windows[:, [0, 1, 3, 4]].clone(),
+        }
+        exec(compile(self.code["ch03a-probe-helpers"], "probes", "exec"), namespace)
+        return namespace
+
+    def loader(self, inputs, targets):
+        return torch.utils.data.DataLoader(
+            torch.utils.data.TensorDataset(inputs, targets), batch_size=3, shuffle=True,
+            generator=torch.Generator().manual_seed(17),
+        )
+
+    def test_cbow_epoch_monitoring_preserves_the_original_ten_epoch_training(self):
+        state = self.namespace()
+        with torch.random.fork_rng(devices=[]):
+            torch.manual_seed(17)
+            model = self.cbow_type(7, 4)
+        with torch.no_grad():
+            model.embedding.weight.copy_(torch.arange(28).reshape(7, 4) / 28)
+            model.hidden.weight.fill_(0.25)
+            model.hidden.bias.fill_(1)
+        reference = deepcopy(model)
+        contexts, answers = state["cat_contexts"], state["windows"][:, 2]
+
+        def heldout(candidate):
+            candidate.eval()
+            with torch.inference_mode():
+                return torch.nn.functional.cross_entropy(candidate(contexts), answers).item()
+
+        state.update({
+            "model": model, "embedding_before": model.embedding.weight.detach().clone(),
+            "cbow_dataloader": self.loader(contexts, answers), "heldout_cbow_loss": heldout,
+        })
+        with torch.inference_mode():
+            logits = model(contexts)
+            state["cbow_before"] = {
+                word: state["word_probe"](logits[row], word)
+                for row, word in enumerate(("cat", "sat", "on"))
+            }
+        with patch.object(model, "fit_language_model", wraps=model.fit_language_model) as fit:
+            with redirect_stdout(StringIO()):
+                exec(compile(self.code["06c-21"], "cbow-learning", "exec"), state)
+            self.assertEqual(fit.call_count, 10)
+            for call in fit.call_args_list:
+                self.assertIs(call.args[0], state["cbow_dataloader"])
+                self.assertIs(call.args[2], state["optimizer"])
+                self.assertEqual(call.kwargs, {"epochs": 1})
+        history = state["cbow_learning_history"]
+        self.assertEqual([row["epoch"] for row in history], list(range(11)))
+        self.assertIsNone(history[0]["train_loss"])
+        self.assertEqual([row["train_loss"] for row in history[1:]], state["losses"])
+        self.assertGreater(history[-1]["cat_row_shift"], 0)
+        reference.fit_language_model(
+            self.loader(contexts, answers), torch.nn.CrossEntropyLoss(),
+            torch.optim.Adam(reference.parameters(), lr=0.008), epochs=10,
+        )
+        for actual, expected in zip(model.parameters(), reference.parameters()):
+            torch.testing.assert_close(actual, expected, rtol=0, atol=0)
+
+    def test_reader_writer_has_its_own_six_epoch_run_and_measured_shared_rows(self):
+        state = self.namespace()
+        windows = state["windows"]
+        sources = windows[:, :3]
+        targets = torch.cat([
+            torch.full((3, 1), 7), windows[:, 3:], torch.full((3, 1), 8),
+        ], dim=1)
+        state.update({
+            "EncoderDecoderLM": self.sequence_type, "TrainableLanguageModel": TrainableLanguageModel,
+            "sequence_vocabulary_size": 9, "sequence_itos": state["itos"] + ["<bos>", "<eos>"],
+            "source_sequences": sources, "sequence_targets": targets,
+            "sequence_dataloader": self.loader(sources, targets), "BOS_ID": 7, "EOS_ID": 8,
+            "criterion": torch.nn.CrossEntropyLoss(), "cbow_seconds": 0.0, "skipgram_seconds": 0.0,
+        })
+        original_fit = TrainableLanguageModel.fit_language_model
+        with torch.random.fork_rng(devices=[]), patch.object(
+            TrainableLanguageModel, "fit_language_model", autospec=True, side_effect=original_fit,
+        ) as fit:
+            with redirect_stdout(StringIO()):
+                exec(compile(self.code["ch03a-sequence-training"], "sequence-learning", "exec"), state)
+            self.assertEqual(fit.call_count, 6)
+            for call in fit.call_args_list:
+                self.assertIs(call.args[0], state["sequence_model"])
+                self.assertIs(call.args[3], state["sequence_optimizer"])
+                self.assertEqual(call.kwargs, {"epochs": 1})
+        history = state["sequence_learning_history"]
+        self.assertEqual([row["epoch"] for row in history], list(range(7)))
+        self.assertGreater(history[-1]["embedding_shift"], 0)
+        self.assertLess(state["sequence_losses"][-1], state["sequence_losses"][0])
+        self.assertTrue(torch.equal(state["sequence_embedding_before"][8], state["sequence_embedding_after"][8]))
+        with torch.random.fork_rng(devices=[]):
+            torch.manual_seed(17)
+            reference = self.sequence_type(9, 4, 48)
+        reference.fit_language_model(
+            self.loader(sources, targets), torch.nn.CrossEntropyLoss(),
+            torch.optim.Adam(reference.parameters(), lr=0.008), epochs=6,
+        )
+        for actual, expected in zip(state["sequence_model"].parameters(), reference.parameters()):
+            torch.testing.assert_close(actual, expected, rtol=0, atol=0)
+
+    def test_teacher_forcing_routes_both_lookup_paths_into_the_same_table(self):
+        with torch.random.fork_rng(devices=[]):
+            torch.manual_seed(17)
+            model = self.sequence_type(9, 4, 6)
+        sources = torch.tensor([[1, 2, 3]])
+        targets = torch.tensor([[7, 4, 5, 8]])
+        occurrences = []
+
+        def remember(module, inputs, output):
+            output.retain_grad()
+            occurrences.append((inputs[0].clone(), output))
+
+        hook = model.embedding.register_forward_hook(remember)
+        try:
+            logits = model(sources, targets)
+            loss = torch.nn.functional.cross_entropy(
+                logits.reshape(-1, 9), model.targets_for_loss(targets).reshape(-1),
+            )
+            loss.backward()
+        finally:
+            hook.remove()
+        self.assertEqual(len(occurrences), 2)
+        self.assertTrue(torch.equal(occurrences[0][0], sources))
+        self.assertTrue(torch.equal(occurrences[1][0], targets[:, :-1]))
+        reconstructed = torch.zeros_like(model.embedding.weight)
+        for ids, vectors in occurrences:
+            reconstructed.index_add_(0, ids.flatten(), vectors.grad.reshape(-1, 4))
+        torch.testing.assert_close(model.embedding.weight.grad, reconstructed)
+        self.assertGreater(model.embedding.weight.grad[3].norm().item(), 0)
+        self.assertGreater(model.embedding.weight.grad[7].norm().item(), 0)
+        self.assertEqual(model.embedding.weight.grad[8].count_nonzero().item(), 0)
+        self.assertNotEqual(model.output.bias.grad[8].item(), 0)
+        changed_future = targets.clone()
+        changed_future[0, 1] = 6
+        with torch.inference_mode():
+            torch.testing.assert_close(model(sources, targets)[:, 0], model(sources, changed_future)[:, 0])
 
 
 class CoreLessonTests(unittest.TestCase):
@@ -335,7 +636,7 @@ class CoreLessonTests(unittest.TestCase):
                 self.assertIn(explanation, " ".join(opening.split()))
         self.assertIn("images/03a-object-sensor-signatures.png", opening)
 
-    def test_analogy_reaches_relatedness_and_distinguishes_sampling(self):
+    def test_analogy_reaches_relatedness_and_distinguishes_word_scores(self):
         markdown = "\n\n".join(
             "".join(cell["source"]) for cell in self.notebook["cells"]
             if cell["cell_type"] == "markdown"
@@ -343,47 +644,41 @@ class CoreLessonTests(unittest.TestCase):
         for explanation in (
             "Earth is your **query profile**",
             "searching for semantically related words",
-            "Not in the embedding lookup.",
-            "Sampling draws from that distribution",
-            "Softmax computes probabilities; it does not itself make a random choice.",
-            "not a generated sentence",
+            "The model produces vocabulary scores.",
+            "Choosing the highest score gives its best guess",
+            "sampling is an optional decoding strategy for later text-generation lessons",
             "images/03a-celestial-neighborhood-principle.png",
             "images/03a-01-shared-word-features.png",
         ):
             with self.subTest(explanation=explanation):
                 self.assertIn(explanation, " ".join(markdown.split()))
 
-    def test_sampling_changes_choices_without_updating_weights_or_global_rng(self):
-        with torch.random.fork_rng(devices=[]):
-            model = torch.nn.Embedding(1, 5)
-        with torch.no_grad():
-            model.weight.copy_(torch.tensor([[2.0, 1.0, 0.0, -1.0, -2.0]]))
-        before = model.weight.detach().clone()
-        rng_before = torch.random.get_rng_state().clone()
-        namespace = {
-            "torch": torch, "model": model, "cat_contexts": torch.tensor([0]),
-            "SEED": 17, "vocabulary_size": 5,
-            "itos": ["cat", "dog", "sat", "slept", "<unk>"],
-            "most_similar": lambda word: [("dog", 0.9)],
-        }
-        source = self.code["ch03a-similarity-and-sampling"]
-        with redirect_stdout(StringIO()):
-            exec(compile(source, "sampling", "exec"), namespace)
-        expected = before[0].softmax(dim=-1)
-        torch.testing.assert_close(namespace["bridge_probabilities"], expected)
-        self.assertEqual(namespace["bridge_greedy_id"], expected.argmax().item())
-        self.assertEqual(namespace["bridge_counts"].sum().item(), 2000)
-        self.assertTrue(torch.equal(namespace["bridge_samples"], namespace["bridge_replay"]))
-        self.assertGreater(namespace["bridge_samples"].unique().numel(), 1)
-        other_seed = dict(namespace, SEED=23)
-        with redirect_stdout(StringIO()):
-            exec(compile(source, "sampling", "exec"), other_seed)
-        torch.testing.assert_close(other_seed["bridge_probabilities"], expected)
-        self.assertEqual(other_seed["bridge_greedy_id"], namespace["bridge_greedy_id"])
-        self.assertFalse(torch.equal(other_seed["bridge_samples"], namespace["bridge_samples"]))
-        self.assertTrue(torch.equal(model.weight.detach(), before))
-        self.assertIsNone(model.weight.grad)
-        self.assertTrue(torch.equal(torch.random.get_rng_state(), rng_before))
+    def test_core_keeps_embedding_evidence_without_the_sampling_detour(self):
+        source = "\n\n".join(self.code.values())
+        self.assertNotIn("ch03a-similarity-and-sampling", self.code)
+        self.assertNotIn("torch.multinomial", source)
+        self.assertIsNone(re.search(r"\bbridge_\w+", source))
+        self.assertIn("def most_similar", self.code["06c-27"])
+        self.assertIn("cbow_before", self.code["ch03a-probe-baseline"])
+        self.assertIn("report_probe", self.code["06c-21"])
+        self.assertIn("heldout_cbow_loss(model)", self.code["06c-21"])
+        self.assertIn("embedding_row_shifts", self.code["06c-21"])
+
+    def test_order_limit_is_plain_english_and_optional_a_sections_stay_available(self):
+        explanation = next(
+            "".join(cell["source"]) for cell in self.notebook["cells"]
+            if cell["id"] == "06c-30"
+        )
+        self.assertLess(len(explanation.split()), 220)
+        self.assertIn("the cat ___ the dog", explanation)
+        self.assertIn("the dog ___ the cat", explanation)
+        self.assertIn("same word scores and probabilities", explanation)
+        self.assertIn("learn useful word relationships", explanation)
+        self.assertNotIn("06c-31", self.code)
+        self.assertNotIn("permuted_context", self.companion)
+        self.assertIn("nn.EmbeddingBag", self.code["06c-15"])
+        self.assertIn("torch.linalg.svd", self.code["06c-29"])
+        self.assertIn("FuncAnimation", self.code["ch03a-window-animation-code"])
 
     def test_heading_numbers_follow_the_reading_order(self):
         sections = []
@@ -393,18 +688,18 @@ class CoreLessonTests(unittest.TestCase):
             if cell["cell_type"] != "markdown":
                 continue
             for line in "".join(cell["source"]).splitlines():
-                heading = re.match(r"## ([1-5A-D]) - ", line)
+                heading = re.match(r"## ([1-6AB]) - ", line)
                 if heading:
                     section = heading[1]
                     sections.append(section)
                     subsections[section] = 0
                 elif line.startswith("### "):
-                    heading = re.match(r"### ([1-5A-D])\.(\d+) - ", line)
+                    heading = re.match(r"### ([1-6AB])\.(\d+) - ", line)
                     self.assertIsNotNone(heading, line)
                     self.assertEqual(heading[1], section, line)
                     subsections[section] += 1
                     self.assertEqual(int(heading[2]), subsections[section], line)
-        self.assertEqual(sections, list("12345ABCD"))
+        self.assertEqual(sections, list("12345AB6"))
 
     def test_code_labels_match_headings_and_the_python_companion(self):
         section = None
@@ -413,7 +708,7 @@ class CoreLessonTests(unittest.TestCase):
             source = "".join(cell["source"])
             if cell["cell_type"] == "markdown":
                 for line in source.splitlines():
-                    heading = re.match(r"#{2,3} ([1-5A-D](?:\.\d+)?) - ", line)
+                    heading = re.match(r"#{2,3} ([1-6AB](?:\.\d+)?) - ", line)
                     if heading:
                         section = heading[1]
             elif cell["cell_type"] == "code":
@@ -452,6 +747,81 @@ class CoreLessonTests(unittest.TestCase):
         self.assertLess(ids.index("ch03a-extensions"), ids.index("06c-15"))
         self.assertNotIn("06c-13", ids)
         self.assertNotIn("read_story", self.code["ch03a-core-setup"])
+
+    def test_section_six_preserves_the_reader_writer_and_independent_comparison(self):
+        labels = [source.splitlines()[0] for source in self.code.values()]
+        self.assertFalse(any(re.match(r"# %% [CD]\.", label) for label in labels))
+        for section in range(1, 14):
+            self.assertTrue(any(label.startswith(f"# %% 6.{section} - ") for label in labels))
+        ids = [cell["id"] for cell in self.notebook["cells"]]
+        self.assertLess(ids.index("06c-s2s-04"), ids.index("ch03a-sequence-training"))
+        self.assertLess(ids.index("ch03a-sequence-training"), ids.index("06c-s2s-06"))
+        self.assertLess(ids.index("06c-s2s-06"), ids.index("ch03a-real-training"))
+        self.assertIn("cbow_learning_history", self.code["06c-21"])
+        self.assertIn("sequence_learning_history", self.code["ch03a-sequence-training"])
+        self.assertIn("sequence_embedding_before", self.code["ch03a-sequence-training"])
+        self.assertIn("train_comparison(", self.code["ch03a-real-training"])
+
+    def test_setup_diagnostics_and_familiar_questions_have_separate_cells(self):
+        ids = [cell["id"] for cell in self.notebook["cells"]]
+        ordered_ids = [
+            "06c-19", "ch03a-probe-helpers", "ch03a-probe-baseline",
+            "ch03a-routing-record", "06c-21",
+        ]
+        positions = [ids.index(cell_id) for cell_id in ordered_ids]
+        self.assertEqual(positions, sorted(positions))
+        setup = ast.parse(self.code["06c-19"])
+        helpers = ast.parse(self.code["ch03a-probe-helpers"])
+        baseline = ast.parse(self.code["ch03a-probe-baseline"])
+        self.assertEqual([node.name for node in helpers.body], ["word_probe", "report_probe"])
+        self.assertNotIn("cat_contexts", self.code["06c-19"])
+        self.assertNotIn("model = CBOW(", self.code["ch03a-probe-baseline"])
+        for module in (setup, helpers, baseline):
+            training_calls = [
+                node.func.attr for node in ast.walk(module)
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                and node.func.attr in {"backward", "step", "fit_language_model"}
+            ]
+            self.assertEqual(training_calls, [])
+
+    def test_familiar_baseline_records_three_questions_without_training(self):
+        definitions = [
+            node for node in ast.parse(self.code["06c-17"]).body
+            if isinstance(node, ast.ClassDef) and node.name == "CBOW"
+        ]
+        namespace = {"nn": torch.nn, "TrainableLanguageModel": TrainableLanguageModel}
+        exec(compile(ast.Module(body=definitions, type_ignores=[]), "CBOW", "exec"), namespace)
+        expected_contexts = torch.tensor([[1, 2, 4, 5], [2, 3, 5, 1], [3, 4, 1, 6]])
+        namespace.update({
+            "torch": torch, "SEED": 17, "EMBEDDING_WIDTH": 4,
+            "vocabulary_size": 7, "itos": ["<unk>", "the", "sleepy", "cat", "sat", "on", "mat"],
+            "cat_window_ids": torch.tensor([[1, 2, 3, 4, 5], [2, 3, 4, 5, 1], [3, 4, 5, 1, 6]]),
+            "cbow_batch_contexts": expected_contexts[:2],
+        })
+        with torch.random.fork_rng(devices=[]), redirect_stdout(StringIO()):
+            exec(compile(self.code["06c-19"], "setup", "exec"), namespace)
+            parameters_before = {
+                name: value.detach().clone() for name, value in namespace["model"].named_parameters()
+            }
+            rng_before = torch.random.get_rng_state().clone()
+            exec(compile(self.code["ch03a-probe-helpers"], "helpers", "exec"), namespace)
+            exec(compile(self.code["ch03a-probe-baseline"], "baseline", "exec"), namespace)
+            self.assertTrue(torch.equal(torch.random.get_rng_state(), rng_before))
+        self.assertTrue(torch.equal(namespace["cat_contexts"], expected_contexts))
+        self.assertTrue(torch.equal(namespace["cat_contexts_before"], expected_contexts))
+        self.assertEqual(tuple(namespace["cat_before_logits"].shape), (3, 7))
+        self.assertEqual(tuple(namespace["untrained_logits"].shape), (2, 7))
+        self.assertEqual(list(namespace["cbow_before"]), ["cat", "sat", "on"])
+        for row, word in enumerate(("cat", "sat", "on")):
+            chances = namespace["cat_before_logits"][row].softmax(dim=-1)
+            word_id = namespace["itos"].index(word)
+            self.assertEqual(namespace["cbow_before"][word]["probability"], chances[word_id].item())
+            self.assertEqual(
+                namespace["cbow_before"][word]["rank"], int((chances > chances[word_id]).sum()) + 1,
+            )
+        for name, value in namespace["model"].named_parameters():
+            self.assertTrue(torch.equal(value.detach(), parameters_before[name]), name)
+            self.assertIsNone(value.grad)
 
     def test_notebook_and_companion_share_all_executable_code(self):
         notebook_source = "\n\n".join(self.code.values())
