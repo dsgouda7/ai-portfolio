@@ -5,7 +5,7 @@ Follow an early clue through increasingly demanding memory tasks.
 ## Required route
 
 - [Chapter 01: Sequence Memory](README.md) — Check the three-notebook route and which text-input ideas are previews for the next chapter.
-- [01A - Sequence Memory Theory](01A-sequence-memory-theory.ipynb) — Follow concrete note cards through order, reused state, backward feedback, and the LSTM's keep/write/show controls.
+- [01A - Sequence Memory Theory](01A-sequence-memory-theory.ipynb) — Follow concrete note cards through order, reused state, backward feedback, LSTM keep/write/show, and [GRU reset/keep/replace mechanics](01A-sequence-memory-theory.ipynb#gru-hidden-state-mechanics).
 - [01B - Sequence Memory PyTorch Lab](01B-sequence-memory-pytorch-lab.ipynb) — Shift exact note pairs, measure the padded-state failure, separate packing from loss masking, and edit a future note to test causal access.
 - [01C - Cinematic Piano Memory](01C-cinematic-piano-memory.ipynb) — Fit a phrase in two keys, swap only the opening cue, and hear and measure what happens at the ending.
 - [Sequence Memory: Handwritten Theory Notes](01A-sequence-memory-theory.md) — Review why running memory forgets and how controlled memory gates help preserve useful signals.
@@ -14,5 +14,10 @@ Follow an early clue through increasingly demanding memory tasks.
 
 - [Illustrated stories](images) — Nine static sketches with the same note names, cards, colors, and plain-English distinctions used in the notebooks.
 - [Local diagram generator](generate_memory_diagrams.py) — Rebuild the sketches without a model or network; measured outputs still come from executing the lessons.
+- [LSTM/GRU gate-flow generator](memory_gate_flows.py) — Rebuild matching animations, controllable replays and static captures from the lesson's actual recorded state arithmetic.
+- [Gate-flow checks](test_memory_gate_flows.py) — Verify carry/replacement/exposure differences, reset-route consequences, GRUCell parity and source-aware capture contracts.
+- [One-token GRU layer](images/01a-gru-token-layer-flow.html) · [shared recorder](gru_layer_flow.py) · [checks](test_gru_layer_flow.py) — Open the input/state Linear projections and show why output and next-token hidden have the same values in one layer.
+- [Audible GRU walkthrough](images/01a-musical-gru-memory.html) — Hear actual guesses before/after fitting and after erasing opening memory; synchronized piano keys and real gate/state values.
+- [Musical experiment and exporter](musical_memory.py) · [checks](test_musical_memory.py) — Rebuild offline audio/animation, verify both echoes, state interventions, named pitches, timing, and notebook/helper parity.
 
 **Next:** [Chapter 02 — Tokenization and Embeddings](../02-tokenization-and-embeddings/README.md).

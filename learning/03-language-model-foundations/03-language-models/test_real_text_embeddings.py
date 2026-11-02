@@ -8,8 +8,6 @@ import json
 import math
 from pathlib import Path
 import re
-import sys
-from types import ModuleType
 import time
 import unittest
 from unittest.mock import patch
@@ -18,7 +16,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from language_model import TrainableLanguageModel
+from language_data import CBOWDataLoader
+from language_model import TrainableLanguageModel, WordEmbeddingLanguageModel
+from language_validation import CBOWValidator, ModelProbeRecorder, ModelValidator, word_probe
 from real_text_embeddings import (
     animate_embedding_routing,
     draw_embedding_routing,
@@ -26,6 +26,7 @@ from real_text_embeddings import (
     make_document_windows,
     objective_pairs,
     plot_embedding_routing,
+    prepare_validation_windows,
     record_embedding_routing,
 )
 
@@ -143,13 +144,10 @@ class CBOWEmbeddingTests(unittest.TestCase):
         ]
         if len(definitions) != 1:
             raise AssertionError("The lesson must define exactly one real CBOW model.")
-        namespace = {"nn": torch.nn, "TrainableLanguageModel": TrainableLanguageModel}
+        namespace = {"nn": torch.nn, "TrainableLanguageModel": TrainableLanguageModel,
+                     "WordEmbeddingLanguageModel": WordEmbeddingLanguageModel}
         exec(compile(ast.Module(body=definitions, type_ignores=[]), "CBOW", "exec"), namespace)
         cls.model_type = namespace["CBOW"]
-        cls.routing_source = next(
-            "".join(cell["source"]) for cell in notebook["cells"]
-            if cell["id"] == "ch03a-routing-record"
-        )
 
     def setUp(self):
         with torch.random.fork_rng(devices=[]):
@@ -164,18 +162,6 @@ class CBOWEmbeddingTests(unittest.TestCase):
             rows.copy_(torch.arange(rows.numel()).reshape_as(rows) / rows.numel())
             self.model.hidden.weight.fill_(0.25)
             self.model.hidden.bias.fill_(1.0)
-
-    def _record_routing(self):
-        namespace = {
-            "torch": torch, "nn": torch.nn, "model": self.model,
-            "cat_contexts": self.ids,
-            "cat_window_ids": torch.tensor([[0, 2, 1, 4, 6], [6, 4, 1, 2, 0]]),
-            "CONTEXT_RADIUS": 2,
-            "itos": ["the", "cat", "sleepy", "dog", "sat", "mat", "on"],
-        }
-        with redirect_stdout(StringIO()):
-            exec(compile(self.routing_source, "routing", "exec"), namespace)
-        return namespace
 
     def test_real_model_allocates_one_trainable_vocabulary_table(self):
         self.assertEqual(tuple(self.model.embedding.weight.shape), (7, 4))
@@ -224,10 +210,11 @@ class CBOWEmbeddingTests(unittest.TestCase):
         before = {name: value.detach().clone() for name, value in self.model.named_parameters()}
         before_ids = self.ids.clone()
         rng_before = torch.random.get_rng_state().clone()
-        state = self._record_routing()
-        trace = state["routing_trace"]
-        self.assertEqual(state["routing_gradient_rows"], {0, 2, 4, 6})
-        self.assertEqual(state["routing_changed_rows"], {0, 2, 4, 6})
+        trace = record_embedding_routing(self.model, self.ids[:1], torch.tensor([1]))
+        gradient_rows = trace["gradient"].ne(0).any(dim=1).nonzero().flatten().tolist()
+        changed_rows = trace["weights"][3].ne(trace["weights"][0]).any(dim=1).nonzero().flatten().tolist()
+        self.assertEqual(set(gradient_rows), {0, 2, 4, 6})
+        self.assertEqual(set(changed_rows), {0, 2, 4, 6})
         self.assertEqual(trace["gradient"].layout, torch.strided)
         self.assertTrue(torch.equal(trace["weights"][0], trace["weights"][1]))
         self.assertTrue(torch.equal(trace["weights"][0], trace["weights"][2]))
@@ -240,35 +227,14 @@ class CBOWEmbeddingTests(unittest.TestCase):
         self.assertTrue(torch.equal(self.ids, before_ids))
         self.assertTrue(torch.equal(torch.random.get_rng_state(), rng_before))
 
-    def test_recorder_refreshes_helpers_cached_before_the_notebook_was_updated(self):
-        self._activate_features()
-        for missing_helper in (True, False):
-            with self.subTest(missing_helper=missing_helper):
-                cached = ModuleType("real_text_embeddings")
-                cached.__file__ = str(Path(__file__).with_name("real_text_embeddings.py"))
-                if not missing_helper:
-                    cached.record_embedding_routing = lambda: None
-                original_module = sys.modules["real_text_embeddings"]
-                try:
-                    sys.modules["real_text_embeddings"] = cached
-                    if missing_helper:
-                        with self.assertRaisesRegex(ImportError, "record_embedding_routing"):
-                            exec("from real_text_embeddings import record_embedding_routing", {})
-                    state = self._record_routing()
-                    self.assertTrue(callable(cached.animate_embedding_routing))
-                finally:
-                    sys.modules["real_text_embeddings"] = original_module
-                self.assertEqual(state["routing_gradient_rows"], {0, 2, 4, 6})
-                self.assertEqual(state["routing_changed_rows"], {0, 2, 4, 6})
-
     def test_checking_answer_does_not_fetch_its_input_row_but_head_receives_feedback(self):
         self._activate_features()
-        state = self._record_routing()
-        self.assertEqual(state["routing_targets"].tolist(), [1])
-        self.assertNotIn(1, state["routing_selected"])
-        self.assertEqual(state["routing_gradient"][1].count_nonzero().item(), 0)
-        self.assertNotEqual(state["routing_head_gradient"][1].item(), 0)
-        self.assertEqual(state["routing_head_gradient"].count_nonzero().item(), 7)
+        trace = record_embedding_routing(self.model, self.ids[:1], torch.tensor([1]))
+        self.assertEqual(trace["targets"].tolist(), [1])
+        self.assertNotIn(1, trace["saved_ids"].flatten().tolist())
+        self.assertEqual(trace["gradient"][1].count_nonzero().item(), 0)
+        self.assertNotEqual(trace["head_gradient"][1].item(), 0)
+        self.assertEqual(trace["head_gradient"].count_nonzero().item(), 7)
 
     def test_repeated_input_ids_accumulate_occurrence_gradients_automatically(self):
         self._activate_features()
@@ -359,7 +325,7 @@ class CBOWEmbeddingTests(unittest.TestCase):
 
     def test_flow_stages_follow_actual_forward_values_and_reverse_gradients(self):
         self._activate_features()
-        trace = self._record_routing()["routing_trace"]
+        trace = record_embedding_routing(self.model, self.ids[:1], torch.tensor([1]))
         steps = embedding_routing_steps(trace)
         self.assertEqual(len(steps), 13)
         self.assertEqual([step[1] for step in steps], [0, 1, 2, 3, 4, 5, 5, 4, 3, 2, 1, 0, 0])
@@ -379,7 +345,7 @@ class CBOWEmbeddingTests(unittest.TestCase):
         self._activate_features()
         with torch.no_grad():
             self.model.hidden.bias[0] = -3
-        trace = self._record_routing()["routing_trace"]
+        trace = record_embedding_routing(self.model, self.ids[:1], torch.tensor([1]))
         probabilities = trace["activations"]["logits"].softmax(dim=-1)
         expected = probabilities.clone()
         expected[0, trace["targets"][0]] -= 1
@@ -398,26 +364,26 @@ class CBOWEmbeddingTests(unittest.TestCase):
         with torch.random.fork_rng(devices=[]):
             self.model = self.model_type(7, 8)
         self._activate_features()
-        state = self._record_routing()
-        trace = state["routing_trace"]
-        figure = plot_embedding_routing(trace, state["itos"])
+        trace = record_embedding_routing(self.model, self.ids[:1], torch.tensor([1]))
+        words = ["the", "cat", "sleepy", "dog", "sat", "mat", "on"]
+        figure = plot_embedding_routing(trace, words)
         try:
             self.assertEqual(len(figure.axes), 1)
             axis = figure.axes[0]
-            draw_embedding_routing(axis, trace, state["itos"], stage=5, progress=0.5)
+            draw_embedding_routing(axis, trace, words, stage=5, progress=0.5)
             texts = [artist.get_text() for artist in axis.texts]
             self.assertIn(f"{trace['loss']:.4f}", texts)
             widths = [patch.get_width() for patch in axis.patches[:6]]
             self.assertEqual(widths.index(max(widths)), 5)
-            draw_embedding_routing(axis, trace, state["itos"], stage=10)
+            draw_embedding_routing(axis, trace, words, stage=10)
             texts = [artist.get_text() for artist in axis.texts]
             values = trace["activation_gradients"]["lookup"][0, 0, :3]
             expected = "[" + ", ".join(f"{value:.3g}" for value in values.tolist()) + "]"
             self.assertIn(expected, texts)
             self.assertIn("each occurrence receives gradient / 4", texts)
-            draw_embedding_routing(axis, trace, state["itos"], stage=12)
+            draw_embedding_routing(axis, trace, words, stage=12)
             texts = [artist.get_text() for artist in axis.texts]
-            values = trace["weights"][3][state["routing_contexts"][0, 0], :3]
+            values = trace["weights"][3][trace["saved_ids"][0, 0], :3]
             expected = "[" + ", ".join(f"{value:.6g}" for value in values.tolist()) + "]"
             self.assertIn(expected, texts)
         finally:
@@ -448,7 +414,8 @@ class VisibleLearningTests(unittest.TestCase):
             node for node in ast.parse("\n\n".join(cls.code.values())).body
             if isinstance(node, ast.ClassDef) and node.name in {"CBOW", "EncoderDecoderLM"}
         ]
-        namespace = {"nn": torch.nn, "TrainableLanguageModel": TrainableLanguageModel}
+        namespace = {"nn": torch.nn, "TrainableLanguageModel": TrainableLanguageModel,
+                     "WordEmbeddingLanguageModel": WordEmbeddingLanguageModel}
         exec(compile(ast.Module(body=definitions, type_ignores=[]), "models", "exec"), namespace)
         cls.cbow_type = namespace["CBOW"]
         cls.sequence_type = namespace["EncoderDecoderLM"]
@@ -460,6 +427,7 @@ class VisibleLearningTests(unittest.TestCase):
             "torch": torch, "nn": torch.nn, "time": time, "math": math, "SEED": 17,
             "itos": words, "stoi": {word: index for index, word in enumerate(words)},
             "vocabulary_size": 7, "EMBEDDING_WIDTH": 4, "windows": windows,
+            "CBOWDataLoader": CBOWDataLoader,
             "cat_contexts": windows[:, [0, 1, 3, 4]],
             "cat_contexts_before": windows[:, [0, 1, 3, 4]].clone(),
         }
@@ -484,29 +452,27 @@ class VisibleLearningTests(unittest.TestCase):
         reference = deepcopy(model)
         contexts, answers = state["cat_contexts"], state["windows"][:, 2]
 
-        def heldout(candidate):
-            candidate.eval()
-            with torch.inference_mode():
-                return torch.nn.functional.cross_entropy(candidate(contexts), answers).item()
-
         state.update({
             "model": model, "embedding_before": model.embedding.weight.detach().clone(),
-            "cbow_dataloader": self.loader(contexts, answers), "heldout_cbow_loss": heldout,
+            "cbow_dataloader": self.loader(contexts, answers),
+            "cbow_validator": CBOWValidator(state["windows"], words=state["itos"], batch_size=3),
         })
-        with torch.inference_mode():
-            logits = model(contexts)
-            state["cbow_before"] = {
-                word: state["word_probe"](logits[row], word)
-                for row, word in enumerate(("cat", "sat", "on"))
-            }
+        state["cbow_recorder"] = ModelProbeRecorder(
+            model, contexts, words=state["itos"], expected_words=("cat", "sat", "on"), name="CBOW",
+        )
+        snapshot = state["cbow_recorder"].record_before()
+        state["embedding_before"] = snapshot.embeddings
+        state["cbow_before"] = snapshot.probes
         with patch.object(model, "fit_language_model", wraps=model.fit_language_model) as fit:
             with redirect_stdout(StringIO()):
                 exec(compile(self.code["06c-21"], "cbow-learning", "exec"), state)
-            self.assertEqual(fit.call_count, 10)
+            self.assertEqual(fit.call_count, 1)
             for call in fit.call_args_list:
                 self.assertIs(call.args[0], state["cbow_dataloader"])
-                self.assertIs(call.args[2], state["optimizer"])
-                self.assertEqual(call.kwargs, {"epochs": 1})
+                self.assertIsInstance(call.args[1], torch.nn.CrossEntropyLoss)
+                self.assertIsInstance(call.args[2], torch.optim.Adam)
+                self.assertEqual(call.args[3], 10)
+                self.assertEqual(call.kwargs, {"on_epoch_end": state["record_cbow_epoch"]})
         history = state["cbow_learning_history"]
         self.assertEqual([row["epoch"] for row in history], list(range(11)))
         self.assertIsNone(history[0]["train_loss"])
@@ -531,19 +497,23 @@ class VisibleLearningTests(unittest.TestCase):
             "sequence_vocabulary_size": 9, "sequence_itos": state["itos"] + ["<bos>", "<eos>"],
             "source_sequences": sources, "sequence_targets": targets,
             "sequence_dataloader": self.loader(sources, targets), "BOS_ID": 7, "EOS_ID": 8,
-            "criterion": torch.nn.CrossEntropyLoss(), "cbow_seconds": 0.0, "skipgram_seconds": 0.0,
+            "validation_windows": windows,
         })
+        for prerequisite in ("criterion", "cbow_seconds", "skipgram_seconds"):
+            self.assertNotIn(prerequisite, state)
         original_fit = TrainableLanguageModel.fit_language_model
         with torch.random.fork_rng(devices=[]), patch.object(
             TrainableLanguageModel, "fit_language_model", autospec=True, side_effect=original_fit,
         ) as fit:
             with redirect_stdout(StringIO()):
                 exec(compile(self.code["ch03a-sequence-training"], "sequence-learning", "exec"), state)
-            self.assertEqual(fit.call_count, 6)
+            self.assertEqual(fit.call_count, 1)
             for call in fit.call_args_list:
                 self.assertIs(call.args[0], state["sequence_model"])
-                self.assertIs(call.args[3], state["sequence_optimizer"])
-                self.assertEqual(call.kwargs, {"epochs": 1})
+                self.assertIsInstance(call.args[2], torch.nn.CrossEntropyLoss)
+                self.assertIsInstance(call.args[3], torch.optim.Adam)
+                self.assertEqual(call.args[4], 6)
+                self.assertEqual(call.kwargs, {"on_epoch_end": state["record_sequence_epoch"]})
         history = state["sequence_learning_history"]
         self.assertEqual([row["epoch"] for row in history], list(range(7)))
         self.assertGreater(history[-1]["embedding_shift"], 0)
@@ -596,6 +566,50 @@ class VisibleLearningTests(unittest.TestCase):
         with torch.inference_mode():
             torch.testing.assert_close(model(sources, targets)[:, 0], model(sources, changed_future)[:, 0])
 
+    def test_a_wrong_guess_does_not_replace_the_correct_previous_training_word(self):
+        with torch.random.fork_rng(devices=[]):
+            torch.manual_seed(17)
+            model = self.sequence_type(9, 4, 6)
+        sources = torch.tensor([[1, 2, 3]])
+        targets = torch.tensor([[7, 4, 5, 8]])
+        with torch.no_grad():
+            model.output.weight.zero_()
+            model.output.bias.zero_()
+            model.output.bias[6] = 8
+        seen = []
+
+        def capture_inputs(module, inputs, output):
+            seen.append(inputs[0].clone())
+
+        hook = model.embedding.register_forward_hook(capture_inputs)
+        try:
+            with torch.inference_mode():
+                logits = model(sources, targets)
+        finally:
+            hook.remove()
+        self.assertTrue(bool((logits.argmax(-1) == 6).all()))
+        torch.testing.assert_close(seen[-1], targets[:, :-1], rtol=0, atol=0)
+        self.assertNotIn(6, seen[-1].flatten().tolist())
+        torch.testing.assert_close(model.targets_for_loss(targets), torch.tensor([[4, 5, 8]]))
+
+    def test_each_prediction_cannot_see_its_own_answer_or_later_answers(self):
+        with torch.random.fork_rng(devices=[]):
+            torch.manual_seed(17)
+            model = self.sequence_type(9, 4, 6)
+        sources = torch.tensor([[1, 2, 3]])
+        targets = torch.tensor([[7, 4, 5, 8]])
+        with torch.inference_mode():
+            baseline = model(sources, targets)
+            for position in range(3):
+                changed = targets.clone()
+                changed[0, position + 1] = 6
+                torch.testing.assert_close(
+                    model(sources, changed)[:, :position + 1], baseline[:, :position + 1], rtol=0, atol=0,
+                )
+            changed_previous = targets.clone()
+            changed_previous[0, 1] = 6
+            self.assertFalse(torch.allclose(model(sources, changed_previous)[:, 1], baseline[:, 1]))
+
 
 class CoreLessonTests(unittest.TestCase):
     @classmethod
@@ -644,9 +658,9 @@ class CoreLessonTests(unittest.TestCase):
         for explanation in (
             "Earth is your **query profile**",
             "searching for semantically related words",
-            "The model produces vocabulary scores.",
-            "Choosing the highest score gives its best guess",
-            "sampling is an optional decoding strategy for later text-generation lessons",
+            "uses the available context to score candidate answers",
+            "it does not simply choose the nearest word embedding",
+            "decoding strategies such as sampling, which belong with text generation",
             "images/03a-celestial-neighborhood-principle.png",
             "images/03a-01-shared-word-features.png",
         ):
@@ -660,11 +674,78 @@ class CoreLessonTests(unittest.TestCase):
         self.assertIsNone(re.search(r"\bbridge_\w+", source))
         self.assertIn("def most_similar", self.code["06c-27"])
         self.assertIn("cbow_before", self.code["ch03a-probe-baseline"])
-        self.assertIn("report_probe", self.code["06c-21"])
-        self.assertIn("heldout_cbow_loss(model)", self.code["06c-21"])
+        self.assertIn("cbow_recorder.report_probes()", self.code["06c-21"])
+        self.assertIn("cbow_validator.evaluate(model)", self.code["06c-21"])
         self.assertIn("embedding_row_shifts", self.code["06c-21"])
 
-    def test_order_limit_is_plain_english_and_optional_a_sections_stay_available(self):
+    def test_compact_skipgram_setup_preserves_pairs_without_consuming_a_batch(self):
+        windows = torch.tensor([[1, 2, 3, 4, 5], [0, 3, 2, 3, 0]])
+        namespace = {
+            "torch": torch, "SEED": 17, "CONTEXT_RADIUS": 2, "window_ids": windows,
+            "DataLoader": torch.utils.data.DataLoader,
+            "TensorDataset": torch.utils.data.TensorDataset,
+        }
+        exec(compile(self.code["06c-11"], "dataloader", "exec"), namespace)
+        exec(compile(self.code["06c-sg-02"], "skipgram-pairs", "exec"), namespace)
+        self.assertEqual(namespace["skipgram_inputs"].tolist(), [3, 3, 3, 3, 2, 2, 2, 2])
+        self.assertEqual(namespace["skipgram_targets"].tolist(), [1, 2, 4, 5, 0, 3, 3, 0])
+        loader = namespace["skipgram_dataloader"]
+        self.assertEqual(len(loader.dataset), 8)
+        torch.testing.assert_close(loader.dataset.tensors[0], namespace["skipgram_inputs"])
+        torch.testing.assert_close(loader.dataset.tensors[1], namespace["skipgram_targets"])
+        self.assertTrue(torch.equal(
+            loader.generator.get_state(), torch.Generator().manual_seed(17).get_state(),
+        ))
+
+    def test_skipgram_top_four_comes_from_one_cat_prediction(self):
+        tree = ast.parse(self.code["06c-sg-04"])
+        definition = next(
+            node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "SkipGram"
+        )
+        namespace = {"nn": torch.nn, "TrainableLanguageModel": TrainableLanguageModel,
+                     "WordEmbeddingLanguageModel": WordEmbeddingLanguageModel}
+        exec(compile(ast.Module(body=[definition], type_ignores=[]), "SkipGram", "exec"), namespace)
+        with torch.random.fork_rng(devices=[]):
+            model = namespace["SkipGram"](7, 4)
+        with torch.no_grad():
+            model.output.weight.zero_()
+            model.output.bias.copy_(torch.arange(7))
+        namespace.update({"torch": torch, "skipgram_model": model, "stoi": {"cat": 2}})
+        predictions = [node for node in tree.body if isinstance(node, ast.With)]
+        self.assertEqual(len(predictions), 1)
+        with patch.object(model, "forward", wraps=model.forward) as forward:
+            exec(compile(ast.Module(body=predictions, type_ignores=[]), "top-four", "exec"), namespace)
+        forward.assert_called_once()
+        torch.testing.assert_close(forward.call_args.args[0], torch.tensor([2]))
+        self.assertEqual(tuple(namespace["neighbour_logits"].shape), (1, 7))
+        self.assertEqual(namespace["predicted_ids"].tolist(), [6, 5, 4, 3])
+
+    def test_prediction_driven_word_profiles_finish_the_training_section(self):
+        explanation = next(
+            "".join(cell["source"]) for cell in self.notebook["cells"]
+            if cell["id"] == "06c-26"
+        )
+        self.assertTrue(explanation.startswith("### 3.4 - "))
+        for idea in (
+            "word that actually appeared in the text",
+            "cat sat ___ the mat", "dog sat ___ the mat",
+            "Both `cat` and `dog` are clues here",
+            "similar kinds of correction",
+            "related profiles can be a useful side effect",
+            "no guarantee every related pair moves closer",
+            "`hot` and `cold`",
+            "not which word wins a particular gap",
+        ):
+            with self.subTest(idea=idea):
+                self.assertIn(idea, " ".join(explanation.split()))
+        ids = [cell["id"] for cell in self.notebook["cells"]]
+        self.assertLess(ids.index("06c-21"), ids.index("06c-26"))
+        self.assertLess(ids.index("06c-26"), ids.index("06c-27"))
+        self.assertLess(ids.index("06c-27"), ids.index("06c-30"))
+        self.assertNotIn("ch03a-sampling-bridge-intro", ids)
+        self.assertTrue(self.code["06c-27"].startswith("# %% 3.4 - "))
+
+    def test_order_limit_closes_cbow_in_plain_english_before_optional_experiments(self):
         explanation = next(
             "".join(cell["source"]) for cell in self.notebook["cells"]
             if cell["id"] == "06c-30"
@@ -674,11 +755,106 @@ class CoreLessonTests(unittest.TestCase):
         self.assertIn("the dog ___ the cat", explanation)
         self.assertIn("same word scores and probabilities", explanation)
         self.assertIn("learn useful word relationships", explanation)
+        self.assertTrue(explanation.startswith("#### "))
+        self.assertIn("The core lesson ends here", explanation)
+        self.assertIn("03B-counts-and-fixed-window-language-models.ipynb", explanation)
+        self.assertNotIn("ch03a-next", [cell["id"] for cell in self.notebook["cells"]])
         self.assertNotIn("06c-31", self.code)
         self.assertNotIn("permuted_context", self.companion)
-        self.assertIn("nn.EmbeddingBag", self.code["06c-15"])
-        self.assertIn("torch.linalg.svd", self.code["06c-29"])
-        self.assertIn("FuncAnimation", self.code["ch03a-window-animation-code"])
+
+    def test_section_four_keeps_only_optional_skipgram(self):
+        ids = [cell["id"] for cell in self.notebook["cells"]]
+        ordered_ids = [
+            "06c-30", "ch03a-extensions", "06c-sg-01", "06c-sg-02",
+            "06c-sg-03", "06c-sg-04", "06c-s2s-01",
+        ]
+        positions = [ids.index(cell_id) for cell_id in ordered_ids]
+        self.assertEqual(positions, sorted(positions))
+        for cell_id, section in (
+            ("06c-sg-02", "4.1"), ("06c-sg-04", "4.2"),
+        ):
+            with self.subTest(section=section):
+                self.assertTrue(self.code[cell_id].startswith(f"# %% {section} - "))
+        markdown = "\n\n".join(
+            "".join(cell["source"]) for cell in self.notebook["cells"]
+            if cell["cell_type"] == "markdown"
+        )
+        self.assertNotRegex(markdown, r"(?m)^#{2,3} [AB](?:\.|\s+-)")
+        self.assertNotIn("A/B", markdown)
+        core_closing = ids.index("06c-30")
+        prior_headings = [
+            heading[1] for cell in self.notebook["cells"][:core_closing]
+            if cell["cell_type"] == "markdown"
+            for heading in re.finditer(r"(?m)^## ([1-5]) - ", "".join(cell["source"]))
+        ]
+        self.assertEqual(prior_headings[-1], "3")
+
+    def test_static_captures_are_beside_their_core_explanations_without_rendering_code(self):
+        from generate_cbow_static_views import source_fingerprint
+        from PIL import Image
+
+        ids = [cell["id"] for cell in self.notebook["cells"]]
+        self.assertLess(ids.index("06c-07"), ids.index("ch03a-window-animation-intro"))
+        self.assertLess(ids.index("ch03a-window-animation-intro"), ids.index("ch03a-window-storyboard-intro"))
+        self.assertLess(ids.index("06c-27"), ids.index("06c-28"))
+        self.assertLess(ids.index("06c-28"), ids.index("06c-30"))
+        for removed in ("06c-14", "06c-15", "06c-29", "ch03a-window-animation-code"):
+            self.assertNotIn(removed, ids)
+        markdown = {
+            cell["id"]: "".join(cell["source"]) for cell in self.notebook["cells"]
+            if cell["cell_type"] == "markdown"
+        }
+        for cell_id, filename in (
+            ("06c-28", "03a-cbow-word-profiles-before-after.png"),
+            ("ch03a-window-animation-intro", "03a-cbow-window-storyboard.png"),
+        ):
+            self.assertIn(f"](images/{filename})", markdown[cell_id])
+            self.assertTrue(markdown[cell_id].startswith("#### "))
+            with Image.open(Path(__file__).parent / "images" / filename) as image:
+                self.assertEqual(image.format, "PNG")
+                self.assertGreaterEqual(image.width, 1500)
+                self.assertGreaterEqual(image.height, 700)
+                self.assertEqual(image.info["SourceFingerprint"], source_fingerprint())
+                if cell_id == "06c-28":
+                    self.assertGreaterEqual(float(image.info["CosineBefore"]), -1)
+                    self.assertLessEqual(float(image.info["CosineAfter"]), 1)
+                else:
+                    self.assertEqual(image.info["WindowCount"], "3")
+                    self.assertEqual(image.info["Answers"], "cat, sat, on")
+        code = "\n\n".join(self.code.values())
+        self.assertNotIn("draw_cbow_window", code)
+        self.assertNotIn("EmbeddingBag", code)
+        self.assertNotIn("window_animation.to_jshtml", code)
+
+    def test_preview_jump_links_distinguish_the_preview_from_the_next_chapter(self):
+        markdown = {
+            cell["id"]: "".join(cell["source"]) for cell in self.notebook["cells"]
+            if cell["cell_type"] == "markdown"
+        }
+        all_markdown = "\n\n".join(markdown.values())
+        anchors = re.findall(r'<a id="([^"]+)"></a>', all_markdown)
+        self.assertEqual(len(anchors), len(set(anchors)))
+        self.assertTrue({
+            "encoder-decoder-preview", "shared-model-definitions",
+            "prediction-diagnostics", "skipgram-training",
+        }.issubset(anchors))
+        for fragment in re.findall(r"\]\(#([^)]+)\)", all_markdown):
+            self.assertIn(fragment, anchors)
+        opening = markdown["ch03a-extensions"]
+        self.assertLess(
+            opening.index("#encoder-decoder-preview"),
+            opening.index("03B-counts-and-fixed-window-language-models.ipynb"),
+        )
+        self.assertIn("CBOW training and section 4 are not prerequisites", markdown["06c-s2s-01"])
+        self.assertIn("#skipgram-training", markdown["ch03a-real-opening"])
+        for cell_id in ("06c-sg-04", "ch03a-sequence-training"):
+            loads = {
+                node.id for node in ast.walk(ast.parse(self.code[cell_id]))
+                if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load)
+            }
+            self.assertNotIn("criterion", loads)
+            if cell_id == "ch03a-sequence-training":
+                self.assertTrue({"cbow_seconds", "skipgram_seconds"}.isdisjoint(loads))
 
     def test_heading_numbers_follow_the_reading_order(self):
         sections = []
@@ -688,18 +864,21 @@ class CoreLessonTests(unittest.TestCase):
             if cell["cell_type"] != "markdown":
                 continue
             for line in "".join(cell["source"]).splitlines():
-                heading = re.match(r"## ([1-6AB]) - ", line)
+                heading = re.match(r"## ([1-5]) - ", line)
                 if heading:
                     section = heading[1]
                     sections.append(section)
                     subsections[section] = 0
                 elif line.startswith("### "):
-                    heading = re.match(r"### ([1-6AB])\.(\d+) - ", line)
+                    heading = re.match(r"### ([1-5])\.(\d+) - ", line)
                     self.assertIsNotNone(heading, line)
                     self.assertEqual(heading[1], section, line)
                     subsections[section] += 1
                     self.assertEqual(int(heading[2]), subsections[section], line)
-        self.assertEqual(sections, list("12345AB6"))
+        self.assertEqual(sections, list("12345"))
+        self.assertEqual(subsections["3"], 4)
+        self.assertEqual(subsections["4"], 2)
+        self.assertEqual(subsections["5"], 12)
 
     def test_code_labels_match_headings_and_the_python_companion(self):
         section = None
@@ -708,7 +887,7 @@ class CoreLessonTests(unittest.TestCase):
             source = "".join(cell["source"])
             if cell["cell_type"] == "markdown":
                 for line in source.splitlines():
-                    heading = re.match(r"#{2,3} ([1-6AB](?:\.\d+)?) - ", line)
+                    heading = re.match(r"#{2,3} ([1-5](?:\.\d+)?) - ", line)
                     if heading:
                         section = heading[1]
             elif cell["cell_type"] == "code":
@@ -733,26 +912,51 @@ class CoreLessonTests(unittest.TestCase):
             if cell["id"] == "06c-12"
         )
         self.assertEqual(re.findall(r"^([1-6])\. ", training_flow, re.MULTILINE), list("123456"))
-        self.assertIn("embedding_before", self.code["06c-19"])
+        self.assertIn("embedding_before", self.code["ch03a-probe-baseline"])
         self.assertIn("embedding_row_shifts", self.code["06c-21"])
+
+    def test_data_and_model_subclasses_supply_hooks_not_duplicate_pipelines(self):
+        self.assertIn("CBOWDataLoader(window_ids", self.code["06c-09"])
+        self.assertIn("cbow_data.prepare_data()", self.code["06c-09"])
+        self.assertIn("cbow_data.make_dataloader()", self.code["06c-09"])
+        self.assertIn("SkipGramDataLoader(window_ids", self.code["06c-sg-02"])
+        self.assertIn("skipgram_data.prepare_data()", self.code["06c-sg-02"])
+        self.assertIn("skipgram_data.make_dataloader()", self.code["06c-sg-02"])
+        self.assertNotIn("torch.cat", self.code["06c-09"])
+        skipgram_workflow = ast.Module(body=[
+            node for node in ast.parse(self.code["06c-sg-02"]).body
+            if not isinstance(node, ast.ClassDef)
+        ], type_ignores=[])
+        self.assertNotIn(".repeat_interleave(", ast.unparse(skipgram_workflow))
+        self.assertIn("CBOWDataLoader(cat_window_ids)", self.code["ch03a-probe-baseline"])
+        self.assertIn("CBOWValidator(validation_windows", self.code["ch03a-core-validation"])
+        for cell_id, name in (("06c-17", "CBOW"), ("06c-sg-04", "SkipGram")):
+            definition = next(
+                node for node in ast.parse(self.code[cell_id]).body
+                if isinstance(node, ast.ClassDef) and node.name == name
+            )
+            self.assertEqual(ast.unparse(definition.bases[0]), "WordEmbeddingLanguageModel")
+            self.assertEqual([node.name for node in definition.body], ["combine_embeddings"])
+        for cell_id in ("06c-21", "06c-sg-04", "ch03a-sequence-training"):
+            self.assertIn(".train_model(", self.code[cell_id])
+            self.assertNotIn(".fit_language_model(", self.code[cell_id])
 
     def test_text_precedes_training_and_extensions_follow_core(self):
         ids = [cell["id"] for cell in self.notebook["cells"]]
         self.assertLess(ids.index("06c-03"), ids.index("06c-17"))
         self.assertLess(ids.index("06c-17"), ids.index("06c-21"))
         self.assertLess(ids.index("ch03a-core-validation"), ids.index("06c-21"))
-        self.assertLess(ids.index("ch03a-next"), ids.index("ch03a-extensions"))
+        self.assertLess(ids.index("06c-30"), ids.index("ch03a-extensions"))
         self.assertLess(ids.index("ch03a-extensions"), ids.index("06c-sg-04"))
         self.assertLess(ids.index("ch03a-extensions"), ids.index("06c-s2s-04"))
-        self.assertLess(ids.index("ch03a-extensions"), ids.index("06c-15"))
         self.assertNotIn("06c-13", ids)
         self.assertNotIn("read_story", self.code["ch03a-core-setup"])
 
-    def test_section_six_preserves_the_reader_writer_and_independent_comparison(self):
+    def test_section_five_preserves_the_reader_writer_and_independent_comparison(self):
         labels = [source.splitlines()[0] for source in self.code.values()]
         self.assertFalse(any(re.match(r"# %% [CD]\.", label) for label in labels))
-        for section in range(1, 14):
-            self.assertTrue(any(label.startswith(f"# %% 6.{section} - ") for label in labels))
+        for section in range(1, 13):
+            self.assertTrue(any(label.startswith(f"# %% 5.{section} - ") for label in labels))
         ids = [cell["id"] for cell in self.notebook["cells"]]
         self.assertLess(ids.index("06c-s2s-04"), ids.index("ch03a-sequence-training"))
         self.assertLess(ids.index("ch03a-sequence-training"), ids.index("06c-s2s-06"))
@@ -762,18 +966,59 @@ class CoreLessonTests(unittest.TestCase):
         self.assertIn("sequence_embedding_before", self.code["ch03a-sequence-training"])
         self.assertIn("train_comparison(", self.code["ch03a-real-training"])
 
+    def test_reader_writer_preparation_is_setup_not_a_separate_subsection(self):
+        introduction = next(
+            "".join(cell["source"]) for cell in self.notebook["cells"]
+            if cell["id"] == "06c-s2s-01"
+        )
+        first_subsection = next(
+            "".join(cell["source"]) for cell in self.notebook["cells"]
+            if cell["id"] == "ch03a-preview-boundary"
+        )
+        self.assertTrue(introduction.startswith("## 5 - "))
+        self.assertNotIn("### ", introduction)
+        self.assertNotIn("Align the source and answer", introduction)
+        self.assertTrue(first_subsection.startswith("### 5.1 - GRU reader and writer"))
+        self.assertTrue(self.code["06c-s2s-02"].startswith("# %% 5 - "))
+        for setup in ("source_sequences, sequence_targets =", "prepare_sequence_data(", "sequence_dataloader ="):
+            self.assertIn(setup, self.code["06c-s2s-02"])
+        ids = [cell["id"] for cell in self.notebook["cells"]]
+        self.assertLess(ids.index("06c-s2s-02"), ids.index("ch03a-preview-boundary"))
+        self.assertLess(ids.index("ch03a-preview-boundary"), ids.index("06c-s2s-04"))
+
+    def test_teacher_forcing_is_explained_before_training_and_metrics_are_not_conflated(self):
+        markdown = {cell["id"]: "".join(cell["source"]) for cell in self.notebook["cells"]
+                    if cell["cell_type"] == "markdown"}
+        intro = markdown["ch03a-sequence-training-intro"]
+        for idea in (
+            "correct previous word", "teacher forcing", "not the word currently being guessed",
+            "<bos>", "<eos>", "sat", "on", "and", "hidden state", "six epochs",
+            "03a-correct-previous-word-vs-own-guess.png",
+            "03a-correct-previous-word-vs-own-guess.gif",
+        ):
+            self.assertIn(idea, " ".join(intro.split()))
+        self.assertIn("one word", intro)
+        readout = markdown["ch03a-sequence-learning-readout"]
+        for idea in ("Training accuracy", "Reserved-story validation", "correct previous words",
+                     "not free-running generation", "stop", "row change"):
+            self.assertIn(idea, " ".join(readout.split()))
+        self.assertIn("same trained weights", markdown["06c-s2s-05"])
+
     def test_setup_diagnostics_and_familiar_questions_have_separate_cells(self):
         ids = [cell["id"] for cell in self.notebook["cells"]]
         ordered_ids = [
             "06c-19", "ch03a-probe-helpers", "ch03a-probe-baseline",
-            "ch03a-routing-record", "06c-21",
+            "ch03a-routing-intro", "06c-21",
         ]
         positions = [ids.index(cell_id) for cell_id in ordered_ids]
         self.assertEqual(positions, sorted(positions))
         setup = ast.parse(self.code["06c-19"])
         helpers = ast.parse(self.code["ch03a-probe-helpers"])
         baseline = ast.parse(self.code["ch03a-probe-baseline"])
-        self.assertEqual([node.name for node in helpers.body], ["word_probe", "report_probe"])
+        self.assertEqual(len(helpers.body), 1)
+        self.assertIsInstance(helpers.body[0], ast.ImportFrom)
+        self.assertEqual(helpers.body[0].module, "language_validation")
+        self.assertEqual([alias.name for alias in helpers.body[0].names], ["ModelProbeRecorder", "word_probe"])
         self.assertNotIn("cat_contexts", self.code["06c-19"])
         self.assertNotIn("model = CBOW(", self.code["ch03a-probe-baseline"])
         for module in (setup, helpers, baseline):
@@ -784,12 +1029,37 @@ class CoreLessonTests(unittest.TestCase):
             ]
             self.assertEqual(training_calls, [])
 
+    def test_routing_animation_is_embedded_without_regeneration_cells(self):
+        markdown = "\n\n".join(
+            "".join(cell["source"]) for cell in self.notebook["cells"]
+            if cell["cell_type"] == "markdown"
+        )
+        self.assertRegex(
+            markdown, r"!\[[^\]]+\]\(images/03a-embedding-forward-backward\.gif\)",
+        )
+        self.assertTrue(
+            (Path(__file__).parent / "images" / "03a-embedding-forward-backward.gif").is_file(),
+        )
+        self.assertIn("images/03a-embedding-forward-backward.png", markdown)
+        self.assertNotIn("routing_question_index", markdown)
+        self.assertNotIn("ch03a-routing-record", self.code)
+        self.assertNotIn("ch03a-routing-visuals", self.code)
+        for source in ("\n\n".join(self.code.values()), self.companion):
+            with self.subTest(source="notebook" if source != self.companion else "companion"):
+                for helper in (
+                    "record_embedding_routing", "plot_embedding_routing", "animate_embedding_routing",
+                ):
+                    self.assertNotIn(helper, source)
+                self.assertIsNone(re.search(r"\brouting_\w+", source))
+
     def test_familiar_baseline_records_three_questions_without_training(self):
         definitions = [
             node for node in ast.parse(self.code["06c-17"]).body
             if isinstance(node, ast.ClassDef) and node.name == "CBOW"
         ]
-        namespace = {"nn": torch.nn, "TrainableLanguageModel": TrainableLanguageModel}
+        namespace = {"nn": torch.nn, "TrainableLanguageModel": TrainableLanguageModel,
+                     "WordEmbeddingLanguageModel": WordEmbeddingLanguageModel,
+                     "CBOWDataLoader": CBOWDataLoader}
         exec(compile(ast.Module(body=definitions, type_ignores=[]), "CBOW", "exec"), namespace)
         expected_contexts = torch.tensor([[1, 2, 4, 5], [2, 3, 5, 1], [3, 4, 1, 6]])
         namespace.update({
@@ -830,68 +1100,184 @@ class CoreLessonTests(unittest.TestCase):
         companion.body = companion.body[1:]
         self.assertEqual(ast.dump(ast.parse(notebook_source)), ast.dump(companion))
 
+    def test_notebook_and_companion_leave_assertions_to_offline_tests(self):
+        for source in ("\n\n".join(self.code.values()), self.companion):
+            self.assertFalse(any(isinstance(node, ast.Assert) for node in ast.walk(ast.parse(source))))
+
+    def test_core_helper_definitions_are_inline_and_match_their_python_modules(self):
+        notebook_nodes = {
+            node.name: node for node in ast.parse("\n\n".join(self.code.values())).body
+            if isinstance(node, (ast.ClassDef, ast.FunctionDef))
+        }
+        for filename, names in (
+            ("language_data.py", [
+                "WindowDataLoader", "CBOWDataLoader",
+                "SkipGramDataLoader", "prepare_sequence_data",
+            ]),
+            ("language_model.py", [
+                "TrainingRun", "TrainableLanguageModel", "WordEmbeddingLanguageModel",
+            ]),
+        ):
+            module_nodes = {
+                node.name: node for node in ast.parse(
+                    (Path(__file__).parent / filename).read_text(encoding="utf-8")
+                ).body if isinstance(node, (ast.ClassDef, ast.FunctionDef))
+            }
+            for name in names:
+                with self.subTest(helper=name):
+                    self.assertIn(name, notebook_nodes)
+                    self.assertEqual(ast.dump(notebook_nodes[name]), ast.dump(module_nodes[name]))
+        self.assertNotIn("heldout_cbow_loss", notebook_nodes)
+        self.assertNotIn("ModelValidator", notebook_nodes)
+        self.assertNotIn("make_dataloader", notebook_nodes)
+        self.assertNotIn("validate_window_ids", notebook_nodes)
+        self.assertNotIn("word_probe", notebook_nodes)
+        self.assertNotIn("report_probe", notebook_nodes)
+        self.assertNotIn("ModelProbeRecorder", notebook_nodes)
+
+    def test_prediction_probes_are_imported_directly_without_notebook_globals(self):
+        namespace = {}
+        exec(compile(self.code["ch03a-probe-helpers"], "probe-imports", "exec"), namespace)
+        self.assertIs(namespace["word_probe"], word_probe)
+        self.assertIs(namespace["ModelProbeRecorder"], ModelProbeRecorder)
+        for cell in self.notebook["cells"]:
+            if cell["cell_type"] != "code":
+                continue
+            for node in ast.walk(ast.parse("".join(cell["source"]))):
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "word_probe":
+                    self.assertTrue(len(node.args) >= 3 or any(
+                        keyword.arg == "words" for keyword in node.keywords
+                    ))
+
+    def test_before_after_recording_is_external_while_epoch_callbacks_stay_inline(self):
+        self.assertIn("cbow_recorder.record_before(", self.code["ch03a-probe-baseline"])
+        self.assertNotIn("with torch.inference_mode", self.code["ch03a-probe-baseline"])
+        for cell_id, recorder, callback in (
+            ("06c-21", "cbow_recorder", "record_cbow_epoch"),
+            ("ch03a-sequence-training", "sequence_recorder", "record_sequence_epoch"),
+        ):
+            self.assertIn(f"{recorder}.record_after()", self.code[cell_id])
+            self.assertIn(f"{recorder}.report_probes()", self.code[cell_id])
+            self.assertIn(f"{recorder}.report_embeddings(", self.code[cell_id])
+            self.assertTrue(any(
+                isinstance(node, ast.FunctionDef) and node.name == callback
+                for node in ast.parse(self.code[cell_id]).body
+            ))
+
+    def test_each_training_section_is_followed_by_its_validation_comparison(self):
+        ids = [cell["id"] for cell in self.notebook["cells"]]
+        for training, comparison, validator in (
+            ("06c-21", "ch03a-cbow-validation-comparison", "cbow_validator"),
+            ("06c-sg-04", "ch03a-skipgram-validation-comparison", "skipgram_validator"),
+            ("ch03a-sequence-training", "ch03a-sequence-validation-comparison", "sequence_validator"),
+        ):
+            self.assertEqual(ids.index(comparison), ids.index(training) + 1)
+            self.assertIn(f"{validator}.record_before(", self.code[training])
+            self.assertIn(f"{validator}.compare_after(", self.code[comparison])
+            self.assertIn("epochs=len(", self.code[comparison])
+
+    def test_reader_writer_bridge_explains_the_internals_needed_for_embedding_learning(self):
+        explanation = next(
+            "".join(cell["source"]) for cell in self.notebook["cells"]
+            if cell["id"] == "ch03a-preview-boundary"
+        )
+        for idea in (
+            "GRU mechanics", "live cat probe", "Source word profile",
+            "Previous output word profile", "E3 initializes decoder D0",
+            "temporary values", "shared embedding rows", "cat",
+            "03a-encoder-decoder-embedding-feedback.png",
+            "03a-encoder-decoder-state-flow.gif", "03a-encoder-decoder-state-flow.html",
+            "model's own guess during generation",
+            "same values", "Linear", "one GRU layer", "03a-encoder-decoder-token-layers.png",
+        ):
+            with self.subTest(idea=idea):
+                self.assertIn(idea, " ".join(explanation.split()))
+        self.assertIn("compare_feedback_routes(", self.code["ch03a-sequence-training"])
+        self.assertRegex(explanation, r"!\[[^\]]+\]\(images/03a-encoder-decoder-state-flow\.gif\)")
+        self.assertIn("<details>", explanation)
+        self.assertLessEqual(len(explanation.split()), 350)
+        self.assertNotIn("reset gate r", explanation)
+
+    def test_prior_memory_references_resolve_to_the_sections_actually_taught(self):
+        explanation = next(
+            "".join(cell["source"]) for cell in self.notebook["cells"]
+            if cell["id"] == "ch03a-preview-boundary"
+        )
+        earlier_path = Path(__file__).parent.parent / "01-sequence-memory" / "01A-sequence-memory-theory.ipynb"
+        earlier = json.loads(earlier_path.read_text(encoding="utf-8"))
+        headings = {
+            re.sub(r"[^\w\s-]", "", line.lstrip("#").strip().lower()).replace(" ", "-")
+            for cell in earlier["cells"] if cell["cell_type"] == "markdown"
+            for line in "".join(cell["source"]).splitlines() if line.startswith("#")
+        }
+        headings.update(
+            anchor for cell in earlier["cells"] if cell["cell_type"] == "markdown"
+            for anchor in re.findall(r'<a id="([^"]+)"></a>', "".join(cell["source"]))
+        )
+        fragments = re.findall(r"01A-sequence-memory-theory\.ipynb#([^)]+)", explanation)
+        self.assertEqual(set(fragments), {"gru-hidden-state-mechanics"})
+        self.assertIn("gru-hidden-state-mechanics", fragments)
+        for fragment in fragments:
+            self.assertIn(fragment, headings)
+        prior_code = "\n\n".join(
+            "".join(cell["source"]) for cell in earlier["cells"] if cell["cell_type"] == "code"
+        )
+        self.assertIn("state = torch.tanh(W_x @ x_t + W_h @ state)", prior_code)
+        self.assertIn("GRU mechanics", explanation)
+        self.assertNotIn("not GRU mechanics", explanation)
+
     def test_reserved_stories_exclude_training_and_reuse_the_training_vocabulary(self):
         stories = ["training words must not appear"] * 3 + ["the sleepy cat sat on"] * 200
         with patch("builtins.print"), patch(
             "real_text_embeddings.read_stories", return_value=stories,
         ) as read_stories:
             namespace = {
-                "torch": torch, "nn": torch.nn, "INTRO_STORIES": 3,
-                "read_stories": read_stories,
-                "story_sentences": lambda story: [story.split()],
+                "INTRO_STORIES": 3,
                 "stoi": {"<unk>": 0, "the": 1, "sleepy": 2, "cat": 3, "sat": 4, "on": 5},
-                "make_document_windows": make_document_windows,
-                "window_width": 5, "CONTEXT_RADIUS": 2,
+                "itos": ["<unk>", "the", "sleepy", "cat", "sat", "on"],
+                "window_width": 5, "prepare_validation_windows": prepare_validation_windows,
             }
+            setup = [
+                node for node in ast.parse(self.code["06c-09"]).body
+                if isinstance(node, ast.Assign) and any(
+                    isinstance(target, ast.Name) and target.id in {"VALIDATION_STORIES", "validation_windows"}
+                    for target in node.targets
+                )
+            ]
+            exec(compile(ast.Module(body=setup, type_ignores=[]), "reserved-windows", "exec"), namespace)
             exec(compile(self.code["ch03a-core-validation"], "validation", "exec"), namespace)
         read_stories.assert_called_once_with(203)
         expected = torch.tensor([[1, 2, 3, 4, 5]]).repeat(200, 1)
         self.assertTrue(torch.equal(namespace["validation_windows"], expected))
-        self.assertTrue(torch.equal(namespace["validation_contexts"], expected[:, [0, 1, 3, 4]]))
-        self.assertTrue(torch.equal(namespace["validation_targets"], expected[:, 2]))
+        self.assertTrue(torch.equal(namespace["cbow_validator"].input_ids, expected[:, [0, 1, 3, 4]]))
+        self.assertTrue(torch.equal(namespace["cbow_validator"].target_ids, expected[:, 2]))
         self.assertNotIn("training", namespace["stoi"])
 
     def test_heldout_loss_weights_the_partial_batch_and_updates_no_parameters(self):
-        class FixedScores(torch.nn.Module):
+        class FixedScores(TrainableLanguageModel):
             def __init__(self):
                 super().__init__()
                 self.scores = torch.nn.Parameter(torch.tensor([0.1, 0.3, -0.5, 0.8, 0.0, -0.2]))
 
-            def forward(self, inputs):
+            def forward(self, inputs, target_ids=None):
                 return self.scores.expand(len(inputs), -1)
 
         model = FixedScores()
         contexts = torch.zeros((767, 4), dtype=torch.long)
         targets = torch.arange(767) % 6
-        namespace = self.evaluation_namespace(contexts, targets)
+        validator = ModelValidator(contexts, targets)
         before = model.scores.detach().clone()
         expected = torch.nn.functional.cross_entropy(
             model(contexts).detach(), targets,
         ).item()
-        actual = namespace["heldout_cbow_loss"](model)
+        actual = validator.evaluate(model).loss
         self.assertAlmostEqual(actual, expected, places=6)
         self.assertTrue(torch.equal(model.scores.detach(), before))
         self.assertIsNone(model.scores.grad)
 
     def test_heldout_loss_rejects_an_empty_evaluation_set(self):
-        namespace = self.evaluation_namespace(
-            torch.empty((0, 4), dtype=torch.long), torch.empty(0, dtype=torch.long),
-        )
-        with self.assertRaisesRegex(ValueError, "at least one target"):
-            namespace["heldout_cbow_loss"](torch.nn.Identity())
-
-    def evaluation_namespace(self, contexts, targets):
-        functions = [
-            node for node in ast.parse(self.code["ch03a-core-validation"]).body
-            if isinstance(node, ast.FunctionDef) and node.name == "heldout_cbow_loss"
-        ]
-        self.assertEqual(len(functions), 1)
-        namespace = {
-            "torch": torch, "nn": torch.nn,
-            "validation_contexts": contexts, "validation_targets": targets,
-        }
-        exec(compile(ast.Module(body=functions, type_ignores=[]), "heldout", "exec"), namespace)
-        return namespace
+        with self.assertRaisesRegex(ValueError, "nonzero"):
+            ModelValidator(torch.empty((0, 4), dtype=torch.long), torch.empty(0, dtype=torch.long))
 
 
 if __name__ == "__main__":

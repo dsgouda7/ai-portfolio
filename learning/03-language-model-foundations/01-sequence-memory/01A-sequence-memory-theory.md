@@ -103,9 +103,66 @@ than the 65% route at the same delay.
 These are mechanism checks, not trained-architecture scores. An LSTM can
 still forget, overfit, or learn bad controls.
 
-**Complaint:** which card is "final" when a short phrase sits beside a longer one?
+**Complaint:** those controls work with two state vectors. Must every gated reader
+carry both a memory cell and an exposed hidden value?
 
-## 6. Stop reading blanks; stop grading blanks
+## 6. One carried note: GRU reset, keep, replace
+
+Keep the same repeated D3 A3 D4 phrase. A GRU carries one hidden state, which is
+also its exposed state. There is no separate cell-memory vector or independent
+show gate. This is a smaller interface, not automatic superiority over LSTM.
+
+The reset control decides how much old-state information enters proposed new
+content. The update control decides how much old hidden content to keep.
+The complementary amount writes the proposal. The candidate is signed content,
+not another gate. Their retained and written contributions add to make the next h.
+
+Reset does not erase the direct old-value route. Close reset while keeping old
+content and the new state can still retain that old clue. Keep everything and
+the next state equals the old one. Replace everything and the direct carry part
+vanishes, but the proposal can still depend on old h unless reset is closed too.
+Unlike LSTM, there is no way to close only show while preserving a separate,
+unchanged memory cell: GRU carries no such second vector.
+
+The matching animations display those different paths with the same note names,
+colors, and measured arithmetic. The LSTM exposes one value while carrying another;
+the GRU carries and exposes the same result. Both start from zero for a new phrase.
+
+01A first chooses scalar GRU controls by hand, just as it did for LSTM.
+Its reset-closed probe keeps old-state feedback when the keep control stays open.
+The full derivative can include the proposal route as well; it is not always just
+the keep fraction. The one-variable drill changes keep while reset stays closed.
+
+Open one A3 step after D3. Two trainable Linear projections mix its current profile
+and old hidden, then split into reset, keep and proposal ingredients. The visible
+calculation matches the actual initialized GRUCell at every note; reset acts on
+projected old-state content. Weights are reused; states and gates can change.
+
+The new h is both the output exposed now and the hidden carried to the next token.
+Two uses, same values; a separate head makes note scores. In a stack, output feeds
+the next layer at the same token while each layer carries its own state through time.
+Repeated token boxes are not extra layers. The smaller equal-width GRU parameter
+count is not a quality ranking.
+
+Now make the note card earn its keep. Play D3 A3 D4, add twenty shared distractions,
+then ask for the opening again. Reverse only the opening and the right echo changes.
+The note counts are identical, so counting cannot solve this task.
+
+A tiny GRU first guesses A3 A3 A3 for both openings. After fitting both examples,
+it generates both correct three-note echoes using its own previous guesses.
+Keep the fitted weights but erase h just after the opening: both echoes become
+D4 A3 D3, so only one is right. Reset before every step instead and neither whole
+echo matches. Later identical inputs need earlier evidence in the carried state.
+
+The replay synthesizes the actual inputs and guesses while showing calculated
+gates and hidden values. State erasure removes forward information; detach would
+preserve those numbers while stopping backward feedback. Two fitted examples
+establish a memory dependency, not composition or held-out musical quality.
+
+**Complaint:** keeping a route available still does not tell us which state to
+return when short and long phrases share a padded batch.
+
+## 7. Stop reading blanks; stop grading blanks
 
 01B starts with 24-value forecasting windows. It checks later answer times
 against a persistence guess: repeat the last observation. Earlier history
@@ -128,7 +185,7 @@ average matches the ignore-pad loss; extra blank columns leave it unchanged.
 
 **Complaint:** could an apparently good guess have peeked at the future?
 
-## 7. Change the clue, not the explanation
+## 8. Change the clue, not the explanation
 
 01B changes a later F4 input to C4 while keeping the earlier prefix fixed.
 Earlier score rows must match in a left-to-right LSTM. This checks future

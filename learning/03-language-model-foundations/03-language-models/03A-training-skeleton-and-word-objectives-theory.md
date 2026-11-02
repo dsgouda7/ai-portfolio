@@ -50,7 +50,7 @@ It does not create a vocabulary-sized copy of each incoming input.
 
 A batch of integer IDs shaped **[B, C]** selects **[B, C, D]** values: question,
 clue word, feature channel. Lookup reads those stored rows; it does not invent a
-new vector for every occurrence. The annotated CBOW code shows this where it happens.
+new vector for every occurrence. The shared word-model base shows this where it happens.
 Treat it as another neural-network layer: attaching it to the model includes its
 weight in the model's parameters, just like a linear layer. The same loss and
 optimizer train both.
@@ -91,10 +91,20 @@ answer. The model creates **32-number** rows and learns them from these question
 No person has to label a coordinate "animal" or provide a hand-written word profile.
 Repeated usage supplies the training evidence instead.
 
+The CBOW and Skip-gram data classes own different pairing rules, while their
+loader base owns validation and batching. Each returns input IDs and answer IDs
+in matching order. The batcher does not decide what a word is supposed to predict.
+
 Reserve the next **200 stories**, absent from training. Keep the training vocabulary
 fixed and evaluate at most **2,048** sentence-local windows before and after the
 same fit. Evaluation reads parameters without updating them. The actual held-out
 loss distinguishes transfer from merely fitting practice questions.
+
+The core loader and model helpers are defined in the notebook, not hidden behind
+imports. Validation is a separate module: record a baseline before training and
+recheck the same reserved questions afterwards. CBOW checks center words,
+Skip-gram checks individual neighbours, and the reader/writer checks next tokens.
+Different counts reflect different jobs, so raw losses are not an architecture ranking.
 
 **Complaint:** we have questions and answers. Which operation actually teaches the profiles?
 
@@ -109,7 +119,13 @@ Create the model once, then repeat:
 5. Clear previous gradients and backpropagate the loss.
 6. Let the optimizer update the model parameters, including the embedding table.
 
-The shared trainer handles this ordinary loop. The embedding and prediction
+The shared trainer handles this ordinary loop. Each word model supplies one
+combination rule: average the CBOW clues, or keep Skip-gram's single center row.
+The base runs lookup, that rule, and prediction layers in the same order.
+Its training entry point configures loss and optimizer once, then repeats the
+updates. Epoch observers inspect progress without taking over the loop.
+This is the engineering contract: subclasses supply the changing rule, while
+the base owns the sequence. The embedding and prediction
 layers learn together; a falling loss should not be attributed to the rows alone.
 Feedback is useful even when the most likely answer was already correct.
 
@@ -128,32 +144,45 @@ Before training, save the real model's table. Afterwards, compare actual feature
 for familiar words and confirm their input IDs stayed fixed. These observations,
 alongside reserved-story loss, show what changed and whether prediction transferred.
 Neighbour inspection asks a different question about what the representation now supports.
+The Python recorder owns those before/after snapshots and reports; short notebook
+calls display the evidence. The per-epoch callback remains beside the training run.
 
 This learning already happens in notebook **3.3**, not only in the final comparison.
 Its epoch table starts at untrained epoch zero and follows the same CBOW for ten
 epochs. Practice loss, reserved loss, cat probability/rank and cat-row movement
 answer different questions. One unchanged optimizer carries its state throughout;
 checking progress does not restart training or create a new model.
+The validation report after each training block compares the model with its
+own before-training baseline. It reads weights and restores model modes without
+updating parameters or clearing gradients. Reader/writer validation supplies
+correct previous words; it does not prove free-running generation quality.
 
 **Complaint:** useful word profiles are not the same thing as answers to a particular question.
 
-## 5. Word neighbours are not prediction scores
+## 5. A prediction job can also teach word relationships
 
-Shared features let a neural model reuse patterns across words and new
-combinations of familiar words. Held-out prediction tests that generalization;
-a neighbour list alone does not.
+CBOW practises filling a gap, checked against the word actually in the text.
+Nobody supplies meaning groups or rewards it directly for putting related words
+next to each other. Why can similar word profiles emerge anyway?
 
-Finding a word similar to cat is not choosing what fits **the cat ___ on the mat**.
-The model processes the clues and scores possible answers. Each output position
-refers to one vocabulary word; a larger score means the model favours that word
-more in this context. Softmax converts the scores into probabilities.
+Imagine practising **cat sat ___ the mat** and **dog sat ___ the mat**, both
+checked against **on**. These illustrate the mechanism, not quoted corpus examples.
+Cat and dog are clues, so their input profiles are read and receive feedback.
+The same predictor can reuse similar signals from either profile to find on.
+Across many shared settings, similar kinds of correction can encourage features
+that help with similar prediction jobs.
 
-The model produces vocabulary scores. Choosing the highest score gives its best
-guess; sampling is an optional decoding strategy for later text-generation lessons.
+Related profiles can be a useful side effect of learning to predict. There is no
+guarantee every related pair moves closer, and similar usage is not the same as
+the same meaning: hot and cold share many settings too.
 
-Keep the useful checks separate. Neighbours inspect learned word profiles.
-The familiar questions' probabilities and ranks inspect particular answers.
-Reserved-story loss checks whether prediction improved beyond the training text.
+Notebook **3.4** now closes the training section by inspecting the actual learned
+profiles, including imperfect matches. Compare their patterns rather than their
+overall size; leave out the query word and the unknown-word placeholder.
+That neighbour list is not the answer to a particular gap: prediction still uses
+all the clues to score possible answers. Reserved-story loss checks whether
+prediction improved beyond the practice text; neighbours inspect what the
+learned profiles now look like.
 
 **Complaint:** better features still cannot restore information discarded before prediction.
 
@@ -173,8 +202,15 @@ discarded before prediction.
 That is the next question for [03B](03B-counts-and-fixed-window-language-models.ipynb):
 would giving words separate seats preserve the distinction?
 
-Optional A/B asides inspect fused lookup, visualization and Skip-gram.
-Notebook section 6 then preserves the reader/writer and larger held-out comparison.
+This complaint now closes notebook section 3, rather than opening another core
+section. The window storyboard stays with section 2, and a saved before/after
+profile view sits in section 3.4. It uses one fixed camera for both states;
+the full-profile comparison is stronger evidence than closeness in a 2D sketch.
+Optional section 4 now contains only Skip-gram.
+For the direct reader/writer preview, skip those optional experiments and jump to
+[notebook section 5](03A-training-skeleton-and-word-objectives.ipynb#encoder-decoder-preview).
+03B is the next-chapter route instead; the preview's shared setup is listed at
+the section 5 opening. Its later held-out comparison also needs the Skip-gram setup.
 They are not prerequisites for the CBOW conclusion.
 Production uses a matching tokenizer and checkpoint table; ordinary inference
 reuses learned weights without drawing new random rows or running optimizer steps.
@@ -185,27 +221,84 @@ Read **the sleepy cat** and practise writing **sat on stop**. The notebook uses
 `<bos>` to start the writer and `<eos>` as the answer meaning stop. This is a fresh
 model, not the CBOW table continued under a different name.
 
-1. Look up the three source-word rows and let the encoder read them in order.
-2. Pass its final hidden note to the decoder. That note is sequence-dependent,
-   unlike a stored word embedding.
-3. Give the decoder the start token to predict sat.
-4. During practice, give correct previous sat to predict on, then correct previous
-   on to predict stop. The current answer is checked, not supplied to its own guess.
-5. Check every next-word score list with cross-entropy and combine the losses.
-6. Backpropagate through the prediction head and decoder. Feedback reaches the
-   decoder's input rows and, through its initial note, the encoder's source rows.
-7. Accumulate both lookup routes into the same shared Parameter. Repeated word
-   IDs add their feedback; recurrent paths need not give every occurrence equal feedback.
-8. Apply one optimizer step to the embedding table, both GRUs and the output head.
+A word embedding is a stored 32-number profile. A hidden state is a temporary
+48-number note about the sequence read so far. It is rebuilt during forward;
+the optimizer changes the embedding and recurrent weights, not that old note.
 
-Section **6.3** follows six training epochs and prints actual before/after input
+Use the [GRU foundation](../01-sequence-memory/01A-sequence-memory-theory.ipynb#gru-hidden-state-mechanics)
+for its reset/keep/replacement mechanics. Here the input is a word profile instead
+of a piano profile. The encoder reuses its weights while reading the, sleepy and
+cat; a separate decoder reuses its own weights while writing sat, on and stop.
+The animation focuses on those block inputs, actual old/new state values,
+the final-state handoff, and feedback into shared embedding rows.
+
+Open one token, not another time box. Each GRU layer mixes the current profile
+and old hidden through two learned Linear projections, then computes gates,
+proposed content and the retained/written blend. The result is both this token's
+output and the state carried onward. Those are two uses of the same values here,
+not two independent predictions. The encoder keeps its final hidden as D0;
+the decoder sends its output to a separate vocabulary head while carrying D1.
+Different jobs, same GRU cell rule. This preview has one layer per block, not
+three stacked layers because the picture shows three words.
+
+The final reader note becomes the writer's starting note. Losses teach the
+writer through its successive states, then travel through that starting note
+to the reader's final and earlier states. Each read also depends on a fetched
+word profile, so feedback can reach both source and writer input rows.
+This is ordinary backward differentiation through time, not a second optimizer
+for hidden-state values.
+
+The GRU decoder always uses a numerical state. Omitting its state argument means
+starting from zeros, not removing memory. It can run without an encoder, but then
+it has no source note. A Transformer decoder has no carried GRU-style recurrent
+state; it still computes internal token representations.
+
+The notebook animation follows the same live cat probe after six epochs.
+Its solid arrows carry state vectors. During practice, the next word input is
+the correct previous answer; during generation, it is the decoder's own guess.
+The word guess and the hidden state are separate outputs with separate routes.
+Wrong guesses stay visible; the animation is measured mechanics, not a promise
+of exact recall. A static view preserves the forward/backward route without playback.
+
+Suppose the first guess is and instead of sat. While practising, still supply the
+correct previous sat so the next question is to predict on. This input rule is
+**teacher forcing**. It does not turn the wrong guess into a right one, reset the
+hidden state, or replace backpropagation. It lets the model practise the real
+continuation rather than only the mistaken sentence it started.
+
+The inputs are start, sat, on; the checked answers are sat, on, stop.
+Each step sees the previous word, not the word it is being asked to predict.
+The GRU reads left to right, so a later input cannot help an earlier prediction.
+
+1. Read the source and pass its final hidden note to the writer.
+2. Read correct previous words and produce one next-word score list per step,
+   carrying the new hidden state throughout.
+3. Cross-entropy checks the scores against all three answers and combines the penalties.
+4. Backward feedback reaches the head, both GRUs and their input rows. Shared-table
+   contributions add; repeated occurrences need not receive equal feedback.
+5. Apply one optimizer step for the batch. Six epochs mean six full passes through
+   the examples, not just six weight updates.
+
+Section **5.2** follows six training epochs and prints actual before/after input
 rows. Source-only cat can learn through the encoder, even though the writer's
 first example never looks up cat as a previous answer. BOS learns as a decoder
 input. EOS is only checked as an answer in this small run, so its untied input row
 stays unchanged while its separate output-score parameters learn.
 
-Teacher-forced improvement is not free-running generation quality. Section 6.4
-feeds back the writer's own guesses. Sections 6.5-6.13 retain the independent
+The notebook checks the route on copies: detach the reader's final note before
+passing it to the writer. The numbers and predictions stay the same, but the
+source-only cat input gradient and row update become zero. The real model is
+untouched. This demonstrates the learning connection, not the meaning of each
+hidden-state coordinate or general language ability.
+
+Training accuracy checks familiar examples with correct previous words.
+Reserved-story validation checks new examples under that same input rule; it is
+a real held-out next-word check, not a free-writing score. Stop-token accuracy can
+also make the aggregate look better than content-word accuracy.
+
+Section 5.3 keeps the fitted weights but feeds back the writer's own guesses.
+An earlier wrong word now changes its next input, so mistakes can compound.
+Sections 5.4-5.12 retain the independent
 three-model held-out comparison, which restarts all models on its own split.
 Those are three separate training runs, not one experiment deferred to the end.
 

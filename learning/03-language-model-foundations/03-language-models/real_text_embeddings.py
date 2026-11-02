@@ -15,9 +15,10 @@ import torch
 from matplotlib.animation import FuncAnimation
 from matplotlib.patches import FancyBboxPatch
 from torch import nn
-from torch.utils.data import DataLoader, TensorDataset
 from numpy.lib.stride_tricks import sliding_window_view
 
+from language_data import CBOWDataLoader, SkipGramDataLoader, WindowDataLoader
+from language_validation import ModelValidator
 
 DATASET = "roneneldan/TinyStories"
 # Pinned commit, so the text cannot change under the lesson.
@@ -90,6 +91,28 @@ def make_document_windows(id_documents, window_width):
     return np.concatenate(per_document)
 
 
+def prepare_validation_windows(
+    stoi: dict[str, int], training_stories: int, *,
+    reserved_stories: int = 200, window_width: int = 5, max_windows: int = 2_048,
+) -> torch.Tensor:
+    if training_stories < 1 or reserved_stories < 1 or max_windows < 1:
+        raise ValueError("Validation story and window budgets must be positive.")
+    if "<unk>" not in stoi:
+        raise ValueError("Validation needs the training vocabulary's unknown-word ID.")
+    stories = read_stories(training_stories + reserved_stories)[training_stories:]
+    if len(stories) != reserved_stories:
+        raise ValueError("The corpus does not contain the requested reserved stories.")
+    documents = [sentence for story in stories for sentence in story_sentences(story)]
+    ids = [[stoi.get(word, stoi["<unk>"]) for word in document] for document in documents]
+    windows = torch.tensor(make_document_windows(ids, window_width)[:max_windows], dtype=torch.long)
+    if len(windows) == 0:
+        raise ValueError("Reserved stories must supply at least one complete validation window.")
+    print(f"Reserved stories: {training_stories + 1} through "
+          f"{training_stories + reserved_stories}; windows: {len(windows)}")
+    print(f"Reserved unknown slots: {windows.eq(stoi['<unk>']).float().mean():.1%}")
+    return windows
+
+
 def load_real_text(stories=STORY_BUDGET, train_windows=40_000, valid_windows=4_000):
     """Split whole stories before making any windows."""
     texts = read_stories(stories)
@@ -129,15 +152,10 @@ def load_real_text(stories=STORY_BUDGET, train_windows=40_000, valid_windows=4_0
 
 def objective_pairs(windows, objective, bos_id):
     """Choose the question and answer for this objective, not how they are batched."""
-    # [N, 5] -> [N, 4] clues and [N] answers: remove the middle word, not a row.
-    context = windows[:, [0, 1, 3, 4]]
-    center = windows[:, 2]
     if objective == "CBOW":
-        return context, center
+        return CBOWDataLoader(windows).prepare_data()
     if objective == "Skip-gram":
-        # [N] -> [4N] centers; [N, 4] -> [4N] answers in matching row-major order.
-        # Repeating a center per neighbour changes the objective, not story weighting.
-        return center.repeat_interleave(4), context.reshape(-1)
+        return SkipGramDataLoader(windows).prepare_data()
     if objective == "Encoder-decoder":
         # A fixed two-word continuation: no padding or easy EOS target in this comparison.
         bos = torch.full((len(windows), 1), bos_id, dtype=torch.long)
@@ -193,32 +211,18 @@ def train_comparison(corpus, cbow_class, skipgram_class, sequence_class, epochs=
             loss_function = nn.CrossEntropyLoss()
             train_x, train_y = objective_pairs(corpus["train"], objective, vocabulary)
             valid_x, valid_y = objective_pairs(corpus["valid"], objective, vocabulary)
-            loader = DataLoader(
-                TensorDataset(train_x, train_y), batch_size=256, shuffle=True,
-                generator=torch.Generator().manual_seed(seed),
-            )
+            loader = WindowDataLoader.batch_tensors(train_x, train_y, batch_size=256, seed=seed)
             if verbose:
                 print(f"\n{objective} data: {len(train_x):,} training pairs; "
                       f"inputs {tuple(train_x.shape)}, answers {tuple(train_y.shape)}; "
                       f"{len(valid_x):,} held-out pairs; batch size {loader.batch_size}",
                       flush=True)
 
-            def evaluate(inputs, targets):
-                total, count = 0.0, 0
-                model.eval()
-                with torch.inference_mode():
-                    for start in range(0, len(inputs), 512):
-                        # Aligned [N, ...] -> at most [512, ...] slices bound score memory.
-                        x, y = inputs[start:start + 512], targets[start:start + 512]
-                        expected = model.targets_for_loss(y)
-                        loss = model.training_loss(x, y, loss_function)
-                        total += loss.item() * expected.numel()
-                        count += expected.numel()
-                return total / count
-
             # Fixed train probe keeps the epoch-zero point comparable to later points.
             # Keep the same first at most 4096 pairs at every checkpoint for comparable loss.
             train_probe_x, train_probe_y = train_x[:4096], train_y[:4096]
+            train_validator = ModelValidator(train_probe_x, train_probe_y)
+            valid_validator = ModelValidator(valid_x, valid_y)
             record = {
                 "train_loss": [], "valid_loss": [], "snapshots": [],
                 "within": [], "across": [], "purity": [], "epoch_fit_loss": [],
@@ -233,8 +237,8 @@ def train_comparison(corpus, cbow_class, skipgram_class, sequence_class, epochs=
                 # [V+1, 48] -> [V, 48] for the writer: exclude its extra <bos> row.
                 weights = model.embedding.weight[:vocabulary].detach().clone()
                 within, across, purity = embedding_metrics(weights, probe_ids)
-                record["train_loss"].append(evaluate(train_probe_x, train_probe_y))
-                record["valid_loss"].append(evaluate(valid_x, valid_y))
+                record["train_loss"].append(train_validator.evaluate(model).loss)
+                record["valid_loss"].append(valid_validator.evaluate(model).loss)
                 record["snapshots"].append(weights)
                 record["within"].append(within)
                 record["across"].append(across)
