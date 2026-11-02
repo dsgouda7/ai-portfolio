@@ -1,6 +1,7 @@
 """Trace the actual preview GRUs on copies, without training the main model."""
 
 import ast
+import base64
 from copy import deepcopy
 from dataclasses import dataclass
 import hashlib
@@ -22,6 +23,7 @@ if str(FOUNDATION) not in sys.path:
     sys.path.insert(0, str(FOUNDATION))
 from gru_layer_flow import LAYER_PHASES, LayerStep, draw_layer, excerpt, record_layer_step
 from memory_gate_flows import responsive_animation_html
+from language_validation import ModelProbeComparison, SourceOrderComparison, compare_source_order
 
 IMAGE = HERE / "images" / "03a-encoder-decoder-embedding-feedback.png"
 ANIMATION = HERE / "images" / "03a-encoder-decoder-state-flow.gif"
@@ -29,12 +31,34 @@ HTML_ANIMATION = ANIMATION.with_suffix(".html")
 MECHANICS_IMAGE = HERE / "images" / "03a-gru-hidden-state-mechanics.png"
 TOKEN_LAYERS_IMAGE = HERE / "images" / "03a-encoder-decoder-token-layers.png"
 TEACHER_FORCING_IMAGE = HERE / "images" / "03a-correct-previous-word-vs-own-guess.png"
+EMBEDDING_LEARNING_IMAGE = HERE / "images" / "03a-prediction-teaches-shared-table.png"
+PROFILE_LEARNING_IMAGE = HERE / "images" / "03a-reader-writer-profiles-before-after.png"
+ORDER_PRELUDE_IMAGE = HERE / "images" / "03a-order-to-attention.png"
 BACKGROUND = "#1a1a2e"
 TEXT = "#e7edf7"
 FORWARD = "#58d7d1"
 BACKWARD = "#ffbb78"
 UPDATE = "#8cdb9b"
 GENERATION = "#c5a3ff"
+
+
+def save_replay(path: Path, animation: FuncAnimation) -> None:
+    html = responsive_animation_html(animation)
+    path.write_text("\n".join(line.rstrip() for line in html.splitlines()) + "\n", encoding="utf-8")
+
+
+def refresh_saved_replay_attachment(notebook_path: Path, animation_path: Path) -> None:
+    before = notebook_path.read_bytes()
+    notebook = json.loads(before)
+    if (json.dumps(notebook, ensure_ascii=False, indent=1) + "\n").encode("utf-8") != before:
+        raise ValueError("Notebook formatting changed; update the replay attachment with a notebook-aware editor.")
+    for cell in notebook["cells"]:
+        bundle = cell.get("attachments", {}).get(animation_path.name)
+        if bundle is not None and "image/gif" in bundle:
+            bundle["image/gif"] = base64.b64encode(animation_path.read_bytes()).decode("ascii")
+    if notebook_path.read_bytes() != before:
+        raise RuntimeError("The notebook changed while its saved replay was being refreshed.")
+    notebook_path.write_bytes((json.dumps(notebook, ensure_ascii=False, indent=1) + "\n").encode("utf-8"))
 
 
 @dataclass
@@ -979,9 +1003,7 @@ def save_teacher_forcing(playback: StatePlayback, words: list[str]) -> None:
         frames=len(teacher_forcing_stages(playback)), interval=2400, repeat=False,
     )
     plt.close(figure)
-    TEACHER_FORCING_IMAGE.with_suffix(".html").write_text(
-        responsive_animation_html(animation), encoding="utf-8",
-    )
+    save_replay(TEACHER_FORCING_IMAGE.with_suffix(".html"), animation)
     animation.save(TEACHER_FORCING_IMAGE.with_suffix(".gif"), writer="pillow", fps=1000 / 2400)
     print("Saved correct-previous-word versus own-guess views:", metadata["TeacherInputs"],
           "/", metadata["GenerationInputs"])
@@ -1116,6 +1138,189 @@ def draw_feedback(comparison: FeedbackComparison, words: list[str], *, epochs: i
     print(f"Saved {IMAGE.name}")
 
 
+EMBEDDING_PHASES = (
+    "Look up input profiles in ONE shared trainable table",
+    "The reader carries the source words in order",
+    "The writer uses previous words and the reader's final state",
+    "Check the next-word scores; no similarity labels were supplied",
+    "Feedback reaches the writer's fetched rows",
+    "Feedback also crosses the reader/writer handoff to source rows",
+    "One update changes the selected input rows on a COPY",
+    "Cut only backward feedback: same scores, no source-row update",
+)
+
+
+def draw_embedding_learning(axis, comparison: FeedbackComparison, words: list[str], stage: int) -> None:
+    trace = comparison.connected
+    axis.clear()
+    axis.set(xlim=(0, 1), ylim=(0, 1), facecolor=BACKGROUND)
+    axis.axis("off")
+    axis.text(0.5, 0.975, "Predict words. The input profiles learn as a side effect.",
+              ha="center", va="top", fontsize=20, color=TEXT, weight="bold")
+    axis.text(0.5, 0.92, f"{stage + 1}/{len(EMBEDDING_PHASES)}  {EMBEDDING_PHASES[stage]}",
+              ha="center", fontsize=13, color=UPDATE if stage == 6 else BACKWARD if stage >= 4 else FORWARD)
+
+    def box(x, y, width, title, detail, active, color=FORWARD):
+        axis.add_patch(FancyBboxPatch(
+            (x, y), width, 0.105, boxstyle="round,pad=0.01", edgecolor=color,
+            facecolor="#26364a" if active else BACKGROUND, linewidth=3 if active else 1.2,
+        ))
+        axis.text(x + width / 2, y + 0.071, title, ha="center", color=TEXT, fontsize=12)
+        axis.text(x + width / 2, y + 0.027, detail, ha="center", color=color, fontsize=11)
+
+    def arrow(start, end, color=FORWARD, active=False):
+        axis.annotate("", xy=end, xytext=start, arrowprops=dict(
+            arrowstyle="->", color=color, lw=3 if active else 1.4,
+        ))
+
+    source = " ".join(words[index] for index in comparison.source_ids[0].tolist())
+    writer = " ".join(words[index] for index in comparison.target_ids[0, :-1].tolist())
+    targets = " ".join(words[index] for index in comparison.target_ids[0, 1:].tolist())
+    box(0.27, 0.73, 0.46, "ONE input embedding table", "Stored word rows, shared by both lookups", stage in {0, 6})
+    box(0.04, 0.48, 0.26, "Reader: source profiles", source, stage in {1, 5})
+    box(0.37, 0.48, 0.22, "Final hidden state", f"{trace.encoder_states[-1].numel()} temporary values", stage in {1, 5})
+    box(0.68, 0.48, 0.28, "Writer: previous-word profiles", writer, stage in {2, 4})
+    box(0.68, 0.25, 0.28, "Separate output head", "One next-word score list per step", stage in {2, 3, 4})
+    box(0.35, 0.25, 0.25, "Check the real next words", targets, stage in {3, 4}, BACKWARD)
+    arrow((0.31, 0.73), (0.17, 0.60), active=stage == 0)
+    arrow((0.69, 0.73), (0.82, 0.60), active=stage == 0)
+    arrow((0.31, 0.53), (0.36, 0.53), active=stage == 1)
+    arrow((0.60, 0.53), (0.67, 0.53), active=stage in {1, 2})
+    arrow((0.82, 0.47), (0.82, 0.37), active=stage == 2)
+    arrow((0.67, 0.30), (0.61, 0.30), active=stage == 3)
+    if stage >= 4:
+        arrow((0.60, 0.34), (0.67, 0.34), BACKWARD, True)
+        arrow((0.74, 0.37), (0.74, 0.47), BACKWARD, True)
+        arrow((0.91, 0.60), (0.70, 0.72), BACKWARD, True)
+    if stage in {5, 6}:
+        arrow((0.67, 0.57), (0.60, 0.57), BACKWARD, True)
+        arrow((0.36, 0.57), (0.31, 0.57), BACKWARD, True)
+        arrow((0.09, 0.60), (0.30, 0.72), BACKWARD, True)
+    cat = int(comparison.source_ids[0, -1])
+    if stage == 6:
+        note = (f"cat row before: {excerpt(trace.table_before[cat])}\n"
+                f"cat feedback: {excerpt(trace.embedding_gradient[cat])}\n"
+                f"cat row after copied update: {excerpt(trace.table_after[cat])}")
+    elif stage == 7:
+        note = (f"Forward-score change after cutting feedback: "
+                f"{(trace.logits - comparison.detached.logits).abs().max().item():.1f}\n"
+                f"cat row movement: {trace.row_changes[cat].item():.6f} connected / "
+                f"{comparison.detached.row_changes[cat].item():.6f} cut\n"
+                "The source word does not need to be an answer to receive teaching feedback.")
+    else:
+        note = ("IDs select stored rows; hidden states carry this example's context.\n"
+                "The loss trains the fetched values, both GRUs and the separate prediction head.\n"
+                "No instruction says 'make cat and dog similar'. Useful organization is an empirical outcome.")
+    axis.text(0.045, 0.19, note, va="top", color=UPDATE if stage == 6 else TEXT,
+              fontsize=12, linespacing=1.5)
+    axis.text(0.5, 0.025, "Fresh pre-training model; one question checks sat / on / stop. "
+              "The diagnostic SGD step uses a COPY; the real model is untouched.",
+              ha="center", color=TEXT, fontsize=10)
+
+
+def save_embedding_learning(comparison: FeedbackComparison, words: list[str]) -> None:
+    figure, axis = plt.subplots(figsize=(13, 9))
+    figure.patch.set_facecolor(BACKGROUND)
+    figure.subplots_adjust(left=0.015, right=0.985, top=0.99, bottom=0.01)
+    draw_embedding_learning(axis, comparison, words, 5)
+    cat = int(comparison.source_ids[0, -1])
+    figure.savefig(EMBEDDING_LEARNING_IMAGE, dpi=120, facecolor=BACKGROUND, metadata={
+        "SourceFingerprint": source_fingerprint(), "Checkpoint": "fresh model before training",
+        "ConnectedCatRowChange": str(comparison.connected.row_changes[cat].item()),
+        "DetachedCatRowChange": str(comparison.detached.row_changes[cat].item()),
+    })
+    animation = FuncAnimation(
+        figure, lambda stage: draw_embedding_learning(axis, comparison, words, stage),
+        frames=len(EMBEDDING_PHASES), interval=2100, repeat=False,
+    )
+    plt.close(figure)
+    save_replay(EMBEDDING_LEARNING_IMAGE.with_suffix(".html"), animation)
+    animation.save(EMBEDDING_LEARNING_IMAGE.with_suffix(".gif"), writer="pillow", fps=1000 / 2100)
+
+
+def save_profile_learning(comparison: ModelProbeComparison, words: list[str], epochs: int) -> None:
+    visible = ("cat", "dog", "mat", "sat", "<bos>", "<eos>")
+    ids = [words.index(word) for word in visible]
+    before, after = comparison.before.embeddings[ids], comparison.after.embeddings[ids]
+    bound = max(before.abs().max().item(), after.abs().max().item())
+    figure, axes = plt.subplots(1, 2, figsize=(13, 5))
+    figure.patch.set_facecolor(BACKGROUND)
+    for axis, rows, title in zip(axes, (before, after), ("Before training", f"After {epochs} Adam epochs")):
+        axis.imshow(rows.numpy(), cmap="coolwarm", vmin=-bound, vmax=bound, aspect="auto")
+        axis.set_yticks(range(len(visible)), visible)
+        axis.set_xlabel("Stored feature coordinate (no hand-assigned meaning)", color=TEXT)
+        axis.set_title(title, color=TEXT)
+        axis.tick_params(colors=TEXT)
+    pair_values = {}
+    for word in ("dog", "mat"):
+        index = words.index(word)
+        scores = []
+        for rows in (comparison.before.embeddings, comparison.after.embeddings):
+            scores.append(nn.functional.cosine_similarity(
+                rows[words.index("cat")][None], rows[index][None],
+            ).item())
+        pair_values[f"cat/{word}"] = scores
+    figure.suptitle("Actual input rows from the SAME six-epoch run", color=TEXT, fontsize=17)
+    figure.text(0.5, 0.10, "Full-row similarity: " + " | ".join(
+        f"{pair} {scores[0]:+.3f} -> {scores[1]:+.3f}" for pair, scores in pair_values.items()
+    ), ha="center", color=UPDATE, fontsize=12)
+    figure.text(0.5, 0.025, "Changed values prove updates, not general semantic quality. "
+                "Compare related words with story-context words; do not promise every pair moves closer.",
+                ha="center", color=TEXT, fontsize=10)
+    figure.tight_layout(rect=(0.01, 0.16, 0.99, 0.93))
+    figure.savefig(PROFILE_LEARNING_IMAGE, dpi=120, facecolor=BACKGROUND, metadata={
+        "SourceFingerprint": source_fingerprint(), "TrainingEpochs": str(epochs),
+        "PairSimilarities": json.dumps(pair_values),
+        "EOSRowChange": str(comparison.row_changes[words.index("<eos>")].item()),
+    })
+    plt.close(figure)
+
+
+def save_order_prelude(order: SourceOrderComparison, words: list[str]) -> None:
+    if order.source_ids.shape[1] != 3:
+        raise ValueError("The order storyboard follows the three-word cat source.")
+    figure, axis = plt.subplots(figsize=(14, 8))
+    figure.patch.set_facecolor(BACKGROUND)
+    axis.set(xlim=(0, 1), ylim=(0, 1), facecolor=BACKGROUND)
+    axis.axis("off")
+    axis.text(0.5, 0.98, "Order is already in the recurrent states. Attention changes access.",
+              ha="center", va="top", color=TEXT, fontsize=19, weight="bold")
+    positions = (0.08, 0.39, 0.70)
+    for y, ids, states, label in (
+        (0.69, order.source_ids, order.ordered_states, "Read in order"),
+        (0.46, order.reversed_ids, order.reversed_states, "Reverse the same rows"),
+    ):
+        axis.text(0.03, y + 0.14, label, color=FORWARD, fontsize=13, weight="bold")
+        for index, x in enumerate(positions):
+            axis.add_patch(FancyBboxPatch(
+                (x, y), 0.22, 0.10, boxstyle="round,pad=0.01",
+                edgecolor=FORWARD, facecolor=BACKGROUND, linewidth=1.5,
+            ))
+            axis.text(x + 0.11, y + 0.065, words[int(ids[0, index])], ha="center", color=TEXT, fontsize=14)
+            axis.text(x + 0.11, y + 0.02, excerpt(states[0, index]), ha="center", color=FORWARD, fontsize=10)
+            if index:
+                axis.annotate("", xy=(x - 0.015, y + 0.05), xytext=(positions[index - 1] + 0.235, y + 0.05),
+                              arrowprops=dict(arrowstyle="->", color=FORWARD, lw=2))
+    axis.text(0.5, 0.37,
+              f"Same table, no updates | mean-row difference {order.mean_difference:.2e} (rounding) | "
+              f"final-state difference {order.hidden_difference:.4f}",
+              ha="center", color=UPDATE, fontsize=11)
+    axis.text(0.5, 0.31, f"First word-score difference: {order.score_difference:.4f}. "
+              "This proves order affects computation, not correct understanding.",
+              ha="center", color=TEXT, fontsize=11)
+    axis.text(0.06, 0.20, "Current writer: receives only the final summary.", color=TEXT, fontsize=13)
+    axis.text(0.06, 0.13, "Attention idea: keep every source-position state and let each writer step look back.",
+              color=UPDATE, fontsize=13, weight="bold")
+    axis.text(0.06, 0.055, "Attention is not implemented here. In this GRU model, recurrence supplies order; "
+              "attention would provide selective access to the already ordered notes.", color=TEXT, fontsize=10)
+    figure.savefig(ORDER_PRELUDE_IMAGE, dpi=120, facecolor=BACKGROUND, metadata={
+        "SourceFingerprint": source_fingerprint(), "MeanDifference": str(order.mean_difference),
+        "HiddenDifference": str(order.hidden_difference), "ScoreDifference": str(order.score_difference),
+        "AttentionImplemented": "False",
+    })
+    plt.close(figure)
+
+
 def main() -> None:
     if not (HERE / "data" / "tinystories" / "TinyStories-valid.txt").is_file():
         raise FileNotFoundError("Run the lesson once to obtain its verified TinyStories cache.")
@@ -1129,6 +1334,7 @@ def main() -> None:
         for cell_id in (
             "ch03a-training-base", "ch03a-word-model-base", "06c-17",
             "ch03a-probe-helpers", "06c-s2s-02", "06c-s2s-04",
+            "ch03a-sequence-probe-setup",
         )
     ]
     namespace = {"__name__": "__main__", "__file__": str(HERE / "03A-training-skeleton-and-word-objectives.py")}
@@ -1142,6 +1348,10 @@ def main() -> None:
         epochs=len(namespace["sequence_losses"]),
     )
     words = namespace["sequence_itos"]
+    save_embedding_learning(namespace["embedding_feedback"], words)
+    save_profile_learning(namespace["sequence_after_record"], words, playback.epochs)
+    order = compare_source_order(namespace["sequence_model"], namespace["cat_sources"][:1], namespace["BOS_ID"])
+    save_order_prelude(order, words)
     draw_feedback(playback.feedback, words, epochs=playback.epochs)
     save_hidden_mechanics(playback, words)
     save_teacher_forcing(playback, words)
@@ -1156,7 +1366,7 @@ def main() -> None:
     })
     plt.close(figure)
     animation = animate_token_layers(playback, words)
-    HTML_ANIMATION.write_text(responsive_animation_html(animation), encoding="utf-8")
+    save_replay(HTML_ANIMATION, animation)
     animation.save(ANIMATION, writer="pillow", fps=1000 / 1800)
     metadata = {
         "SourceFingerprint": source_fingerprint(), "TrainingEpochs": playback.epochs,
@@ -1183,6 +1393,7 @@ def main() -> None:
     )
     print(f"Saved {ANIMATION.name}: {len(frames)} recorded stages, "
           f"generated words {metadata['Generated']}; {HTML_ANIMATION.name} has replay controls.")
+    refresh_saved_replay_attachment(HERE / "03A-training-skeleton-and-word-objectives.ipynb", ANIMATION)
 
 
 if __name__ == "__main__":

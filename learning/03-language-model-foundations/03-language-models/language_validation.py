@@ -177,6 +177,164 @@ class ModelProbeRecorder:
 
 
 @dataclass(frozen=True)
+class SequenceLearningReadout:
+    teacher_accuracy: float
+    content_accuracy: float
+    checked_words: int
+    similarities: dict[str, tuple[float, float]]
+
+
+class EncoderDecoderProbeRecorder(ModelProbeRecorder):
+    # Specializes snapshot/reporting for the same three cat windows; never owns optimization.
+    def __init__(self, model: ProbeModel, sources: torch.Tensor, targets: torch.Tensor, words: Sequence[str]):
+        super().__init__(
+            model, sources, target_ids=targets, words=words,
+            expected_words=("sat", "mat"), positions=((0, 0), (2, 1)),
+            labels=("Next 'sat' after 'the sleepy cat' + start",
+                    "Next 'mat' after 'cat sat on' + correct previous 'the'"),
+        )
+        self.history: list[dict[str, float | int | None]] = []
+
+    def record_before(self, *, show: bool = False) -> ModelProbeSnapshot:
+        snapshot = super().record_before(show=show)
+        probability = snapshot.probes["sat"]["probability"]
+        self.history = [{
+            "epoch": 0, "train_loss": None, "sat_probability": probability, "embedding_shift": 0.0,
+        }]
+        print("Epoch | practice loss | correct first-word share | input-table movement")
+        print(f"0 | not trained | {probability:.3%} | 0")
+        return snapshot
+
+    def record_epoch(self, epoch: int, epoch_loss: float) -> None:
+        if self.before is None or self.target_ids is None:
+            raise RuntimeError("Record the reader/writer's baseline before monitoring epochs.")
+        with torch.inference_mode():
+            probe = word_probe(self.model(self.input_ids[:1], self.target_ids[:1])[0, 0], "sat", self.words)
+            shift = (self.model.embedding.weight - self.before.embeddings).norm().item()
+        self.history.append({
+            "epoch": epoch, "train_loss": epoch_loss,
+            "sat_probability": probe["probability"], "embedding_shift": shift,
+        })
+        print(f"{epoch} | {epoch_loss:.4f} | {probe['probability']:.3%} | {shift:.4f}")
+
+    def report_after_training(
+        self, sources: torch.Tensor, targets: torch.Tensor,
+        losses: Sequence[float], seconds: float,
+    ) -> SequenceLearningReadout:
+        if self.comparison is None:
+            raise RuntimeError("Record the trained snapshot before reporting the reader/writer.")
+        comparison = self.comparison
+        print("\nStored input rows: movement from the SAME run's initial values")
+        for word in ("cat", "sat", "<bos>", "<eos>"):
+            index = self.words.index(word)
+            print(f"{word}: {comparison.row_changes[index].item():.6f}")
+        similarities = {}
+        for left, right in (("cat", "dog"), ("cat", "mat")):
+            if left not in self.words or right not in self.words:
+                print(f"{left}/{right}: not checked (word absent from this vocabulary)")
+                continue
+            ids = [self.words.index(left), self.words.index(right)]
+            before_score, after_score = (
+                float(nn.functional.cosine_similarity(rows[ids[:1]], rows[ids[1:]], dim=-1).item())
+                for rows in (comparison.before.embeddings, comparison.after.embeddings)
+            )
+            scores = (before_score, after_score)
+            similarities[f"{left}/{right}"] = scores
+            print(f"Full-row {left}/{right} similarity: {scores[0]:+.3f} -> {scores[1]:+.3f}")
+        modes = [(module, module.training) for module in self.model.modules()]
+        try:
+            self.model.eval()
+            with torch.inference_mode():
+                logits = self.model(sources[:4096], targets[:4096])
+                expected = self.model.targets_for_loss(targets[:4096])
+                correct = logits.argmax(-1) == expected
+                accuracy = correct.float().mean().item()
+                content = correct[:, :-1].float().mean().item()
+        finally:
+            for module, training in modes:
+                module.training = training
+        print(f"Practice loss: {losses[0]:.4f} -> {losses[-1]:.4f}; {len(losses)} epochs, {seconds:.1f}s")
+        print(f"Training next-word accuracy: {accuracy:.1%}; excluding stop: {content:.1%}")
+        self.report_probes()
+        return SequenceLearningReadout(accuracy, content, expected.numel(), similarities)
+
+
+class RecurrentWriterModel(ProbeModel, Protocol):
+    encoder: nn.GRU
+
+    def encode(self, source_ids: torch.Tensor) -> torch.Tensor: ...
+
+    def decode(
+        self, decoder_input_ids: torch.Tensor, hidden: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]: ...
+
+
+@dataclass(frozen=True)
+class SourceOrderComparison:
+    source_ids: torch.Tensor
+    reversed_ids: torch.Tensor
+    ordered_states: torch.Tensor
+    reversed_states: torch.Tensor
+    mean_difference: float
+    hidden_difference: float
+    score_difference: float
+
+
+def compare_source_order(
+    model: RecurrentWriterModel, source_ids: torch.Tensor, bos_id: int,
+) -> SourceOrderComparison:
+    if source_ids.ndim != 2 or source_ids.shape[0] != 1 or source_ids.shape[1] < 2:
+        raise ValueError("The order check needs one source with at least two tokens.")
+    if not isinstance(model.encoder, nn.GRU) or model.encoder.num_layers != 1 or model.encoder.bidirectional:
+        raise ValueError("The order check follows one unidirectional encoder layer.")
+    modes = [(module, module.training) for module in model.modules()]
+    try:
+        model.eval()
+        with torch.inference_mode():
+            reversed_ids = source_ids.flip(1)
+            ordered_rows, reversed_rows = model.embedding(source_ids), model.embedding(reversed_ids)
+            ordered_states, hidden = model.encoder(ordered_rows)
+            reversed_states, reversed_hidden = model.encoder(reversed_rows)
+            start = torch.full_like(source_ids[:, :1], bos_id)
+            scores, _ = model.decode(start, hidden)
+            reversed_scores, _ = model.decode(start, reversed_hidden)
+            return SourceOrderComparison(
+                source_ids.clone(), reversed_ids.clone(), ordered_states.clone(), reversed_states.clone(),
+                (ordered_rows.mean(1) - reversed_rows.mean(1)).abs().max().item(),
+                (hidden - reversed_hidden).abs().max().item(),
+                (scores - reversed_scores).abs().max().item(),
+            )
+    finally:
+        for module, training in modes:
+            module.training = training
+
+
+def greedy_decode(
+    model: RecurrentWriterModel, source_ids: torch.Tensor, bos_id: int, eos_id: int, max_steps: int,
+) -> torch.Tensor:
+    if max_steps < 1:
+        raise ValueError("Generation needs at least one permitted output step.")
+    modes = [(module, module.training) for module in model.modules()]
+    try:
+        model.eval()
+        current_ids = torch.full_like(source_ids[:, :1], bos_id)
+        generated = []
+        with torch.inference_mode():
+            hidden = model.encode(source_ids)
+            for _ in range(max_steps):
+                logits, hidden = model.decode(current_ids, hidden)
+                next_ids = logits[:, -1].argmax(dim=-1)
+                generated.append(next_ids)
+                current_ids = next_ids.unsqueeze(1)
+                if bool((next_ids == eos_id).all()):
+                    break
+        return torch.stack(generated, dim=1)
+    finally:
+        for module, training in modes:
+            module.training = training
+
+
+@dataclass(frozen=True)
 class ValidationResult:
     # An immutable record stores one evaluation's scores, answer count, and example predictions.
     loss: float

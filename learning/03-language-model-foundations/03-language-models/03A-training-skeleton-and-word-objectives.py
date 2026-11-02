@@ -1,4 +1,4 @@
-"""Code companion for 03A. Core first; optional extensions also run when executing the whole script."""
+"""Code companion for the focused word-embedding lesson; larger comparisons run in their own optional lab."""
 
 # %% Setup - Import the tools for one text-trained embedding model
 import math
@@ -84,8 +84,12 @@ def make_document_windows(id_documents, window_width):
         for document in id_documents
         if len(document) >= window_width
     ]
+
+    # If no document is long enough, return an empty array.
     if not per_document:
         return np.empty((0, window_width), dtype=np.int64)
+
+    # Concatenate windows from each document without crossing boundaries.
     return np.concatenate(per_document)
 
 
@@ -535,16 +539,38 @@ skipgram_validation_comparison = skipgram_validator.compare_after(
     skipgram_model, epochs=len(skipgram_run.losses),
 )
 
-# %% 5 - Prepare the reader/writer example
+# %% 5.1 - Open saved interactive controls without model setup
+from pathlib import Path
+from IPython.display import HTML, display
+
+_saved_replay_name = "03a-encoder-decoder-state-flow.html"
+_saved_replay_roots = (
+    Path(__file__).resolve().parent if "__file__" in globals() else Path.cwd(),
+    Path.cwd() / "learning" / "03-language-model-foundations" / "03-language-models",
+)
+_saved_replay_path = next(
+    (root / "images" / _saved_replay_name for root in _saved_replay_roots
+     if (root / "images" / _saved_replay_name).is_file()),
+    None,
+)
+if _saved_replay_path is None:
+    raise FileNotFoundError("Saved replay not found. Run from the repository root or this chapter directory.")
+display(HTML(_saved_replay_path.read_text(encoding="utf-8")))
+
+# %% 5.1 - Prepare source words and continuation answers
 def prepare_sequence_data(
     window_ids: torch.Tensor, bos_id: int, eos_id: int,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     WindowDataLoader.validate_window_ids(window_ids)
     if bos_id < 0 or eos_id < 0 or bos_id == eos_id:
         raise ValueError("Start and stop markers need distinct nonnegative IDs.")
+
+    # Split each window into source tokens and continuation tokens.
     source_width = window_ids.shape[1] // 2 + 1
     sources = window_ids[:, :source_width]
     continuations = window_ids[:, source_width:]
+
+    # Add BOS before and EOS after each continuation.
     targets = torch.cat([
         torch.full((len(window_ids), 1), bos_id, dtype=torch.long, device=window_ids.device),
         continuations,
@@ -626,55 +652,31 @@ class EncoderDecoderLM(TrainableLanguageModel):
         # [B, 4] -> [B, 3]: drop <bos> to align each score with the NEXT token.
         return target_ids[:, 1:]
 
-# %% 5.2 - Train the reader/writer and inspect its embedding changes
+# %% 5.3 - Check the input-row teaching route on model copies
 torch.manual_seed(SEED)
 sequence_model = EncoderDecoderLM(
-    sequence_vocabulary_size,
-    embedding_width=EMBEDDING_WIDTH,
-    hidden_width=48,
+    sequence_vocabulary_size, embedding_width=EMBEDDING_WIDTH, hidden_width=48,
 )
-from language_validation import EncoderDecoderValidator
-sequence_validator = EncoderDecoderValidator(validation_windows, words=sequence_itos)
-sequence_validator.record_before(sequence_model)
-# [3, 5] -> two [3, 3/4] probe tensors using the same preparation as the full dataset.
 cat_sources = source_sequences[-3:]
 cat_answers = sequence_targets[-3:]
-
 from encoder_decoder_feedback import compare_feedback_routes
 embedding_feedback = compare_feedback_routes(
     sequence_model, cat_sources[:1], cat_answers[:1], sequence_itos,
 )
 
-sequence_recorder = ModelProbeRecorder(
-    sequence_model, cat_sources, target_ids=cat_answers, words=sequence_itos,
-    expected_words=("sat", "mat"), positions=((0, 0), (2, 1)),
-    labels=(
-        "Writer next 'sat' after source 'the sleepy cat' + <bos>",
-        "Writer next 'mat' after source 'cat sat on' + correct previous 'the'",
-    ),
+# %% 5.4 - Train the reader/writer; keep reporting separate
+from language_validation import EncoderDecoderProbeRecorder, EncoderDecoderValidator
+sequence_validator = EncoderDecoderValidator(validation_windows, words=sequence_itos)
+sequence_validator.record_before(sequence_model)
+sequence_recorder = EncoderDecoderProbeRecorder(
+    sequence_model, cat_sources, cat_answers, sequence_itos,
 )
 sequence_before_record = sequence_recorder.record_before()
 sequence_embedding_before = sequence_before_record.embeddings
-writer_before_logits = sequence_before_record.logits
-writer_before = sequence_before_record.probes
-sequence_learning_history = [{
-    "epoch": 0, "train_loss": None, "sat_probability": writer_before["sat"]["probability"],
-    "embedding_shift": 0.0,
-}]
-print("Reader/writer epoch | practice loss | P(sat | source, <bos>) | shared table change")
-print(f"0 | not trained | {writer_before['sat']['probability']:.3%} | 0")
 
 
 def record_sequence_epoch(epoch, epoch_loss):
-    with torch.inference_mode():
-        epoch_writer = word_probe(sequence_model(cat_sources[:1], cat_answers[:1])[0, 0],
-                                  "sat", sequence_itos)
-        sequence_shift = (sequence_model.embedding.weight - sequence_embedding_before).norm().item()
-    sequence_learning_history.append({
-        "epoch": epoch, "train_loss": epoch_loss,
-        "sat_probability": epoch_writer["probability"], "embedding_shift": sequence_shift,
-    })
-    print(f"{epoch} | {epoch_loss:.4f} | {epoch_writer['probability']:.3%} | {sequence_shift:.4f}")
+    sequence_recorder.record_epoch(epoch, epoch_loss)
 
 
 sequence_run = sequence_model.train_model(
@@ -682,201 +684,27 @@ sequence_run = sequence_model.train_model(
 )
 sequence_losses = sequence_run.losses
 sequence_seconds = sequence_run.seconds
+sequence_learning_history = sequence_recorder.history
 sequence_after_record = sequence_recorder.record_after()
 sequence_embedding_after = sequence_after_record.after.embeddings
 sequence_embedding_shifts = sequence_after_record.row_changes
-sequence_recorder.report_embeddings(
-    ("the", "sleepy", "cat", "sat", "on", "<bos>", "<eos>"),
-    features=3, include_row_change=True,
+sequence_readout = sequence_recorder.report_after_training(
+    source_sequences, sequence_targets, sequence_losses, sequence_seconds,
 )
-# EOS is checked as an answer but is never looked up by this untied model.
-print("Encoder and decoder input rows learned together; the unread EOS input row stayed unchanged.")
 
-with torch.inference_mode():
-    # [N, ...] -> first at most 4096 rows: bounded diagnostic avoids a huge [N, 3, V] allocation.
-    teacher_forced_logits = sequence_model(source_sequences[:4096], sequence_targets[:4096])
-    teacher_forced_predictions = teacher_forced_logits.argmax(dim=-1)
-    expected_sequence_ids = sequence_targets[:4096, 1:]
-    teacher_forced_accuracy = (
-        teacher_forced_predictions == expected_sequence_ids
-    ).float().mean().item()
-    # [probe, 3] -> [probe, 2]: exclude the easy final stop target when checking content.
-    content_accuracy = (
-        teacher_forced_predictions[:, :-1] == expected_sequence_ids[:, :-1]
-    ).float().mean().item()
-
-print(f"Seq2Seq loss: {sequence_losses[0]:.4f} -> {sequence_losses[-1]:.4f}")
-print(f"Encoder-decoder: {sequence_seconds:.1f}s (6 epochs)")
-print("Teacher-forced accuracy on the first 4096 training windows:", f"{teacher_forced_accuracy:.1%}")
-print("Without the predictable stop target:", f"{content_accuracy:.1%}")
-print("Sequence logits:", tuple(teacher_forced_logits.shape))
-sequence_recorder.report_probes()
-
-# %% 5.2 - Compare reader/writer validation before and after this run
+# %% 5.4 - Check the same reserved stories before and after
 sequence_validation_comparison = sequence_validator.compare_after(
     sequence_model, epochs=len(sequence_run.losses),
 )
 
-# %% 5.3 - Generate without correct previous answers
-def greedy_decode(model, source_ids, bos_id, eos_id, max_steps):
-    model.eval()
-    current_ids = torch.full(
-        (len(source_ids), 1),
-        bos_id,
-        dtype=torch.long,
-    )
-    generated = []
-
-    with torch.inference_mode():
-        hidden = model.encode(source_ids)
-        for _ in range(max_steps):
-            logits, hidden = model.decode(current_ids, hidden)
-            # [B, 1, V] -> [B, V] -> [B]: choose only the latest step's best word.
-            next_ids = logits[:, -1].argmax(dim=-1)
-            generated.append(next_ids)
-            # [B] -> [B, 1]: a new one-token time axis lets the GRU read its own guess.
-            current_ids = next_ids.unsqueeze(1)
-            if bool((next_ids == eos_id).all()):
-                break
-
-    # List of T [B] columns -> [B, T]: keep generated words in time order.
-    return torch.stack(generated, dim=1)
-
-
+# %% 5.5 - Measure order and inspect one uncorrected continuation
+from language_validation import compare_source_order, greedy_decode
+order_check = compare_source_order(sequence_model, cat_sources[:1], BOS_ID)
+print(f"Mean-row difference (rounding only): {order_check.mean_difference:.2e}")
+print(f"Final-state difference after reversal: {order_check.hidden_difference:.6f}")
+print(f"First word-score difference: {order_check.score_difference:.6f}")
 generated_ids = greedy_decode(
-    sequence_model,
-    cat_sources[:1],
-    BOS_ID,
-    EOS_ID,
-    max_steps=sequence_targets.shape[1] - 1,
+    sequence_model, cat_sources[:1], BOS_ID, EOS_ID, max_steps=sequence_targets.shape[1] - 1,
 )
-
-with torch.inference_mode():
-    ordered_hidden = sequence_model.encode(cat_sources[:1])
-    reversed_hidden = sequence_model.encode(cat_sources[:1].flip(dims=[1]))
-
-expected_words = [
-    sequence_itos[index]
-    for index in cat_answers[0, 1:].tolist()
-]
-generated_words = [
-    sequence_itos[index]
-    for index in generated_ids[0].tolist()
-]
-hidden_difference = (ordered_hidden - reversed_hidden).abs().max().item()
-
-print("Expected continuation:", expected_words)
-print("Greedy continuation:", generated_words)
-print(f"Hidden-state difference after reversal: {hidden_difference:.6f}")
-
-
-# %% 5.4 - Load the independent comparison split
-from pathlib import Path
-
-import real_text_embeddings
-from real_text_embeddings import (
-    animate_word_maps,
-    blank_shortlist,
-    load_real_text,
-    plot_losses_and_geometry,
-    plot_similarity_heatmaps,
-    plot_word_maps,
-    project_snapshots,
-    report_neighbours,
-    shortlist_summary,
-    train_comparison,
-)
-from real_text_embeddings import best_versus_final
-
-real_corpus = load_real_text()
-
-# %% 5.5 - Record all three training histories
-REAL_TEXT_EPOCHS = 16
-real_results = train_comparison(
-    real_corpus, CBOW, SkipGram, EncoderDecoderLM, epochs=REAL_TEXT_EPOCHS,
-)
-
-# %% 5.6 - Plot recorded loss and geometry
-chart_directory = Path(real_text_embeddings.__file__).resolve().parent / "images"
-loss_figure = plot_losses_and_geometry(real_results)
-loss_figure.savefig(chart_directory / "03a-real-text-loss-and-similarity.png", dpi=130)
-plt.show()
-plt.close(loss_figure)
-
-# %% 5.7 - Project all histories through one camera
-real_probe_words, real_coordinates, real_pca_fraction = project_snapshots(
-    real_corpus, real_results,
-)
-map_figure = plot_word_maps(real_probe_words, real_coordinates, real_results)
-map_figure.savefig(chart_directory / "03a-real-text-word-maps.png", dpi=130)
-plt.show()
-plt.close(map_figure)
-
-# %% 5.8 - Compare complete stored rows
-similarity_figure = plot_similarity_heatmaps(real_corpus, real_results)
-similarity_figure.savefig(chart_directory / "03a-real-text-cosine-heatmaps.png", dpi=130)
-plt.show()
-plt.close(similarity_figure)
-
-# %% 5.9 - Play the recorded snapshots
-real_animation = animate_word_maps(real_probe_words, real_coordinates, real_results)
-real_animation_html = real_animation.to_jshtml()
-if "get_ipython" in globals():
-    from IPython.display import HTML, display
-
-    display(HTML(real_animation_html))
-else:
-    print(f"Recorded animation rendered ({len(real_animation_html):,} HTML characters).")
-
-# %% 5.10 - Print actual neighbour changes
-report_neighbours(real_corpus, real_results)
-
-# %% 5.10 - Your turn: Inspect another pair
-probe_pair = ("mom", "dad")  # CHANGE THIS: try ("mom", "green"), without retraining
-for objective, record in real_results.items():
-    pair_ids = [real_corpus["word_ids"][word] for word in probe_pair]
-    pair_scores = []
-    for rows in (record["snapshots"][0], record["snapshots"][-1]):
-        pair_vectors = torch.nn.functional.normalize(rows[pair_ids], dim=1)
-        pair_scores.append((pair_vectors[0] @ pair_vectors[1]).item())
-    print(f"{objective}: {' / '.join(probe_pair)} cosine "
-          f"{pair_scores[0]:+.3f} -> {pair_scores[1]:+.3f}; "
-          f"final across-group mean {record['across'][-1]:+.3f}")
-
-# %% 5.11 - Check held-out answer shortlists
-cbow_best = real_results["CBOW"]["best_model"]
-for left, right in [("was so", "to have"), ("a little", "named tom"),
-                    ("played with", "toys and"), ("they went", "the park")]:
-    menu = blank_shortlist(cbow_best, real_corpus, left, right)
-    print(f"{left} ___ {right} -> " + ", ".join(f"{word} {chance:.0%}" for word, chance in menu))
-
-shortlist = shortlist_summary(cbow_best, real_corpus)
-print(f"\nAll {shortlist['blanks']:,} held-out blanks with a known answer:")
-print(f"  right answer is the number-one guess:   {shortlist['first_right']:.1%}")
-print(f"  right answer is somewhere in the top 5: {shortlist['shortlist_right']:.1%}")
-print(f"  average share given to the first guess: {shortlist['first_share']:.1%}")
-print(f"  how alike the 5 shortlisted words' rows are: {shortlist['shortlist_similarity']:+.3f}")
-print(f"  how alike 5 random words' rows are:          {shortlist['random_similarity']:+.3f}")
-
-
-# %% 5.12 - Check best versus final without retraining
-writer_check = best_versus_final(real_results)
-writer_record = writer_check["Encoder-decoder"]
-if writer_record["final_gap"] < writer_record["best_gap"]:
-    print("The writer's group separation faded after its best held-out checkpoint.")
-else:
-    print("This run did not show fading group separation; judge the recorded losses too.")
-
-# %% 5.12 - Optional extra-seed robustness check
-RUN_SEED_CHECK = False
-if RUN_SEED_CHECK:
-    for check_seed in (5, 123):
-        print(f"--- seed {check_seed}")
-        best_versus_final(train_comparison(
-            real_corpus, CBOW, SkipGram, EncoderDecoderLM,
-            epochs=REAL_TEXT_EPOCHS, seed=check_seed, verbose=False,
-        ))
-else:
-    print("Skipped. Set RUN_SEED_CHECK = True to retrain with seeds 5 and 123.")
-print(f"Whole default lesson: {time.perf_counter() - notebook_started:.1f}s "
-      "(cache verified, one CPU thread; first download is extra).")
+generated_words = [sequence_itos[index] for index in generated_ids[0].tolist()]
+print("Without correct previous words:", generated_words)

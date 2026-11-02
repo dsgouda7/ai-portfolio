@@ -6,6 +6,7 @@ from io import StringIO
 import json
 from pathlib import Path
 import unittest
+from tempfile import TemporaryDirectory
 
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -418,6 +419,48 @@ class EncoderFeedbackTests(unittest.TestCase):
                 float(image.info["Retained"]) + float(image.info["Written"]),
                 float(image.info["NewState"]), places=6,
             )
+
+    def test_focused_embedding_and_order_views_report_measured_boundaries(self):
+        from encoder_decoder_feedback import (
+            EMBEDDING_LEARNING_IMAGE, ORDER_PRELUDE_IMAGE, PROFILE_LEARNING_IMAGE, source_fingerprint,
+        )
+        with Image.open(EMBEDDING_LEARNING_IMAGE) as image:
+            self.assertEqual(image.info["SourceFingerprint"], source_fingerprint())
+            self.assertEqual(image.info["Checkpoint"], "fresh model before training")
+            self.assertGreater(float(image.info["ConnectedCatRowChange"]), 0)
+            self.assertEqual(float(image.info["DetachedCatRowChange"]), 0)
+        with Image.open(PROFILE_LEARNING_IMAGE) as image:
+            self.assertEqual(image.info["SourceFingerprint"], source_fingerprint())
+            self.assertEqual(image.info["TrainingEpochs"], "6")
+            self.assertEqual(float(image.info["EOSRowChange"]), 0)
+            self.assertEqual(set(json.loads(image.info["PairSimilarities"])), {"cat/dog", "cat/mat"})
+        with Image.open(ORDER_PRELUDE_IMAGE) as image:
+            self.assertEqual(image.info["SourceFingerprint"], source_fingerprint())
+            self.assertLess(float(image.info["MeanDifference"]), 1e-6)
+            self.assertGreater(float(image.info["HiddenDifference"]), 1e-5)
+            self.assertGreater(float(image.info["ScoreDifference"]), 1e-5)
+            self.assertEqual(image.info["AttentionImplemented"], "False")
+
+    def test_explicit_rebuild_refreshes_only_the_embedded_gif(self):
+        import base64
+        from encoder_decoder_feedback import ANIMATION, refresh_saved_replay_attachment
+        notebook = {"cells": [
+            {"cell_type": "markdown", "source": ["saved replay"], "metadata": {},
+             "attachments": {ANIMATION.name: {"image/gif": "stale"}, "other.png": {"image/png": "kept"}}},
+            {"cell_type": "code", "source": ["value = 1"], "metadata": {},
+             "outputs": [], "execution_count": None},
+        ]}
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "notebook.ipynb"
+            path.write_bytes((json.dumps(notebook, ensure_ascii=False, indent=1) + "\n").encode("utf-8"))
+            refresh_saved_replay_attachment(path, ANIMATION)
+            updated = json.loads(path.read_bytes())
+        self.assertEqual(updated["cells"][1], notebook["cells"][1])
+        self.assertEqual(updated["cells"][0]["source"], notebook["cells"][0]["source"])
+        self.assertEqual(updated["cells"][0]["metadata"], notebook["cells"][0]["metadata"])
+        self.assertEqual(updated["cells"][0]["attachments"]["other.png"], {"image/png": "kept"})
+        self.assertEqual(base64.b64decode(updated["cells"][0]["attachments"][ANIMATION.name]["image/gif"]),
+                         ANIMATION.read_bytes())
 
 
 if __name__ == "__main__":

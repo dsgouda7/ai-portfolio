@@ -501,6 +501,8 @@ class VisibleLearningTests(unittest.TestCase):
         })
         for prerequisite in ("criterion", "cbow_seconds", "skipgram_seconds"):
             self.assertNotIn(prerequisite, state)
+        with redirect_stdout(StringIO()):
+            exec(compile(self.code["ch03a-sequence-probe-setup"], "sequence-route", "exec"), state)
         original_fit = TrainableLanguageModel.fit_language_model
         with torch.random.fork_rng(devices=[]), patch.object(
             TrainableLanguageModel, "fit_language_model", autospec=True, side_effect=original_fit,
@@ -618,6 +620,9 @@ class CoreLessonTests(unittest.TestCase):
         stem = "03A-training-skeleton-and-word-objectives"
         cls.notebook = json.loads((chapter / f"{stem}.ipynb").read_text(encoding="utf-8"))
         cls.companion = (chapter / f"{stem}.py").read_text(encoding="utf-8")
+        cls.lab = json.loads((chapter / "03A-word-objective-comparison-lab.ipynb").read_text(encoding="utf-8"))
+        cls.lab_code = {cell["id"]: "".join(cell["source"]) for cell in cls.lab["cells"]
+                        if cell["cell_type"] == "code"}
         cls.code = {
             cell["id"]: "".join(cell["source"]) for cell in cls.notebook["cells"]
             if cell["cell_type"] == "code"
@@ -660,7 +665,7 @@ class CoreLessonTests(unittest.TestCase):
             "searching for semantically related words",
             "uses the available context to score candidate answers",
             "it does not simply choose the nearest word embedding",
-            "decoding strategies such as sampling, which belong with text generation",
+            "broad semantic or generation quality",
             "images/03a-celestial-neighborhood-principle.png",
             "images/03a-01-shared-word-features.png",
         ):
@@ -846,7 +851,9 @@ class CoreLessonTests(unittest.TestCase):
             opening.index("03B-counts-and-fixed-window-language-models.ipynb"),
         )
         self.assertIn("CBOW training and section 4 are not prerequisites", markdown["06c-s2s-01"])
-        self.assertIn("#skipgram-training", markdown["ch03a-real-opening"])
+        self.assertIn("03A-word-objective-comparison-lab.ipynb", markdown["ch03a-extensions"])
+        self.assertIn("from language_model import CBOW, SkipGram, EncoderDecoderLM",
+                      self.lab_code["comparison-lab-setup"])
         for cell_id in ("06c-sg-04", "ch03a-sequence-training"):
             loads = {
                 node.id for node in ast.walk(ast.parse(self.code[cell_id]))
@@ -878,7 +885,7 @@ class CoreLessonTests(unittest.TestCase):
         self.assertEqual(sections, list("12345"))
         self.assertEqual(subsections["3"], 4)
         self.assertEqual(subsections["4"], 2)
-        self.assertEqual(subsections["5"], 12)
+        self.assertEqual(subsections["5"], 5)
 
     def test_code_labels_match_headings_and_the_python_companion(self):
         section = None
@@ -952,19 +959,22 @@ class CoreLessonTests(unittest.TestCase):
         self.assertNotIn("06c-13", ids)
         self.assertNotIn("read_story", self.code["ch03a-core-setup"])
 
-    def test_section_five_preserves_the_reader_writer_and_independent_comparison(self):
+    def test_section_five_is_focused_and_comparison_is_preserved_in_its_own_lab(self):
         labels = [source.splitlines()[0] for source in self.code.values()]
         self.assertFalse(any(re.match(r"# %% [CD]\.", label) for label in labels))
-        for section in range(1, 13):
+        for section in (1, 3, 4, 5):
             self.assertTrue(any(label.startswith(f"# %% 5.{section} - ") for label in labels))
         ids = [cell["id"] for cell in self.notebook["cells"]]
         self.assertLess(ids.index("06c-s2s-04"), ids.index("ch03a-sequence-training"))
         self.assertLess(ids.index("ch03a-sequence-training"), ids.index("06c-s2s-06"))
-        self.assertLess(ids.index("06c-s2s-06"), ids.index("ch03a-real-training"))
+        self.assertNotIn("ch03a-real-training", ids)
         self.assertIn("cbow_learning_history", self.code["06c-21"])
         self.assertIn("sequence_learning_history", self.code["ch03a-sequence-training"])
         self.assertIn("sequence_embedding_before", self.code["ch03a-sequence-training"])
-        self.assertIn("train_comparison(", self.code["ch03a-real-training"])
+        self.assertIn("train_comparison(", self.lab_code["ch03a-real-training"])
+        self.assertIn("REAL_TEXT_EPOCHS = 16", self.lab_code["ch03a-real-training"])
+        self.assertIn("RUN_SEED_CHECK = False", self.lab_code["ch03a-real-seed-check"])
+        self.assertEqual(len([cell for cell in self.lab["cells"] if cell["cell_type"] == "code"]), 12)
 
     def test_reader_writer_preparation_is_setup_not_a_separate_subsection(self):
         introduction = next(
@@ -978,12 +988,12 @@ class CoreLessonTests(unittest.TestCase):
         self.assertTrue(introduction.startswith("## 5 - "))
         self.assertNotIn("### ", introduction)
         self.assertNotIn("Align the source and answer", introduction)
-        self.assertTrue(first_subsection.startswith("### 5.1 - GRU reader and writer"))
-        self.assertTrue(self.code["06c-s2s-02"].startswith("# %% 5 - "))
+        self.assertTrue(first_subsection.startswith("### 5.1 - From supplied note features"))
+        self.assertTrue(self.code["06c-s2s-02"].startswith("# %% 5.1 - "))
         for setup in ("source_sequences, sequence_targets =", "prepare_sequence_data(", "sequence_dataloader ="):
             self.assertIn(setup, self.code["06c-s2s-02"])
         ids = [cell["id"] for cell in self.notebook["cells"]]
-        self.assertLess(ids.index("06c-s2s-02"), ids.index("ch03a-preview-boundary"))
+        self.assertLess(ids.index("ch03a-preview-boundary"), ids.index("06c-s2s-02"))
         self.assertLess(ids.index("ch03a-preview-boundary"), ids.index("06c-s2s-04"))
 
     def test_teacher_forcing_is_explained_before_training_and_metrics_are_not_conflated(self):
@@ -991,18 +1001,62 @@ class CoreLessonTests(unittest.TestCase):
                     if cell["cell_type"] == "markdown"}
         intro = markdown["ch03a-sequence-training-intro"]
         for idea in (
-            "correct previous word", "teacher forcing", "not the word currently being guessed",
-            "<bos>", "<eos>", "sat", "on", "and", "hidden state", "six epochs",
-            "03a-correct-previous-word-vs-own-guess.png",
-            "03a-correct-previous-word-vs-own-guess.gif",
+            "Teacher forcing", "previous", "not the answer currently being guessed",
+            "<bos>", "<eos>", "sat", "on", "and", "hidden state",
+            "03a-correct-previous-word-vs-own-guess.html",
         ):
             self.assertIn(idea, " ".join(intro.split()))
-        self.assertIn("one word", intro)
+        self.assertLess(len(intro.split()), 200)
         readout = markdown["ch03a-sequence-learning-readout"]
-        for idea in ("Training accuracy", "Reserved-story validation", "correct previous words",
-                     "not free-running generation", "stop", "row change"):
-            self.assertIn(idea, " ".join(readout.split()))
-        self.assertIn("same trained weights", markdown["06c-s2s-05"])
+        for idea in ("reserved-story", "Training accuracy", "correct previous words",
+                     "free writing", "stop", "row change", "cat/dog", "cat/mat"):
+            self.assertIn(idea.lower(), " ".join(readout.split()).lower())
+        self.assertIn("Attention does **not** create order", markdown["d282fa88"])
+
+    def test_compact_preview_has_measured_order_and_an_honest_attention_prelude(self):
+        cells = self.notebook["cells"]
+        start = next(index for index, cell in enumerate(cells) if cell["id"] == "06c-s2s-01")
+        end = next(index for index, cell in enumerate(cells) if cell["id"] == "06c-33")
+        words = sum(len("".join(cell["source"]).split()) for cell in cells[start:end]
+                    if cell["cell_type"] == "markdown")
+        self.assertLessEqual(words, 1400)
+        code = "\n".join("".join(cell["source"]) for cell in cells[start:end] if cell["cell_type"] == "code")
+        self.assertLessEqual(len([line for line in code.splitlines() if line.strip()]), 170)
+        self.assertNotRegex(code, r"savefig|to_jshtml|FuncAnimation|plt\.")
+        self.assertIn("compare_source_order(", code)
+        self.assertIn("order_check.hidden_difference", code)
+        markdown = "\n".join("".join(cell["source"]) for cell in cells[start:end] if cell["cell_type"] == "markdown")
+        for text in ("source-position", "No attention is", "Transformer attention needs separate positional",
+                     "03a-order-to-attention.png", "stored profiles", "hidden states"):
+            self.assertIn(text, markdown)
+
+    def test_layer_replay_is_embedded_by_reading_saved_html_not_regenerating_it(self):
+        source = self.code["ch03a-saved-layer-replay"]
+        self.assertIn("from IPython.display import HTML, display", source)
+        self.assertIn("03a-encoder-decoder-state-flow.html", source)
+        self.assertIn(".read_text(encoding=\"utf-8\")", source)
+        self.assertIn("display(HTML(", source)
+        self.assertNotIn("CHAPTER_DIRECTORY", source)
+        calls = {node.func.attr for node in ast.walk(ast.parse(source))
+                 if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)}
+        self.assertEqual(calls, {"resolve", "cwd", "is_file", "read_text"})
+        cell = next(cell for cell in self.notebook["cells"] if cell["id"] == "ch03a-saved-layer-replay")
+        self.assertFalse(cell["metadata"]["jupyter"]["source_hidden"])
+
+    def test_layer_animation_is_a_portable_markdown_image_without_kernel_or_javascript(self):
+        import base64
+        from io import BytesIO
+        from PIL import Image
+        cell = next(cell for cell in self.notebook["cells"] if cell["id"] == "ch03a-preview-boundary")
+        text = "".join(cell["source"])
+        name = "03a-encoder-decoder-state-flow.gif"
+        self.assertRegex(text, r"!\[[^\]]+\]\(attachment:03a-encoder-decoder-state-flow\.gif\)")
+        self.assertNotIn("<details>", text)
+        self.assertNotIn("<summary>", text)
+        data = base64.b64decode(cell["attachments"][name]["image/gif"])
+        self.assertEqual(data, (Path(__file__).parent / "images" / name).read_bytes())
+        with Image.open(BytesIO(data)) as image:
+            self.assertEqual(image.n_frames, 19)
 
     def test_setup_diagnostics_and_familiar_questions_have_separate_cells(self):
         ids = [cell["id"] for cell in self.notebook["cells"]]
@@ -1116,6 +1170,7 @@ class CoreLessonTests(unittest.TestCase):
             ]),
             ("language_model.py", [
                 "TrainingRun", "TrainableLanguageModel", "WordEmbeddingLanguageModel",
+                "CBOW", "SkipGram", "EncoderDecoderLM",
             ]),
         ):
             module_nodes = {
@@ -1157,8 +1212,12 @@ class CoreLessonTests(unittest.TestCase):
             ("ch03a-sequence-training", "sequence_recorder", "record_sequence_epoch"),
         ):
             self.assertIn(f"{recorder}.record_after()", self.code[cell_id])
-            self.assertIn(f"{recorder}.report_probes()", self.code[cell_id])
-            self.assertIn(f"{recorder}.report_embeddings(", self.code[cell_id])
+            if recorder == "cbow_recorder":
+                self.assertIn(f"{recorder}.report_probes()", self.code[cell_id])
+                self.assertIn(f"{recorder}.report_embeddings(", self.code[cell_id])
+            else:
+                self.assertIn(f"{recorder}.report_after_training(", self.code[cell_id])
+                self.assertIn(f"{recorder}.record_epoch(", self.code[cell_id])
             self.assertTrue(any(
                 isinstance(node, ast.FunctionDef) and node.name == callback
                 for node in ast.parse(self.code[cell_id]).body
@@ -1182,19 +1241,17 @@ class CoreLessonTests(unittest.TestCase):
             if cell["id"] == "ch03a-preview-boundary"
         )
         for idea in (
-            "GRU mechanics", "live cat probe", "Source word profile",
-            "Previous output word profile", "E3 initializes decoder D0",
-            "temporary values", "shared embedding rows", "cat",
-            "03a-encoder-decoder-embedding-feedback.png",
-            "03a-encoder-decoder-state-flow.gif", "03a-encoder-decoder-state-flow.html",
-            "model's own guess during generation",
-            "same values", "Linear", "one GRU layer", "03a-encoder-decoder-token-layers.png",
+            "GRU foundation", "trainable word rows", "context-dependent",
+            "one input table", "design choice", "stored row",
+            "same values", "one GRU layer", "03a-encoder-decoder-token-layers.png",
         ):
             with self.subTest(idea=idea):
                 self.assertIn(idea, " ".join(explanation.split()))
-        self.assertIn("compare_feedback_routes(", self.code["ch03a-sequence-training"])
-        self.assertRegex(explanation, r"!\[[^\]]+\]\(images/03a-encoder-decoder-state-flow\.gif\)")
-        self.assertIn("<details>", explanation)
+        self.assertIn("compare_feedback_routes(", self.code["ch03a-sequence-probe-setup"])
+        feedback = next("".join(cell["source"]) for cell in self.notebook["cells"]
+                        if cell["id"] == "ch03a-embedding-feedback-intro")
+        self.assertRegex(feedback, r"!\[[^\]]+\]\(images/03a-prediction-teaches-shared-table\.gif\)")
+        self.assertNotIn("<details>", explanation)
         self.assertLessEqual(len(explanation.split()), 350)
         self.assertNotIn("reset gate r", explanation)
 
@@ -1223,7 +1280,7 @@ class CoreLessonTests(unittest.TestCase):
             "".join(cell["source"]) for cell in earlier["cells"] if cell["cell_type"] == "code"
         )
         self.assertIn("state = torch.tanh(W_x @ x_t + W_h @ state)", prior_code)
-        self.assertIn("GRU mechanics", explanation)
+        self.assertIn("GRU foundation", explanation)
         self.assertNotIn("not GRU mechanics", explanation)
 
     def test_reserved_stories_exclude_training_and_reuse_the_training_vocabulary(self):

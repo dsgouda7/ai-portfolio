@@ -70,9 +70,8 @@ visualization code to render in the notebook. Both profile panels use one fixed
 projection, with full-profile similarity reported separately from the 2D sketch.
 Section 4 now contains only optional Skip-gram in **4.1-4.2**. The redundant
 EmbeddingBag shortcut and old visualization cells are removed.
-The encoder-decoder and its original larger
-comparison are now **section 5.1-5.12**, not optional C/D subsections.
-Example preparation sits in the section 5 opening, not a separate alignment subsection.
+The encoder-decoder preview is now **5.1-5.5**. Its original larger comparison
+is a [separate optional lab](03A-word-objective-comparison-lab.ipynb).
 To skip the optional follow-ups, jump to the
 [encoder-decoder preview](03A-training-skeleton-and-word-objectives.ipynb#encoder-decoder-preview).
 To run it without CBOW training, run Setup and section 2, then the
@@ -81,9 +80,8 @@ and [measurement helpers](03A-training-skeleton-and-word-objectives.ipynb#predic
 The shared definitions now include the training base, word-model base, and concrete
 CBOW class in consecutive executable cells. Section 2 also prepares the shared
 reserved-story windows, so this preview route needs no CBOW training.
-The preview in **5.1-5.3** needs neither CBOW nor Skip-gram training; the larger
-comparison from **5.4** also needs
-[Skip-gram 4.1-4.2](03A-training-skeleton-and-word-objectives.ipynb#skipgram-training).
+The preview needs neither CBOW nor Skip-gram training. The comparison lab imports
+the same tested concrete model classes and runs independently from a fresh kernel.
 03B is the next-chapter route, not the jump destination for this preview.
 The Python companion's cell labels follow those same section numbers.
 There is one embedding-learning path, not a separate toy or parameter-registry tour.
@@ -98,48 +96,46 @@ mean-gradient split and reconstruct the complete table gradient from saved
 addresses; retaining intermediate gradients is for inspection only.
 The original rich illustrations remain beside the conceptual explanation.
 
-Section 5 explains source lookup, the encoder's final note, teacher forcing,
-per-token loss, feedback through both GRUs, and accumulation into one shared
-embedding table. Its own six-epoch training run prints progress and source,
-decoder-input, BOS and EOS row changes. EOS is checked as an answer but is never
-an input lookup in this small untied model; its unchanged input row is expected.
-Section 5.1 opens exactly one encoder `cat` input and one decoder `<bos>` input
-from the real six-epoch cat checkpoint. The saved animation steps through learned
-input/state Linear projections, chunk splits, gates, retained/written content and
-the output/hidden fork. E3 initializes D0. The decoder's separate Linear head
-produces vocabulary scores; its real wrong guess remains visible.
-The full [GRU mechanics lesson](../01-sequence-memory/01A-sequence-memory-theory.ipynb#gru-hidden-state-mechanics)
-now lives beside LSTM in 01A, including a one-token layer animation. Both GRUs
-have one recurrent layer here: time-unrolled boxes are not a stack of extra
-layers. Each layer has the same cell rule; output_t and carried h_t have identical
-values. Encoder/decoder inputs, initialization and output use differ, not this rule.
-The notebook references saved GIF/HTML/static views; it contains no rendering code.
-Section 5.2 explains **teacher forcing** in plain language: after a wrong `and`
-guess, practice still supplies the correct previous word `sat` so the next task
-is to predict `on`. The earlier guess remains wrong and contributes to the loss;
-the hidden state is carried, not reset. A
-[saved side-by-side replay](images/03a-correct-previous-word-vs-own-guess.html) and
-[static comparison](images/03a-correct-previous-word-vs-own-guess.png) use the
-same fitted weights to show correct-previous-word inputs versus actual own-guess
-inputs. Shifted input/answer rows make the no-current-answer-leak boundary explicit.
-The readout guide separates training accuracy, easier stop-token checks, held-out
-next-word validation and embedding movement from the free-running test in 5.3.
-The GRU decoder can start with a zero state instead of the encoder's note; omitting
-the state argument does not remove its recurrent state. Transformer decoders have
-no GRU-style recurrent state but still compute token representations.
-An inline GIF, controllable HTML replay, and static fallback are saved from the
-same checkpoint. A small check before fitting cuts only the gradient
-handoff on copies: predictions stay identical, but the source-only `cat` row
-no longer receives feedback. GRU equations, LSTM details, attention and broader
-LM architecture remain outside this embedding-focused preview.
+## Focused reader/writer preview
 
-The Skip-gram, reader/writer, and larger comparison training experiments are retained.
-**Run All and the full Python script execute them, but do not redraw the static captures.**
-The three training runs are separate: main CBOW in **3.3**, fresh reader/writer
-in **5.2**, and the larger three-objective comparison in **5.4-5.12**. That
-8,000-story comparison uses fresh models and its own whole-story split; it does
-not continue either earlier model, and its losses are not their evaluations.
-Attention and Transformer internals are deferred to their actual chapters.
+The new question is **why `cat`'s input row changes when the answer being graded
+is `sat`**, not how to build a complete text generator.
+
+1. **5.1:** bridge from supplied piano profiles to a trainable word lookup table.
+   The [GRU foundation](../01-sequence-memory/01A-sequence-memory-theory.ipynb#gru-hidden-state-mechanics)
+   owns gate mechanics; the detailed cat/BOS layer replay remains optional.
+   The animation itself is an embedded GIF attachment, visible without a kernel
+   or JavaScript and portable with the notebook. A visible, independent display
+   cell reads the saved HTML for optional controls without loading data or training.
+   JavaScript controls need a trusted renderer; separate-player and static links remain.
+   The external replay exporter also refreshes this GIF attachment when rebuilding it.
+2. **5.2:** keep teacher forcing to its input rule and a three-row alignment table.
+   The full plain-English reference remains in the lab appendix.
+3. **5.3:** follow prediction feedback into the shared table. A saved animation
+   and a checked model-copy intervention show why the reader's `cat` row learns.
+   That diagnostic update does not alter the real model.
+4. **5.4:** run the original six Adam epochs. The inline callback delegates reporting
+   to `EncoderDecoderProbeRecorder`; there is still only one optimizer loop.
+   Compare actual row movement, full-row cat/dog versus cat/mat similarities,
+   and reserved-story prediction. All belong to this same run.
+5. **5.5:** reverse the same input rows without updates. Their mean agrees up to
+   rounding, while recurrent states and next-word scores change. This proves
+   order sensitivity, not understanding. The concise attention prelude explains
+   the next limitation: the writer receives only a final summary. Attention would
+   allow selective access to all saved source states; recurrence supplies order
+   here, while Transformer attention needs positional information.
+
+Stored rows, temporary context-dependent states, and vocabulary scores stay
+distinct. Movement is not proof of rich semantics; actual wrong guesses remain
+visible. EOS's untied input row remains unchanged because it is never looked up.
+No attention is implemented here, and all notebook visuals are saved references.
+
+**Run All in 03A no longer runs the larger comparison.** The
+[optional lab](03A-word-objective-comparison-lab.ipynb), with its
+[Python companion](03A-word-objective-comparison-lab.py), preserves all three
+original 8,000-story, shared-initialization, 16-epoch experiments, including plots,
+shortlists, best/final checks and optional extra seeds. It uses its own split and
+fresh models; its results are not the small preview's before/after evidence.
 
 ## Engineering contracts inside the lesson
 
@@ -164,6 +160,9 @@ Data, model, and training definitions remain inline.
 The recorder captures fixed probe questions and detached embedding values before
 and after a run, then reports the prediction and row changes through short calls.
 Per-epoch callbacks still live in the notebook; recording does not own training.
+Concrete CBOW, Skip-gram and encoder-decoder definitions also have AST-matched
+module counterparts for the standalone lab. `compare_source_order` and
+`greedy_decode` are read-only inspections, not hidden training loops.
 
 `prepare_data()` returns exactly `(input_ids, target_ids)`.
 `loader.make_dataloader()` uses the object's data, batch size, and seed.
@@ -204,7 +203,7 @@ reader/writer next-token answers including stop. Compare improvement within each
 objective, not raw losses across different jobs.
 
 Reader/writer validation is teacher-forced: it supplies correct previous words.
-Free-running generation is a separate check in 5.3. Evaluation preserves model
+Free-running generation is a small boundary check in 5.5. Evaluation preserves model
 modes, weights, gradients, and RNG state. The larger comparison reuses this same
 evaluation implementation on its independent split.
 

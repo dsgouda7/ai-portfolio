@@ -146,3 +146,46 @@ class WordEmbeddingLanguageModel(TrainableLanguageModel):
         features = self.combine_embeddings(token_vectors)
         hidden_features = self.activation(self.hidden(features))
         return self.output(hidden_features)
+
+
+class CBOW(WordEmbeddingLanguageModel):
+    # Reuses the shared word model and averages its clue profiles.
+    def combine_embeddings(self, token_vectors):
+        return token_vectors.mean(dim=1)
+
+
+class SkipGram(WordEmbeddingLanguageModel):
+    # Reuses the shared word model with one center profile per training pair.
+    def combine_embeddings(self, token_vectors):
+        return token_vectors
+
+
+class EncoderDecoderLM(TrainableLanguageModel):
+    # Reuses training while two recurrent modules read and write through one input table.
+    def __init__(self, vocabulary_size, embedding_width, hidden_width):
+        super().__init__()
+        self.embedding = nn.Embedding(vocabulary_size, embedding_width)
+        self.encoder = nn.GRU(embedding_width, hidden_width, batch_first=True)
+        self.decoder = nn.GRU(embedding_width, hidden_width, batch_first=True)
+        self.output = nn.Linear(hidden_width, vocabulary_size)
+
+    def encode(self, source_ids):
+        _, hidden = self.encoder(self.embedding(source_ids))
+        return hidden
+
+    def decode(self, decoder_input_ids, hidden):
+        decoder_states, hidden = self.decoder(
+            self.embedding(decoder_input_ids),
+            hidden,
+        )
+        return self.output(decoder_states), hidden
+
+    def forward(self, source_ids, target_ids=None):
+        if target_ids is None:
+            raise ValueError("Training requires target IDs for teacher forcing.")
+        hidden = self.encode(source_ids)
+        logits, _ = self.decode(target_ids[:, :-1], hidden)
+        return logits
+
+    def targets_for_loss(self, target_ids):
+        return target_ids[:, 1:]

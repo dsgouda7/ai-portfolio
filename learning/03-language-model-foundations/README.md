@@ -17,6 +17,9 @@ Each chapter has its own setup script and notebook kernel; its README tells you 
 | [03. Language models](03-language-models/README.md) | [03A notebook](03-language-models/03A-training-skeleton-and-word-objectives.ipynb) · [theory notes](03-language-models/03A-training-skeleton-and-word-objectives-theory.md) | Make practice questions from text, then follow fixed windows, recurrent memory, and source attention |
 
 Chapter 01B uses token IDs and masks to test memory before Chapter 02 explains how they work.
+
+The [optional word-objective comparison lab](03-language-models/03A-word-objective-comparison-lab.ipynb)
+preserves the larger three-model experiment separately from the compact embedding-learning path.
 That preview is intentional: you don't need to master tokenization before studying recurrence.
 
 ![Piano notes become token pieces, integer addresses, and learned rows, then shifted next-note targets, padding, and separate input and loss masks. All are first used in the Chapter 01B lab and formally explained in Chapter 02.](images/03-first-use-concept-map.png)

@@ -218,89 +218,58 @@ reuses learned weights without drawing new random rows or running optimizer step
 ## 7. A reader and writer teach one shared embedding table
 
 Read **the sleepy cat** and practise writing **sat on stop**. The notebook uses
-`<bos>` to start the writer and `<eos>` as the answer meaning stop. This is a fresh
-model, not the CBOW table continued under a different name.
+`<bos>` to start and `<eos>` to stop. This is a fresh model, not CBOW continued.
+Reuse [the familiar GRU](../01-sequence-memory/01A-sequence-memory-theory.ipynb#gru-hidden-state-mechanics);
+replace supplied piano profiles with trainable word rows. Sharing one input table
+between reader and writer is a deliberate design choice.
 
-A word embedding is a stored 32-number profile. A hidden state is a temporary
-48-number note about the sequence read so far. It is rebuilt during forward;
-the optimizer changes the embedding and recurrent weights, not that old note.
+Keep three objects separate:
 
-Use the [GRU foundation](../01-sequence-memory/01A-sequence-memory-theory.ipynb#gru-hidden-state-mechanics)
-for its reset/keep/replacement mechanics. Here the input is a word profile instead
-of a piano profile. The encoder reuses its weights while reading the, sleepy and
-cat; a separate decoder reuses its own weights while writing sat, on and stop.
-The animation focuses on those block inputs, actual old/new state values,
-the final-state handoff, and feedback into shared embedding rows.
+| Object | Job |
+|---|---|
+| Stored 32-number word row | Reused across contexts; changed by optimization |
+| Temporary 48-number hidden state | Carries this example's ordered context |
+| Vocabulary score list | Says which next words the head favors |
 
-Open one token, not another time box. Each GRU layer mixes the current profile
-and old hidden through two learned Linear projections, then computes gates,
-proposed content and the retained/written blend. The result is both this token's
-output and the state carried onward. Those are two uses of the same values here,
-not two independent predictions. The encoder keeps its final hidden as D0;
-the decoder sends its output to a separate vocabulary head while carrying D1.
-Different jobs, same GRU cell rule. This preview has one layer per block, not
-three stacked layers because the picture shows three words.
+The reader's final hidden initializes the writer. For one GRU layer, output and
+carried hidden have identical values; the separate head makes word scores.
 
-The final reader note becomes the writer's starting note. Losses teach the
-writer through its successive states, then travel through that starting note
-to the reader's final and earlier states. Each read also depends on a fetched
-word profile, so feedback can reach both source and writer input rows.
-This is ordinary backward differentiation through time, not a second optimizer
-for hidden-state values.
+**Why does cat learn when sat is the answer?** Loss feedback passes through the
+head, writer and reader, then through their input lookups into the shared table.
+The checked answer's output weights are not its input row. In this question cat
+is only read by the encoder, yet its row can receive feedback. A copy-only check
+cuts the backward handoff: forward scores stay identical, but cat's input gradient
+and copied update become zero. The real model is untouched.
 
-The GRU decoder always uses a numerical state. Omitting its state argument means
-starting from zeros, not removing memory. It can run without an encoder, but then
-it has no source note. A Transformer decoder has no carried GRU-style recurrent
-state; it still computes internal token representations.
+Practice supplies correct previous words: start predicts sat, sat predicts on,
+on predicts stop. This is **teacher forcing**, the same clean-history rule used
+in the musical echo exercise. A wrong and guess stays wrong; giving sat next
+neither fixes that guess nor resets hidden state. The current answer is never
+its own input. Cross-entropy checks the scores; backward calculates feedback;
+one optimizer step updates the batch's parameters.
 
-The notebook animation follows the same live cat probe after six epochs.
-Its solid arrows carry state vectors. During practice, the next word input is
-the correct previous answer; during generation, it is the decoder's own guess.
-The word guess and the hidden state are separate outputs with separate routes.
-Wrong guesses stay visible; the animation is measured mechanics, not a promise
-of exact recall. A static view preserves the forward/backward route without playback.
+Section **5.4** performs six complete training passes and compares the same table
+before and after. Movement proves updates, not semantic quality. Compare the
+related cat/dog rows with story-context cat/mat rows; neither pair was a training
+similarity target. Two pair scores do not establish general meaning. The unread
+EOS input row remains unchanged while its separate output-score weights learn.
+Reserved-story loss tests new next-word questions with correct previous words;
+it is not a free-writing score. Content accuracy excludes the easy stop answer.
 
-Suppose the first guess is and instead of sat. While practising, still supply the
-correct previous sat so the next question is to predict on. This input rule is
-**teacher forcing**. It does not turn the wrong guess into a right one, reset the
-hidden state, or replace backpropagation. It lets the model practise the real
-continuation rather than only the mistaken sentence it started.
+**The remaining complaint:** order survives, but access is limited.
+Reverse the same input rows: their mean agrees up to rounding, while recurrent
+states and word scores change. The state depends on the earlier words already
+read. That establishes order sensitivity, not correct understanding.
 
-The inputs are start, sat, on; the checked answers are sat, on, stop.
-Each step sees the previous word, not the word it is being asked to predict.
-The GRU reads left to right, so a later input cannot help an earlier prediction.
+The writer currently receives only the final summary. Attention would retain all
+source-position states and let each writer step select useful ones to look back
+at. Order comes from recurrence here, not from attention. Transformer attention
+needs separate positional information. [03D](03D-recurrent-encoder-decoder-to-attention.ipynb)
+implements look-back access; this preview does not.
 
-1. Read the source and pass its final hidden note to the writer.
-2. Read correct previous words and produce one next-word score list per step,
-   carrying the new hidden state throughout.
-3. Cross-entropy checks the scores against all three answers and combines the penalties.
-4. Backward feedback reaches the head, both GRUs and their input rows. Shared-table
-   contributions add; repeated occurrences need not receive equal feedback.
-5. Apply one optimizer step for the batch. Six epochs mean six full passes through
-   the examples, not just six weight updates.
-
-Section **5.2** follows six training epochs and prints actual before/after input
-rows. Source-only cat can learn through the encoder, even though the writer's
-first example never looks up cat as a previous answer. BOS learns as a decoder
-input. EOS is only checked as an answer in this small run, so its untied input row
-stays unchanged while its separate output-score parameters learn.
-
-The notebook checks the route on copies: detach the reader's final note before
-passing it to the writer. The numbers and predictions stay the same, but the
-source-only cat input gradient and row update become zero. The real model is
-untouched. This demonstrates the learning connection, not the meaning of each
-hidden-state coordinate or general language ability.
-
-Training accuracy checks familiar examples with correct previous words.
-Reserved-story validation checks new examples under that same input rule; it is
-a real held-out next-word check, not a free-writing score. Stop-token accuracy can
-also make the aggregate look better than content-word accuracy.
-
-Section 5.3 keeps the fitted weights but feeds back the writer's own guesses.
-An earlier wrong word now changes its next input, so mistakes can compound.
-Sections 5.4-5.12 retain the independent
-three-model held-out comparison, which restarts all models on its own split.
-Those are three separate training runs, not one experiment deferred to the end.
+The [optional comparison lab](03A-word-objective-comparison-lab.ipynb) preserves
+the larger three-model experiment, independent data split and full diagnostic
+reference without lengthening the main embedding-learning path.
 
 **Failure checks:** do not confuse IDs, parameters, activations, gradients, or
 scores. Do not mistake lookup for learning, nearby words for the best gap answer,

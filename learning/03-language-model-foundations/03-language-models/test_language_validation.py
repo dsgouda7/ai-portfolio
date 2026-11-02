@@ -10,10 +10,11 @@ import torch
 from torch import nn
 
 from language_data import prepare_sequence_data
-from language_model import TrainableLanguageModel
+from language_model import EncoderDecoderLM, TrainableLanguageModel
 from language_validation import (
     CBOWValidator, EncoderDecoderValidator, ModelValidator, SkipGramValidator,
     ModelProbeRecorder, report_probe, word_probe,
+    EncoderDecoderProbeRecorder, compare_source_order, greedy_decode,
 )
 from real_text_embeddings import prepare_validation_windows
 
@@ -233,6 +234,70 @@ class BeforeAfterRecordingTests(unittest.TestCase):
         recorder.record_after()
         with self.assertRaisesRegex(ValueError, "Feature count"):
             recorder.report_embeddings(["cat"], features=5)
+
+
+class SequenceInspectionTests(unittest.TestCase):
+    def setUp(self):
+        with torch.random.fork_rng(devices=[]):
+            torch.manual_seed(17)
+            self.model = EncoderDecoderLM(10, 4, 6)
+        self.words = ["<unk>", "the", "sleepy", "cat", "sat", "on", "mat", "dog", "<bos>", "<eos>"]
+        self.sources = torch.tensor([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
+        self.targets = torch.tensor([[8, 4, 5, 9], [8, 5, 1, 9], [8, 1, 6, 9]])
+
+    def test_order_changes_states_not_stored_profiles_and_keeps_model_read_only(self):
+        self.model.train()
+        self.model.decoder.eval()
+        before = {name: parameter.clone() for name, parameter in self.model.named_parameters()}
+        for parameter in self.model.parameters():
+            parameter.grad = torch.ones_like(parameter)
+        modes = [module.training for module in self.model.modules()]
+        rng = torch.random.get_rng_state().clone()
+        result = compare_source_order(self.model, self.sources[:1], 8)
+        self.assertLess(result.mean_difference, 1e-6)
+        self.assertGreater(result.hidden_difference, 1e-5)
+        self.assertGreater(result.score_difference, 1e-5)
+        self.assertEqual(result.ordered_states.shape, (1, 3, 6))
+        torch.testing.assert_close(result.reversed_ids, self.sources[:1].flip(1), rtol=0, atol=0)
+        for name, parameter in self.model.named_parameters():
+            torch.testing.assert_close(parameter, before[name], rtol=0, atol=0)
+            torch.testing.assert_close(parameter.grad, torch.ones_like(parameter), rtol=0, atol=0)
+        self.assertEqual(modes, [module.training for module in self.model.modules()])
+        self.assertTrue(torch.equal(rng, torch.random.get_rng_state()))
+
+    def test_generation_uses_its_own_words_stops_and_preserves_modes(self):
+        with torch.no_grad():
+            self.model.output.weight.zero_()
+            self.model.output.bias.zero_()
+            self.model.output.bias[9] = 9
+        self.model.train()
+        generated = greedy_decode(self.model, self.sources[:1], 8, 9, 3)
+        self.assertEqual(generated.tolist(), [[9]])
+        self.assertTrue(self.model.training)
+        with self.assertRaisesRegex(ValueError, "at least one"):
+            greedy_decode(self.model, self.sources[:1], 8, 9, 0)
+
+    def test_sequence_recorder_reports_same_run_profiles_and_unfavored_controls(self):
+        recorder = EncoderDecoderProbeRecorder(self.model, self.sources, self.targets, self.words)
+        with redirect_stdout(StringIO()):
+            before = recorder.record_before()
+            recorder.record_epoch(1, 3.0)
+        with torch.no_grad():
+            self.model.embedding.weight[3].add_(0.2)
+        recorder.record_after()
+        output = StringIO()
+        with redirect_stdout(output):
+            readout = recorder.report_after_training(self.sources, self.targets, [3.0, 2.0], 0.1)
+        self.assertEqual(readout.checked_words, 9)
+        self.assertEqual(set(readout.similarities), {"cat/dog", "cat/mat"})
+        for pair, measured in readout.similarities.items():
+            left, right = [self.words.index(word) for word in pair.split("/")]
+            expected_before = nn.functional.cosine_similarity(
+                before.embeddings[left][None], before.embeddings[right][None],
+            ).item()
+            self.assertAlmostEqual(measured[0], expected_before)
+        self.assertEqual([row["epoch"] for row in recorder.history], [0, 1])
+        self.assertIn("excluding stop", output.getvalue())
 
 
 if __name__ == "__main__":
