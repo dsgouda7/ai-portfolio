@@ -7,6 +7,8 @@ import inspect
 import json
 from pathlib import Path
 import re
+import subprocess
+import sys
 from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
@@ -16,10 +18,12 @@ import numpy as np
 from PIL import Image
 import torch
 
+import musical_memory
 from memory_gate_flows import refresh_image_attachments
 from musical_memory import (
-    EchoGRU, MIDI, MODES, MusicFrame, fit_echo_model, make_echo_questions, music_frames,
+    EchoGRU, EchoLSTM, MIDI, MODES, MusicFrame, fit_echo_model, make_echo_questions, music_frames,
     replay_html, run_echo_experiment, source_fingerprint, synthesize_timeline, wav_bytes,
+    NOTES, note_audio, opening_note_audio, echo_audio_panel, note_audio_panel,
 )
 
 
@@ -59,6 +63,8 @@ class MusicalMemoryTests(unittest.TestCase):
         for cases in self.comparison.traces.values():
             for trace in cases:
                 for step in (*trace.prompt, *trace.outputs):
+                    self.assertIsInstance(step, musical_memory.EchoStep)
+                    assert isinstance(step, musical_memory.EchoStep)
                     torch.testing.assert_close(step.retained + step.written, step.hidden)
                     torch.testing.assert_close(step.retained, step.keep * step.old)
                     torch.testing.assert_close(step.written, (1 - step.keep) * step.candidate)
@@ -95,6 +101,58 @@ class MusicalMemoryTests(unittest.TestCase):
             self.assertEqual((audio.getnchannels(), audio.getsampwidth(), audio.getframerate()), (1, 2, 16000))
             self.assertEqual(audio.getnframes(), len(silence))
 
+    def test_opening_audio_plays_each_named_note_and_the_actual_reference_phrase(self):
+        melody = ["D3", "A3", "D4"] * 2
+        html = opening_note_audio(melody).data
+        clips = re.findall(r'src="data:audio/wav;base64,([^"]+)"', html)
+        expected = [("D3",), ("A3",), ("D4",), melody]
+        self.assertEqual(len(clips), len(expected))
+        for encoded, notes in zip(clips, expected):
+            self.assertEqual(base64.b64decode(encoded), note_audio(notes))
+        self.assertIn("146.83 Hz", html)
+        self.assertIn("220.00 Hz", html)
+        self.assertIn("293.66 Hz", html)
+        self.assertNotRegex(html, r"<audio\b[^>]*\bautoplay")
+        with wave.open(BytesIO(base64.b64decode(clips[0])), "rb") as audio:
+            samples = np.frombuffer(audio.readframes(audio.getnframes()), dtype="<i2").astype(float)
+            self.assertEqual(len(samples), 7200)
+            frequencies = np.fft.rfftfreq(len(samples), 1 / audio.getframerate())
+            frequency = frequencies[np.abs(np.fft.rfft(samples * np.hanning(len(samples)))).argmax()]
+            self.assertAlmostEqual(frequency, 440 * 2 ** ((50 - 69) / 12), delta=2)
+
+    def test_echo_audio_uses_real_before_after_and_intervention_guesses_without_changing_rng(self):
+        before = torch.random.get_rng_state().clone()
+        html = echo_audio_panel(self.comparison).data
+        clips = re.findall(r'src="data:audio/wav;base64,([^"]+)"', html)
+        expected = [tuple(NOTES[index] for index in answer) for answer in self.comparison.answers.tolist()]
+        for mode in ("Before learning", "After learning", "Opening erased", "No carry"):
+            expected.extend(tuple(NOTES[index] for index in trace.generated)
+                            for trace in self.comparison.traces[mode])
+        self.assertEqual(len(clips), 10)
+        for encoded, notes in zip(clips, expected):
+            self.assertEqual(base64.b64decode(encoded), note_audio(notes))
+        self.assertTrue(torch.equal(before, torch.random.get_rng_state()))
+        self.assertNotRegex(html, r"<audio\b[^>]*\bautoplay")
+        self.assertIn("not sonified hidden values", html)
+
+    def test_note_audio_rejects_missing_or_non_note_values_instead_of_faking_predictions(self):
+        with self.assertRaisesRegex(ValueError, "at least one"):
+            note_audio([])
+        with self.assertRaisesRegex(ValueError, "Unknown lesson notes"):
+            note_audio(["0.7", "-0.2"])
+        with self.assertRaisesRegex(ValueError, "at least one labelled"):
+            note_audio_panel([], description="empty")
+
+    def test_notebook_places_audio_at_meaningful_input_and_prediction_comparisons(self):
+        cells = {cell["id"]: "".join(cell["source"]) for cell in self.notebook["cells"]}
+        self.assertIn("opening_note_audio(melody)", cells["eb7df241"])
+        self.assertIn("note_audio_panel(", cells["ac9aca71"])
+        self.assertIn("melody[:3][::-1]", cells["ac9aca71"])
+        self.assertIn("not notes generated", cells["ac9aca71"])
+        self.assertIn("echo_audio_panel(echo_comparison)", cells["musical-echo-training"])
+        self.assertNotIn("gru_real_r[0].tolist()", cells["gru-real-cell-parity"])
+        self.assertNotIn("round(value, 3)", cells["ac9aca71"])
+
     def test_all_replayed_notes_come_from_the_actual_input_or_guess(self):
         self.assertLessEqual(len(self.frames), 60)
         self.assertEqual(sum(frame.title.startswith("Read ") for frame in self.frames), 24)
@@ -111,7 +169,7 @@ class MusicalMemoryTests(unittest.TestCase):
     def test_notebook_learning_code_matches_the_reusable_implementation(self):
         code = "\n".join("".join(cell["source"]) for cell in self.notebook["cells"] if cell["cell_type"] == "code")
         definitions = {node.name: node for node in ast.parse(code).body if isinstance(node, (ast.ClassDef, ast.FunctionDef))}
-        for symbol in (EchoGRU, fit_echo_model, make_echo_questions):
+        for symbol in (EchoLSTM, EchoGRU, fit_echo_model, make_echo_questions):
             expected = ast.parse(inspect.getsource(symbol)).body[0]
             self.assertEqual(ast.dump(definitions[symbol.__name__]), ast.dump(expected))
         self.assertNotIn("render_replay", code)
@@ -185,6 +243,39 @@ class MusicalMemoryTests(unittest.TestCase):
         second = replay_html(frames, [image.getvalue()], audio)
         self.assertNotEqual(re.search(r'<section id="([^"]+)"', first)[1],
                             re.search(r'<section id="([^"]+)"', second)[1])
+
+
+class NotebookSetupTests(unittest.TestCase):
+    def test_setup_refreshes_a_cached_helper_missing_the_new_audio_functions(self):
+        probe = """
+import json
+from pathlib import Path
+import sys
+chapter = Path(sys.argv[1])
+sys.path.insert(0, str(chapter))
+import musical_memory
+
+assert callable(musical_memory.opening_note_audio)
+del musical_memory.opening_note_audio
+book = json.loads((chapter / "01A-sequence-memory-theory.ipynb").read_text(encoding="utf-8"))
+setup = next(cell for cell in book["cells"] if cell["id"] == "eb7df241")
+namespace = {"__name__": "cached_kernel_probe"}
+exec(compile("".join(setup["source"]), "notebook setup", "exec"), namespace)
+for name in ("compare_echo_models", "opening_note_audio", "note_audio_panel", "echo_audio_panel"):
+    assert namespace[name] is getattr(musical_memory, name)
+assert namespace["opening_note_audio"](namespace["melody"]).data.count("<audio ") == 4
+exec(compile("".join(setup["source"]), "rerun notebook setup", "exec"), namespace)
+assert namespace["opening_note_audio"] is musical_memory.opening_note_audio
+print("PASS: cached helper refreshed and four opening players produced.")
+"""
+        for cwd in (HERE, HERE.parents[2]):
+            with self.subTest(cwd=cwd):
+                result = subprocess.run(
+                    [sys.executable, "-c", probe, str(HERE.resolve())],
+                    cwd=cwd, capture_output=True, text=True, timeout=60,
+                )
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn("PASS: cached helper refreshed", result.stdout)
 
 
 if __name__ == "__main__":

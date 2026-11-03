@@ -9,10 +9,12 @@ Start after [Stage 02 — PyTorch Foundations](../../02-pytorch-foundations/READ
 
 1. [01A — Sequence Memory Theory](01A-sequence-memory-theory.ipynb) ·
    [handwritten notes](01A-sequence-memory-theory.md) — Build a running note, watch its
-   teaching signal fade, and discover LSTM keep/write/show and
+   teaching signal fade, and learn LSTM first: keep/write/show, real two-state
+   cell arithmetic and audible delayed echoes. Then discover
    [GRU reset/keep/replace mechanics](01A-sequence-memory-theory.ipynb#gru-hidden-state-mechanics).
-   Then hear a tiny GRU echo an opening after twenty distracting notes, before
-   and after fitting, and erase only its opening state.
+   Reuse the same echo task and trainer for GRU; erase both LSTM states or the
+   GRU's single state. Finish with the boundary between cells, encoder-decoder
+   wiring and optional attention.
 2. [01B — Sequence Memory PyTorch Lab](01B-sequence-memory-pytorch-lab.ipynb) — Train
    forecasting and token models with packed batches, padding-aware loss, and causal checks.
 3. [01C — Cinematic Piano Memory](01C-cinematic-piano-memory.ipynb) — Hear and measure
@@ -30,24 +32,50 @@ Essential explanations remain visible without Mermaid or JavaScript support.
 with embedded static fallbacks and linked controllable HTML replays.
 Both follow the same repeated `D3 A3 D4` phrase. Chosen scalar controls expose
 retained, written, carried and exposed values; GRU interventions differentiate
-the complete scalar update. A two-value `GRUCell` check then computes actual
-input/state-derived gates and compares the resulting state at every note.
+the complete scalar update. Two-value `LSTMCell` and `GRUCell` checks compute
+actual input/state-derived gates and compare both LSTM states or GRU's single
+state with PyTorch at every note.
 These are mechanism demonstrations, not claims that initialized weights learned music.
-The [one-token layer replay](images/01a-gru-token-layer-flow.html) opens the actual
-A3 step after D3: two input/state Linear projections, gates, content blending,
-and the fork into output and next-token hidden state. Those two routes carry
-identical values in one unidirectional layer; a separate model head produces note
-scores. Repeated time steps are not additional stacked layers.
+The [LSTM layer replay](images/01a-lstm-token-layer-flow.html) opens A3 after D3:
+input and old h choose controls, old c follows the keep lane, and output h is
+exposed while **both (h, c)** travel to the next token.
+The [GRU layer replay](images/01a-gru-token-layer-flow.html) contrasts its single
+carried/exposed h. A separate head produces note scores in either model.
+Repeated time steps are not additional stacked layers.
 
-The [musical memory walkthrough](images/01a-musical-gru-memory.html) connects those
-mechanics to actual predictions. A twelve-value GRU learns two cue-echo examples
-in 240 optimizer steps. The audio-clocked replay plays both reference openings,
+The [LSTM musical walkthrough](images/01a-musical-lstm-memory.html), then the
+[GRU walkthrough](images/01a-musical-gru-memory.html), connect those mechanics to
+actual predictions. Both learn the same two openings after twenty distractions:
+480 updates for LSTM, 240 for the original unchanged GRU run.
+The LSTM's shorter 240-update trial still confuses the cues; the notebook's
+one-variable drill reproduces it. Equal hidden widths do not mean equal parameter
+counts, and different fit budgets are not an architecture ranking.
+Each audio-clocked replay plays both reference openings,
 actual initialized/fitted guesses, a no-carry intervention, all twenty distracting
 notes, and an opening-state-erasure comparison. It uses synthesized tones, not a
-recorded piano. The [static scorecard](images/01a-musical-gru-memory.png),
+recorded piano. LSTM's [scorecard](images/01a-musical-lstm-memory.png),
+[silent GIF](images/01a-musical-lstm-memory.gif) and
+[WAV](images/01a-musical-lstm-memory.wav), plus GRU's
+[static scorecard](images/01a-musical-gru-memory.png),
 [silent GIF](images/01a-musical-gru-memory.gif), and
 [same WAV](images/01a-musical-gru-memory.wav) remain available without notebook JavaScript.
-This is fitted recall, not composition, held-out accuracy, or a GRU/RNN benchmark.
+This is fitted recall, not composition, held-out accuracy, or an architecture benchmark.
+
+A concise [access diagram](images/01a-memory-vs-attention.png) separates three
+questions: a cell updates memory, encoder-decoder wiring assigns reader/writer
+jobs, and optional source attention revisits saved source positions before an
+output. Equal access does not mean equal weight. No attention model is trained
+in 01A; that implementation belongs in
+[03D](../03-language-models/03D-recurrent-encoder-decoder-to-attention.ipynb).
+
+01A now has short native audio players in the learning flow: hear D3, A3 and D4
+separately and as the opening phrase, compare the actual original/reversed inputs,
+then hear both reference openings and the model's real before/after, erased-memory
+and no-carry echoes. Those latter clips use the current run's recorded guesses.
+Players require a click and use local synthesized tones; no sound autoplays.
+Early gate/gradient blocks do not predict notes, so their internal numbers are
+not converted into fake melodies. Dense per-note vector dumps are replaced by
+shorter memory/parity takeaways; the saved visual traces retain the detailed values.
 
 01B uses token IDs, shifted answers, and padding before explaining where they come from.
 That's a preview for testing memory; [Chapter 02](../02-tokenization-and-embeddings/README.md)
@@ -67,6 +95,8 @@ GIFs render inline, and linked HTML files provide playback controls and synchron
 sound in a browser. The notebook contains no plotting, animation generation, or
 replay-display code. **Run All** from a fresh kernel only for its learning experiments
 and training; the setup supports both repository-root and chapter working directories.
+Rerunning 01A's setup reloads its local musical helper, so an existing kernel
+does not keep an older copy missing newly added audio functions.
 Changing an experiment changes its printed evidence, not the saved default captures.
 Sound starts only after clicking the linked replay's native audio Play button. All replays
 are offline, use visible text buttons rather than an external icon font, fit narrow
@@ -91,20 +121,24 @@ Rebuild the measured gate-flow captures from the notebook's recorded updates:
 
 ```powershell
 .\.venv\Scripts\python.exe .\memory_gate_flows.py
+.\.venv\Scripts\python.exe .\lstm_layer_flow.py
 .\.venv\Scripts\python.exe .\musical_memory.py
-.\.venv\Scripts\python.exe -m unittest test_memory_gate_flows test_musical_memory -v
-.\.venv\Scripts\python.exe -m unittest test_gru_layer_flow -v
+.\.venv\Scripts\python.exe -m unittest test_memory_gate_flows test_musical_memory test_gru_layer_flow test_lstm_layer_flow -v
 ```
 
 The gate-flow generator saves feedback-decay, LSTM-state and retention-comparison
 charts alongside the paired gate replays. It uses the same recorded arithmetic as
 the lesson and adds source fingerprints; it never trains a model. The musical
-generator trains the tiny cue-echo GRU and exports measured guesses and state
+generator trains both tiny cue-echo models and exports measured guesses and state
 arithmetic, audio, and playback timing with provenance metadata. Neither downloads data.
-Both explicit exporters also refresh the notebook's embedded PNG attachments
+All explicit exporters also refresh the notebook's embedded PNG attachments
 without changing cell sources, outputs, or metadata.
 The gate exporter also rebuilds the one-token layer replay using the shared
 [GRU layer recorder/renderer](gru_layer_flow.py), which the encoder/decoder preview
 reuses for the same cell rule with learned word profiles.
+The [LSTM recorder/exporter](lstm_layer_flow.py) separately verifies the native
+(h, c) contract and builds the LSTM close-up plus conceptual attention-access
+diagram. Musical provenance fingerprints cover both the experiment and this
+LSTM recorder.
 
 **Next:** [Chapter 02 — Tokenization and Embeddings](../02-tokenization-and-embeddings/README.md).

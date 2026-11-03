@@ -5,7 +5,7 @@ Follow an early clue through increasingly demanding memory tasks.
 ## Required route
 
 - [Chapter 01: Sequence Memory](README.md) — Check the three-notebook route and which text-input ideas are previews for the next chapter.
-- [01A - Sequence Memory Theory](01A-sequence-memory-theory.ipynb) — Follow concrete note cards through order, reused state, backward feedback, LSTM keep/write/show, and [GRU reset/keep/replace mechanics](01A-sequence-memory-theory.ipynb#gru-hidden-state-mechanics).
+- [01A - Sequence Memory Theory](01A-sequence-memory-theory.ipynb) — Follow order and fading feedback into a complete LSTM story, then [GRU by contrast](01A-sequence-memory-theory.ipynb#gru-hidden-state-mechanics): real cells, audible echoes, and a concise encoder-decoder/attention boundary.
 - [01B - Sequence Memory PyTorch Lab](01B-sequence-memory-pytorch-lab.ipynb) — Shift exact note pairs, measure the padded-state failure, separate packing from loss masking, and edit a future note to test causal access.
 - [01C - Cinematic Piano Memory](01C-cinematic-piano-memory.ipynb) — Fit a phrase in two keys, swap only the opening cue, and hear and measure what happens at the ending.
 - [Sequence Memory: Handwritten Theory Notes](01A-sequence-memory-theory.md) — Review why running memory forgets and how controlled memory gates help preserve useful signals.
@@ -17,7 +17,10 @@ Follow an early clue through increasingly demanding memory tasks.
 - [LSTM/GRU gate-flow generator](memory_gate_flows.py) — Rebuild matching animations, controllable replays and static captures from the lesson's actual recorded state arithmetic.
 - [Gate-flow checks](test_memory_gate_flows.py) — Verify carry/replacement/exposure differences, reset-route consequences, GRUCell parity and source-aware capture contracts.
 - [One-token GRU layer](images/01a-gru-token-layer-flow.html) · [shared recorder](gru_layer_flow.py) · [checks](test_gru_layer_flow.py) — Open the input/state Linear projections and show why output and next-token hidden have the same values in one layer.
+- [One-token LSTM layer](images/01a-lstm-token-layer-flow.html) · [recorder/exporter](lstm_layer_flow.py) · [checks](test_lstm_layer_flow.py) — Follow input, h and c through real gates; expose h and carry both states.
+- [Audible LSTM walkthrough](images/01a-musical-lstm-memory.html) — Fit the same delayed echo, hear actual guesses, and erase both h and c.
 - [Audible GRU walkthrough](images/01a-musical-gru-memory.html) — Hear actual guesses before/after fitting and after erasing opening memory; synchronized piano keys and real gate/state values.
 - [Musical experiment and exporter](musical_memory.py) · [checks](test_musical_memory.py) — Rebuild offline audio/animation, verify both echoes, state interventions, named pitches, timing, and notebook/helper parity.
+- [Memory versus attention](images/01a-memory-vs-attention.png) — Conceptual final-summary versus source-position look-back; access is not equal weighting.
 
 **Next:** [Chapter 02 — Tokenization and Embeddings](../02-tokenization-and-embeddings/README.md).

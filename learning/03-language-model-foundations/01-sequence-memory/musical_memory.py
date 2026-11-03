@@ -1,15 +1,18 @@
 """A measured cue-echo experiment and an offline, audio-clocked replay for 01A."""
 
 import base64
+from collections.abc import Sequence
 from copy import deepcopy
 from dataclasses import dataclass
 import hashlib
+from html import escape
 from io import BytesIO
 import json
 from pathlib import Path
 import uuid
 import wave
 
+from IPython.display import HTML
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import numpy as np
@@ -17,6 +20,8 @@ from PIL import Image
 import torch
 from torch import nn
 from torch.nn import functional as F
+
+from lstm_layer_flow import record_lstm_layer_step
 
 
 HERE = Path(__file__).resolve().parent
@@ -54,6 +59,23 @@ class EchoGRU(nn.Module):
         return torch.stack(scores, dim=1)
 
 
+class EchoLSTM(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.cell = nn.LSTMCell(4, 12)
+        self.head = nn.Linear(12, 3)
+
+    def forward(self, token_ids):
+        profiles = F.one_hot(token_ids, num_classes=4).float()
+        hidden = profiles.new_zeros((len(token_ids), 12))
+        cell = torch.zeros_like(hidden)
+        scores = []
+        for profile in profiles.unbind(dim=1):
+            hidden, cell = self.cell(profile, (hidden, cell))
+            scores.append(self.head(hidden))
+        return torch.stack(scores, dim=1)
+
+
 def fit_echo_model(model, practice, answers, steps=240):
     if steps < 1:
         raise ValueError("Use at least one optimizer step for the before/after comparison.")
@@ -84,9 +106,25 @@ class EchoStep:
 
 
 @dataclass(frozen=True)
+class LSTMEchoStep:
+    input_id: int
+    old: torch.Tensor
+    old_cell: torch.Tensor
+    input_gate: torch.Tensor
+    forget_gate: torch.Tensor
+    candidate: torch.Tensor
+    output_gate: torch.Tensor
+    retained: torch.Tensor
+    written: torch.Tensor
+    cell: torch.Tensor
+    hidden: torch.Tensor
+    logits: torch.Tensor
+
+
+@dataclass(frozen=True)
 class EchoTrace:
-    prompt: tuple[EchoStep, ...]
-    outputs: tuple[EchoStep, ...]
+    prompt: tuple[EchoStep | LSTMEchoStep, ...]
+    outputs: tuple[EchoStep | LSTMEchoStep, ...]
     generated: tuple[int, ...]
 
 
@@ -95,28 +133,47 @@ class EchoComparison:
     traces: dict[str, tuple[EchoTrace, EchoTrace]]
     answers: torch.Tensor
     losses: tuple[float, ...]
+    kind: str = "GRU"
 
 
 def trace_echo(model, prompt, *, erase_opening=False, no_carry=False):
     copied = deepcopy(model).eval()
-    hidden = torch.zeros((1, copied.cell.hidden_size))
+    recurrent = copied.get_submodule("cell")
+    head = copied.get_submodule("head")
+    if not isinstance(recurrent, (nn.GRUCell, nn.LSTMCell)) or not isinstance(head, nn.Linear):
+        raise TypeError("Echo tracing requires a GRUCell or LSTMCell and a Linear note head.")
+    hidden = recurrent.weight_ih.new_zeros((1, recurrent.hidden_size))
+    cell_memory = torch.zeros_like(hidden)
     reading, outputs, generated = [], [], []
 
     def read(token_id):
-        nonlocal hidden
+        nonlocal hidden, cell_memory
         if no_carry:
             hidden = torch.zeros_like(hidden)
-        profile = F.one_hot(torch.tensor([token_id]), num_classes=4).float()
-        xr, xz, xn = F.linear(profile, copied.cell.weight_ih, copied.cell.bias_ih).chunk(3, -1)
-        hr, hz, hn = F.linear(hidden, copied.cell.weight_hh, copied.cell.bias_hh).chunk(3, -1)
+            cell_memory = torch.zeros_like(cell_memory)
+        profile = F.one_hot(torch.tensor([token_id], device=hidden.device), num_classes=4).to(hidden.dtype)
+        if isinstance(recurrent, nn.LSTMCell):
+            recorded = record_lstm_layer_step(recurrent, profile, hidden, cell_memory)
+            actual_hidden = recorded.carried_hidden[None]
+            actual_cell = recorded.carried_cell[None]
+            step = LSTMEchoStep(
+                token_id, hidden.clone(), cell_memory.clone(),
+                recorded.input_gate[None], recorded.forget_gate[None], recorded.candidate[None],
+                recorded.output_gate[None], recorded.retained[None], recorded.written[None],
+                actual_cell, actual_hidden, head(actual_hidden),
+            )
+            hidden, cell_memory = actual_hidden, actual_cell
+            return step
+        xr, xz, xn = F.linear(profile, recurrent.weight_ih, recurrent.bias_ih).chunk(3, -1)
+        hr, hz, hn = F.linear(hidden, recurrent.weight_hh, recurrent.bias_hh).chunk(3, -1)
         reset, keep = torch.sigmoid(xr + hr), torch.sigmoid(xz + hz)
         candidate = torch.tanh(xn + reset * hn)
         retained, written = keep * hidden, (1 - keep) * candidate
-        actual = copied.cell(profile, hidden)
+        actual = recurrent(profile, hidden)
         torch.testing.assert_close(retained + written, actual, rtol=1e-5, atol=1e-6)
         step = EchoStep(
             token_id, hidden.clone(), reset, keep, candidate, retained, written,
-            actual, copied.head(actual),
+            actual, head(actual),
         )
         hidden = actual
         return step
@@ -126,6 +183,7 @@ def trace_echo(model, prompt, *, erase_opening=False, no_carry=False):
             reading.append(read(token))
             if erase_opening and index == 2:
                 hidden = torch.zeros_like(hidden)
+                cell_memory = torch.zeros_like(cell_memory)
         step = reading[-1]
         for index in range(3):
             outputs.append(step)
@@ -137,6 +195,10 @@ def trace_echo(model, prompt, *, erase_opening=False, no_carry=False):
 
 
 def compare_echo_models(before, after, prompts, answers, losses):
+    before_cell, after_cell = before.get_submodule("cell"), after.get_submodule("cell")
+    if type(before_cell) is not type(after_cell):
+        raise TypeError("Before/after evidence must use the same recurrent cell architecture.")
+    kind = "LSTM" if isinstance(after_cell, nn.LSTMCell) else "GRU"
     traces = {}
     for mode in MODES:
         model = before if mode == "Before learning" else after
@@ -144,19 +206,21 @@ def compare_echo_models(before, after, prompts, answers, losses):
             trace_echo(model, prompt, erase_opening=mode == "Opening erased", no_carry=mode == "No carry")
             for prompt in prompts
         )
-    return EchoComparison(traces, answers.clone(), tuple(losses))
+    return EchoComparison(traces, answers.clone(), tuple(losses), kind)
 
 
-def run_echo_experiment():
+def run_echo_experiment(*, kind="GRU"):
+    if kind not in ("LSTM", "GRU"):
+        raise ValueError("Choose LSTM or GRU for the cue-echo experiment.")
     prompts, practice, answers = make_echo_questions()
     threads = torch.get_num_threads()
     try:
         torch.set_num_threads(1)
         with torch.random.fork_rng(devices=[]):
             torch.manual_seed(42)
-            before = EchoGRU()
+            before = EchoLSTM() if kind == "LSTM" else EchoGRU()
             after = deepcopy(before)
-            losses = fit_echo_model(after, practice, answers)
+            losses = fit_echo_model(after, practice, answers, steps=480 if kind == "LSTM" else 240)
     finally:
         torch.set_num_threads(threads)
     return compare_echo_models(before, after, prompts, answers, losses)
@@ -168,7 +232,7 @@ class MusicFrame:
     message: str
     note: str | None
     duration: float
-    step: EchoStep | None = None
+    step: EchoStep | LSTMEchoStep | None = None
     case: int = 0
     mode: str = ""
 
@@ -194,8 +258,10 @@ def music_frames(comparison):
         role = "opening cue" if index < 3 else ("PLAY marker" if index == 23 else "shared distraction")
         frames.append(MusicFrame(
             f"Read {index + 1}/24: {role}",
-            "Same GRU weights at every step. Current input + old hidden -> reset/keep controls -> new hidden. "
-            "The 12 state coordinates are numbers, not named notes.",
+            ("Same LSTM weights at every step. Input + old h choose keep/write/show; old c enters the carry lane. "
+             "Both new h and c travel to the next token." if comparison.kind == "LSTM" else
+             "Same GRU weights at every step. Current input + old hidden -> reset/keep controls -> new hidden. "
+             "The 12 state coordinates are numbers, not named notes."),
             NOTES[step.input_id] if step.input_id < 3 else None, 0.38, step,
             mode="After learning",
         ))
@@ -204,7 +270,7 @@ def music_frames(comparison):
     frames.append(MusicFrame(
         "The opening matters because the state carried it",
         "Erasing only the opening makes the two remaining inputs identical. "
-        "This is fitted recall of two examples, not composition or an RNN-versus-GRU benchmark.",
+        "This is fitted recall of two examples, not composition or an architecture benchmark.",
         None, 3.0,
     ))
     return frames
@@ -253,6 +319,78 @@ def wav_bytes(samples, sample_rate=16000):
     return buffer.getvalue()
 
 
+def note_audio(notes: Sequence[str]) -> bytes:
+    if len(notes) == 0:
+        raise ValueError("A note clip needs at least one named note.")
+    unknown = [note for note in notes if note not in MIDI]
+    if unknown:
+        raise ValueError(f"Unknown lesson notes: {unknown}. Available notes: {', '.join(NOTES)}.")
+    frames = [MusicFrame("named note", "", note, 0.45) for note in notes]
+    return wav_bytes(synthesize_timeline(frames))
+
+
+def _note_player(caption: str, notes: Sequence[str]) -> str:
+    encoded = base64.b64encode(note_audio(notes)).decode("ascii")
+    return (
+        '<section style="min-width:0;padding:8px;border:1px solid #94a3b8;border-radius:6px">'
+        f"<p><strong>{escape(caption)}</strong><br><code>{escape(' '.join(notes))}</code></p>"
+        f'<audio controls preload="metadata" style="width:100%;max-width:420px" '
+        f'src="data:audio/wav;base64,{encoded}">Audio playback is unavailable in this renderer.</audio>'
+        "</section>"
+    )
+
+
+def note_audio_panel(
+    clips: Sequence[tuple[str, Sequence[str]]], *, description: str,
+) -> HTML:
+    if len(clips) == 0:
+        raise ValueError("An audio comparison needs at least one labelled clip.")
+    players = "".join(_note_player(caption, notes) for caption, notes in clips)
+    return HTML(
+        f"<p>{escape(description)}</p>"
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px">'
+        + players + "</div>"
+    )
+
+
+def opening_note_audio(melody: Sequence[str]) -> HTML:
+    clips: list[tuple[str, Sequence[str]]] = []
+    for note in dict.fromkeys(melody):
+        if note not in MIDI:
+            raise ValueError(f"Unknown lesson note: {note}.")
+        frequency = 440 * 2 ** ((MIDI[note] - 69) / 12)
+        clips.append((f"{note}: {frequency:.2f} Hz", (note,)))
+    clips.append(("Reference phrase (input, not a model prediction)", melody))
+    return note_audio_panel(
+        clips, description="Press Play to hear each named note, then the phrase. "
+        "D3 is low, A3 is higher, and D4 is one octave above D3. Sound never starts automatically.",
+    )
+
+
+def echo_audio_panel(comparison: EchoComparison) -> HTML:
+    rows = []
+    references = [tuple(NOTES[index] for index in answer) for answer in comparison.answers.tolist()]
+    for mode in ("Reference opening / expected echo", "Before learning", "After learning",
+                 "Opening erased", "No carry"):
+        clips = [
+            (f"Opening {case + 1}", reference if mode == "Reference opening / expected echo"
+             else tuple(NOTES[index] for index in comparison.traces[mode][case].generated))
+            for case, reference in enumerate(references)
+        ]
+        rows.append(
+            f"<h4>{escape(mode)}</h4>"
+            '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">'
+            + "".join(_note_player(caption, notes) for caption, notes in clips) + "</div>"
+        )
+    state_description = (" Erasure resets BOTH h and c." if comparison.kind == "LSTM"
+                         else " Erasure resets the single h.")
+    return HTML(
+        f"<p>{comparison.kind}: the reference is the opening we want echoed. All other clips are actual generated notes, "
+        "not sonified hidden values. After learning, opening erased and no carry use the same fitted weights; "
+        "only the state intervention differs." + state_description + " Press Play to compare.</p>" + "".join(rows)
+    )
+
+
 def draw_music_frame(figure, comparison, frame):
     figure.clear()
     figure.set_facecolor(PAPER)
@@ -276,13 +414,23 @@ def draw_music_frame(figure, comparison, frame):
         frequency = 440 * 2 ** ((MIDI[frame.note] - 69) / 12)
         keyboard.text(0, -0.18, f"Synthesized tone: {frequency:.2f} Hz", color=INK, fontsize=11)
     state_axis = figure.add_axes((0.59, 0.41, 0.36, 0.29))
+    bound = 1.0
     if frame.step is not None:
         step = frame.step
-        rows = [step.old, step.reset, step.keep, step.candidate, step.retained, step.written, step.hidden]
-        state_axis.imshow(torch.cat(rows).numpy(), aspect="auto", cmap="coolwarm", vmin=-1, vmax=1)
-        state_axis.set_yticks(range(7), ["old h", "reset r", "keep z", "proposal", "kept", "written", "new h"])
+        if isinstance(step, LSTMEchoStep):
+            rows = [step.old, step.old_cell, step.forget_gate, step.input_gate, step.candidate,
+                    step.output_gate, step.retained, step.written, step.cell, step.hidden]
+            labels = ["old h", "old c", "keep f", "write i", "proposal", "show o", "kept c", "written", "new c", "new h"]
+            bound = max(1.0, float(torch.cat(rows).abs().max()))
+            title = "LSTM: new c = kept + written; new h = show * tanh(c)"
+        else:
+            rows = [step.old, step.reset, step.keep, step.candidate, step.retained, step.written, step.hidden]
+            labels = ["old h", "reset r", "keep z", "proposal", "kept", "written", "new h"]
+            title = "Actual GRU values: kept + written = new h"
+        state_axis.imshow(torch.cat(rows).numpy(), aspect="auto", cmap="coolwarm", vmin=-bound, vmax=bound)
+        state_axis.set_yticks(range(len(labels)), labels)
         state_axis.set_xticks(range(12), range(12))
-        state_axis.set_title("Actual GRU values: kept + written = new h", color=INK, fontsize=11)
+        state_axis.set_title(title, color=INK, fontsize=10)
         state_axis.tick_params(labelsize=9, colors=INK)
     else:
         state_axis.axis("off")
@@ -300,7 +448,7 @@ def draw_music_frame(figure, comparison, frame):
                     color=COLORS[index], fontsize=12,
                     weight="bold" if frame.mode == mode else "normal")
     figure.text(0.055, 0.035, "Piano = input while reading; actual predicted note while generating. "
-                "Blue -1 / white 0 / red +1. Gates stay in [0,1].", color=INK, fontsize=10)
+                f"Blue -{bound:.1f} / white 0 / red +{bound:.1f}. Gates stay in [0,1].", color=INK, fontsize=10)
 
 
 def scorecard_figure(comparison):
@@ -313,7 +461,7 @@ def scorecard_figure(comparison):
         whole = sum(trace.generated == tuple(comparison.answers[index].tolist()) for index, trace in enumerate(traces))
         rows.append([" ".join(NOTES[token] for token in trace.generated) for trace in traces] + [f"{first}/2", f"{whole}/2"])
     axes[0].axis("off")
-    axes[0].set_title("Same musical question; actual free-running guesses", color=INK, fontsize=17, pad=20)
+    axes[0].set_title(f"{comparison.kind}: actual free-running guesses", color=INK, fontsize=17, pad=20)
     table = axes[0].table(
         cellText=rows, rowLabels=MODES,
         colLabels=["Echo D3 A3 D4", "Echo D4 A3 D3", "First note", "Whole echo"],
@@ -360,7 +508,7 @@ def replay_html(frames, pictures, audio):
     return f"""<section id="{identity}" style="max-width:100%;color:#17324d">
 <p>Press Play for sound. The audio clock advances the picture; pause or scrub to inspect a step.
 Sound is synthesized locally, not a piano recording.</p>
-<img src="data:image/png;base64,{images[0]}" alt="Musical GRU cue-echo walkthrough"
+<img src="data:image/png;base64,{images[0]}" alt="Musical recurrent-memory cue-echo walkthrough"
  style="display:block;width:100%;height:auto">
 <audio controls preload="metadata" style="width:100%" src="{audio_url}"></audio>
 <p><button type="button" data-action="back">Previous step</button>
@@ -407,18 +555,21 @@ Sound is synthesized locally, not a piano recording.</p>
 
 
 def source_fingerprint():
-    return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    return hashlib.sha256(
+        Path(__file__).read_bytes() + (HERE / "lstm_layer_flow.py").read_bytes(),
+    ).hexdigest()
 
 
 def export_music(comparison):
     directory = HERE / "images"
     directory.mkdir(exist_ok=True)
-    prefix = directory / "01a-musical-gru-memory"
+    prefix = directory / f"01a-musical-{comparison.kind.lower()}-memory"
     frames, pictures, audio = render_replay(comparison)
     prefix.with_suffix(".html").write_text(replay_html(frames, pictures, audio), encoding="utf-8")
     prefix.with_suffix(".wav").write_bytes(audio)
     metadata = {
         "SourceFingerprint": source_fingerprint(), "TrainingSteps": len(comparison.losses),
+        "Architecture": comparison.kind, "ErasedStates": ["h", "c"] if comparison.kind == "LSTM" else ["h"],
         "Distractions": 20, "SampleRate": 16000, "Loss": [comparison.losses[0], comparison.losses[-1]],
         "Predictions": {mode: [list(trace.generated) for trace in traces] for mode, traces in comparison.traces.items()},
         "Frames": [{"title": frame.title, "note": frame.note, "duration": frame.duration} for frame in frames],
@@ -442,6 +593,7 @@ def export_music(comparison):
 
 
 if __name__ == "__main__":
+    export_music(run_echo_experiment(kind="LSTM"))
     export_music(run_echo_experiment())
     from memory_gate_flows import refresh_image_attachments
     refresh_image_attachments()

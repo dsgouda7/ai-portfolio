@@ -1,6 +1,7 @@
 """Source-aware checks for the paired LSTM/GRU foundation and saved flow evidence."""
 
 import ast
+from collections import Counter
 from contextlib import redirect_stdout
 from io import StringIO
 import json
@@ -29,6 +30,21 @@ class MemoryGateFlowTests(unittest.TestCase):
             ):
                 exec(compile("".join(cls.cells[cell_id]["source"]), cell_id, "exec"), cls.namespace)
             cls.recordings = recorded_steps(cls.notebook)
+
+    def test_counting_uses_the_existing_illustration_not_an_inline_one_hot_detour(self):
+        self.assertNotIn("c3f86706", self.cells)
+        introduction = "".join(self.cells["856af87b"]["source"])
+        self.assertIn("attachment:01a-01-order-is-not-a-bag.png", introduction)
+        self.assertIn("carrying only a small memory?", introduction)
+        self.assertNotIn("The next cell checks both", introduction)
+        notes = self.namespace["melody"]
+        self.assertEqual(Counter(notes), Counter(reversed(notes)))
+        self.assertNotEqual(notes, list(reversed(notes)))
+        recurrence = "".join(self.cells["ac9aca71"]["source"])
+        self.assertIn("state = torch.tanh(W_x @ x_t + W_h @ state)", recurrence)
+        self.assertIn("Reversed phrase's final card", recurrence)
+        self.assertIn("| Explained or illustrated | Ordered versus pooled inputs",
+                      "".join(self.cells["9b40ba08"]["source"]))
 
     def test_lstm_retained_and_written_parts_reproduce_the_existing_state_trace(self):
         for index, step in enumerate(self.recordings["lstm"]):
