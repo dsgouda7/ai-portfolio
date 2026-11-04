@@ -15,6 +15,7 @@ from torch import nn
 
 import musical_memory
 from lstm_layer_flow import LSTM_PHASES, draw_lstm_layer, record_lstm_layer_step, source_fingerprint
+from memory_visuals import MOTION_FRAMES
 from musical_memory import (
     EchoLSTM, NOTES, echo_audio_panel, fit_echo_model, make_echo_questions,
     music_frames, note_audio, run_echo_experiment, source_fingerprint as music_fingerprint,
@@ -99,10 +100,13 @@ class LSTMLayerTests(unittest.TestCase):
         step = record_lstm_layer_step(self.cell, self.x, self.h, self.c)
         figure, axis = plt.subplots()
         try:
-            draw_lstm_layer(axis, step, len(LSTM_PHASES) - 1)
-            labels = " ".join(text.get_text() for text in axis.texts)
-            for label in ("previous h", "previous c", "output now: h", "next token receives (h, c)",
-                          "KEEP", "WRITE", "SHOW", "old c bypasses projections"):
+            seen = []
+            for phase in range(len(LSTM_PHASES)):
+                draw_lstm_layer(axis, step, phase)
+                seen.extend(text.get_text() for text in axis.texts)
+            labels = " ".join(seen).replace("\n", " ")
+            for label in ("Previous h", "Previous c", "Output now: h", "Next token: (h, c)",
+                          "KEEP", "WRITE", "SHOW", "old c bypasses"):
                 self.assertIn(label, labels)
         finally:
             plt.close(figure)
@@ -219,7 +223,7 @@ class LSTMEchoTests(unittest.TestCase):
             self.assertEqual(image.info["Output"], image.info["CarriedHidden"])
             self.assertNotEqual(image.info["Output"], image.info["CarriedCell"])
         with Image.open(prefix.with_suffix(".gif")) as image:
-            self.assertEqual(image.n_frames, len(LSTM_PHASES))
+            self.assertEqual(image.n_frames, len(LSTM_PHASES) * MOTION_FRAMES)
         html = prefix.with_suffix(".html").read_text(encoding="utf-8")
         self.assertNotIn("https:", html)
         self.assertIn(">Next frame</button>", html)

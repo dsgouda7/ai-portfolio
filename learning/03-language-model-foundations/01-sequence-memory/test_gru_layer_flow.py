@@ -13,6 +13,7 @@ from torch import nn
 
 from gru_layer_flow import LAYER_PHASES, draw_layer, record_layer_step
 from memory_gate_flows import fingerprint, recorded_foundation_layer
+from memory_visuals import MOTION_FRAMES
 
 
 class GRULayerFlowTests(unittest.TestCase):
@@ -93,7 +94,7 @@ class GRULayerFlowTests(unittest.TestCase):
             torch.testing.assert_close(torch.tensor(json.loads(image.info["Output"])), step.output.float())
             self.assertEqual(image.info["Output"], image.info["Carried"])
         with Image.open(prefix.with_suffix(".gif")) as image:
-            self.assertEqual(image.n_frames, len(LAYER_PHASES))
+            self.assertEqual(image.n_frames, len(LAYER_PHASES) * MOTION_FRAMES)
         html = prefix.with_suffix(".html").read_text(encoding="utf-8")
         self.assertNotIn("https:", html)
         self.assertIn(">Next frame</button>", html)

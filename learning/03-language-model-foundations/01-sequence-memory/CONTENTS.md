@@ -12,7 +12,8 @@ Follow an early clue through increasingly demanding memory tasks.
 
 ## Visuals
 
-- [Illustrated stories](images) — Nine static sketches with the same note names, cards, colors, and plain-English distinctions used in the notebooks.
+- [Illustrated stories](images) — Static sketches with the same note names, cards, colors, and plain-English distinctions used in the notebooks.
+- [Saved-card backprop replay](images/01a-backprop-saved-cards.html) · [MAI storyboard](images/01a-backprop-saved-cards.png) · [recorder/exporter](backprop_memory_flow.py) · [checks](test_backprop_memory_flow.py) — Inspect h3, h2, h1 before one shared-weight update; contrast full feedback with a detach boundary that preserves forward cards.
 - [Local diagram generator](generate_memory_diagrams.py) — Rebuild the sketches without a model or network; measured outputs still come from executing the lessons.
 - [LSTM/GRU gate-flow generator](memory_gate_flows.py) — Rebuild matching animations, controllable replays and static captures from the lesson's actual recorded state arithmetic.
 - [Gate-flow checks](test_memory_gate_flows.py) — Verify carry/replacement/exposure differences, reset-route consequences, GRUCell parity and source-aware capture contracts.
@@ -22,5 +23,6 @@ Follow an early clue through increasingly demanding memory tasks.
 - [Audible GRU walkthrough](images/01a-musical-gru-memory.html) — Hear actual guesses before/after fitting and after erasing opening memory; synchronized piano keys and real gate/state values.
 - [Musical experiment and exporter](musical_memory.py) · [checks](test_musical_memory.py) — Rebuild offline audio/animation, verify both echoes, state interventions, named pitches, timing, and notebook/helper parity.
 - [Memory versus attention](images/01a-memory-vs-attention.png) — Conceptual final-summary versus source-position look-back; access is not equal weighting.
+- [Motion-graphics renderer](memory_visuals.py) · [visual checks](test_memory_visuals.py) — Staged memory cards, per-feature gate meters, moving value markers, and measured text/connector spacing.
 
 **Next:** [Chapter 02 — Tokenization and Embeddings](../02-tokenization-and-embeddings/README.md).

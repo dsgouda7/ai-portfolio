@@ -18,28 +18,43 @@ a reading rule reusable beyond a fixed window.
 
 ## 2. One reader, a changing notecard
 
-The reader takes the current input and previous card, then writes a new card.
-The weights stay fixed throughout the pass; the temporary card changes.
-Repeated time boxes are uses of one layer, not extra stacked layers.
+The weights are a card-writing recipe: mix the current note, mix the previous
+card, combine them, then squeeze the result into a new card. The recipe stays
+fixed while reading a phrase; the temporary card changes. Same recipe doesn't
+mean equal influence: each note arrives with different numbers and history.
 
-The card is a fixed-width numerical summary, not a transcript or one slot per
-past position. Reversing the notebook's three inputs changes its final card
-without changing weights. That proves order affects computation, not musical skill.
+An old note survives only through the cards it helped make. Each new note
+rewrites the same small summary, not a separate slot for each past position.
+Its effect can weaken, mix with newer clues, or be overwritten. Farther-back
+notes cross more rewrites, so have more chances to get lost in translation.
+Forgetting isn't inevitable, but different final cards don't prove distant recall.
 
-**Complaint:** forward memory alone doesn't guarantee we can teach the opening.
+**Complaint:** can a wrong ending teach the recipe to preserve the opening?
 
 ## 3. Reading goes forward; teaching comes back
 
-A final mistake sends feedback backward through recorded recurrent steps:
-**backpropagation through time**. Each use contributes gradients to the
-same weights; the optimizer updates them afterward.
+Read D3, A3, D4 to make h1, h2, h3. Use h3 to predict note four.
+If the guess is wrong, don't update weights yet.
 
-The notebook isolates a route keeping 65% of feedback at each transition.
-Repeated shrinking compounds: less than 1% survives after eleven transitions.
-Autograd agrees with repeated multiplication.
+Training kept the earlier cards and their calculations. It inspects h3,
+then h2 that helped create h3, then h1 that helped create h2:
+**backpropagation through time**. Each inspection calculates how changing
+that card and the weights used there would affect the final error.
+All uses contribute to the same weights. Collect their corrections, then
+update the shared recipe once. One update involves several backward checks.
 
-That multiplier is chosen, not a universal RNN constant. Real derivatives
-also depend on weights, inputs and nonlinearities.
+Full backprop reaches the start of the recorded phrase. Truncated backprop
+stops at a chosen boundary. In the notebook, detaching after h1 preserves
+every forward card and the guess, but stops feedback entering h1.
+That boundary is the **backpropagation horizon**, not necessarily how old
+the information in the carried card is. A Transformer's context window
+instead limits which earlier positions a prediction can directly consult.
+
+Saving earlier cards doesn't guarantee useful feedback reaches them.
+Repeated rewrites may make their influence on the final guess tiny.
+Training can inspect the trail and still struggle to teach the opening.
+The chosen 65% feedback route falls below 1% after eleven transitions;
+it illustrates repeated shrinking, not a universal RNN percentage.
 
 **Complaint:** can a training safety brake bring vanished feedback back?
 
@@ -49,7 +64,14 @@ Repeated amplification can make gradients explode. Clipping caps an overly
 large gradient after backward and before the optimizer step.
 
 A cap cannot enlarge a tiny gradient, recreate forgotten evidence or shorten
-its route. We need a memory mechanism, not just safer updates.
+its route.
+
+**Complaint:** why should every new note have to rewrite all of our memory?
+
+LSTMs and GRUs add learned controls for retaining old evidence and accepting
+new changes. The aim is to carry clues forward and leave a better teaching
+route backward. Neither stores every note or guarantees success; the controls
+must be learned. First open the LSTM, then the GRU.
 
 ## 5. Keep some, write some, show some
 

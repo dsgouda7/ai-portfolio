@@ -12,6 +12,7 @@ import unittest
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
+from memory_visuals import MOTION_FRAMES
 import torch
 
 from memory_gate_flows import PHASES, draw_gate_flow, fingerprint, recorded_evidence, recorded_steps
@@ -156,14 +157,14 @@ class MemoryGateFlowTests(unittest.TestCase):
                 self.assertEqual(metadata["Notes"], ["D3", "A3", "D4"] * 2)
                 self.assertEqual(metadata["SourceFingerprint"], expected_hash)
                 self.assertEqual(metadata["StateCount"], 2 if kind == "lstm" else 1)
-                self.assertEqual(image.n_frames, len(PHASES) * 6)
-                self.assertLessEqual(image.n_frames, 60)
+                self.assertEqual(image.n_frames, len(PHASES) * 6 * MOTION_FRAMES)
+                self.assertLessEqual(image.n_frames, 180)
                 self.assertAlmostEqual(metadata["FinalCarried"], self.recordings[kind][-1].carried)
                 self.assertIn("not trained", metadata["TraceOrigin"])
             html = prefix.with_suffix(".html").read_text(encoding="utf-8")
             self.assertIn("new Animation", html)
-            self.assertIn("frames[29]", html)
-            self.assertNotIn("frames[30]", html)
+            self.assertIn("frames[179]", html)
+            self.assertNotIn("frames[180]", html)
             self.assertNotIn("https:", html)
             self.assertNotIn('class="fa ', html)
             self.assertIn(">Next frame</button>", html)
@@ -174,11 +175,14 @@ class MemoryGateFlowTests(unittest.TestCase):
         figure, axis = plt.subplots(figsize=(14, 8))
         try:
             for kind, required in (
-                ("lstm", ("KEEP f", "WRITE i", "SHOW o", "new CELL c", "exposed HIDDEN h")),
-                ("gru", ("RESET r", "KEEP z", "WRITTEN (1-z)*n", "new HIDDEN h")),
+                ("lstm", ("KEEP f", "WRITE i", "SHOW o", "New cell c", "Output now: h")),
+                ("gru", ("RESET r", "KEEP z", "WRITE 1-z", "New hidden h")),
             ):
-                draw_gate_flow(axis, kind, self.recordings[kind], 13)
-                texts = "\n".join(item.get_text() for item in axis.texts)
+                seen = []
+                for phase in range(len(PHASES)):
+                    draw_gate_flow(axis, kind, self.recordings[kind], 10 + phase)
+                    seen.extend(item.get_text() for item in axis.texts)
+                texts = "\n".join(seen)
                 for text in required:
                     self.assertIn(text, texts)
                 self.assertIn(f"{self.recordings[kind][2].carried:+.4f}", texts)

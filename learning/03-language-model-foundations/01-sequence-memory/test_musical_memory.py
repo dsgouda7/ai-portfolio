@@ -186,7 +186,8 @@ class MusicalMemoryTests(unittest.TestCase):
             for target in re.findall(r"\]\(([^)]+)\)", text):
                 if target.startswith("attachment:"):
                     name = target.removeprefix("attachment:")
-                    embedded = base64.b64decode(cell["attachments"][name]["image/png"])
+                    mime = "image/gif" if name.endswith(".gif") else "image/png"
+                    embedded = base64.b64decode(cell["attachments"][name][mime])
                     self.assertEqual(embedded, (HERE / "images" / name).read_bytes())
                     with Image.open(BytesIO(embedded)) as image:
                         self.assertGreater(image.width, 500)
@@ -214,7 +215,7 @@ class MusicalMemoryTests(unittest.TestCase):
             metadata = json.loads(image.info["comment"])
             self.assertEqual(metadata["SourceFingerprint"], source_fingerprint())
             self.assertEqual(image.n_frames, len(self.frames))
-            self.assertEqual(image.size, (1200, 700))
+            self.assertEqual(image.size, (1280, 1050))
             self.assertEqual(metadata["TrainingSteps"], 240)
             self.assertEqual(metadata["Distractions"], 20)
             for mode in MODES:

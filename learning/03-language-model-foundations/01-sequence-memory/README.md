@@ -28,8 +28,34 @@ a final state, and why stopping the reader and skipping blank answers are separa
 Each illustration has a plain-English reading guide next to its measured check.
 Essential explanations remain visible without Mermaid or JavaScript support.
 
+Section 2 now opens the training trail explicitly: create h1, h2, h3, make
+a wrong note-four guess, inspect those saved cards in reverse, then update
+the shared weights once. Its [MAI storyboard](images/01a-backprop-saved-cards.png)
+is paired with a [measured local replay](images/01a-backprop-saved-cards.html).
+The replay reuses the notebook's two-value recurrence and a hand-picked
+prediction head. Detaching after h1 preserves all forward cards and the guess
+while stopping feedback into h1. This is a training horizon, not a claim that
+an RNN's carried information has a fixed-age context window.
+
+All lesson visuals are embedded in 01A, including the full-resolution MAI
+storyboard, PNG/GIF fallbacks, SVG companions, and all seven HTML players.
+The musical players embed their WAV recordings; the notebook's audio links
+jump to those players rather than requiring separate files. The notebook has
+a 55 MB limit to retain these original assets without reducing their quality.
+
 01A references saved feedback/state charts and LSTM/GRU gate-flow animations,
-with embedded static fallbacks and linked controllable HTML replays.
+with embedded static fallbacks and embedded controllable HTML replays.
+The recurrent replays use spacious, staged motion graphics: rounded memory
+cards, per-feature gate meters, and moving markers rather than a complete
+wiring diagram in every frame. Labels are checked at a 640-pixel pane width.
+The four primary GIFs are embedded notebook attachments, so relative-path
+resolution and JavaScript are not needed for playback. Their SVG companions
+remain crisp when zoomed. Motion interpolates marker positions, never invented
+intermediate gate or state values.
+All seven HTML players are stored inside notebook display outputs, not loaded
+through relative iframe URLs. Each runs in its own sandboxed frame, so its
+controls cannot collide with another replay. PNG frames are packed as lossless
+WebP: every pixel and all playback/audio timing remain unchanged.
 Both follow the same repeated `D3 A3 D4` phrase. Chosen scalar controls expose
 retained, written, carried and exposed values; GRU interventions differentiate
 the complete scalar update. Two-value `LSTMCell` and `GRUCell` checks compute
@@ -90,15 +116,18 @@ Run each notebook from a fresh kernel. They share readable
 [helpers](sequence_helpers.py), not live notebook state.
 Small CPU examples use one PyTorch thread to avoid spending more time scheduling than learning.
 
-01A's visuals require no kernel execution: static diagrams are notebook attachments,
-GIFs render inline, and linked HTML files provide playback controls and synchronized
-sound in a browser. The notebook contains no plotting, animation generation, or
-replay-display code. **Run All** from a fresh kernel only for its learning experiments
-and training; the setup supports both repository-root and chapter working directories.
+01A's saved visuals require no training run: static diagrams and GIF fallbacks
+are notebook attachments, and seven saved HTML players appear beside their
+explanations. **Trust the notebook outputs** to use interactive HTML; viewers
+that block scripts or frames can use the PNG/GIF fallbacks. The short hidden
+display cells only read saved players, not generate images or animations.
+Rerun setup and a display cell to reload a player from disk without training.
+**Run All** from a fresh kernel for the learning experiments and training;
+the setup supports both repository-root and chapter working directories.
 Rerunning 01A's setup reloads its local musical helper, so an existing kernel
 does not keep an older copy missing newly added audio functions.
 Changing an experiment changes its printed evidence, not the saved default captures.
-Sound starts only after clicking the linked replay's native audio Play button. All replays
+Sound starts only after clicking an embedded player's native audio Play button. All replays
 are offline, use visible text buttons rather than an external icon font, fit narrow
 output panes, and show an initial image even when scripts are disabled.
 
@@ -121,9 +150,13 @@ Rebuild the measured gate-flow captures from the notebook's recorded updates:
 
 ```powershell
 .\.venv\Scripts\python.exe .\memory_gate_flows.py
+.\.venv\Scripts\python.exe .\backprop_memory_flow.py
 .\.venv\Scripts\python.exe .\lstm_layer_flow.py
 .\.venv\Scripts\python.exe .\musical_memory.py
 .\.venv\Scripts\python.exe -m unittest test_memory_gate_flows test_musical_memory test_gru_layer_flow test_lstm_layer_flow -v
+.\.venv\Scripts\python.exe -m unittest test_memory_visuals -v
+.\.venv\Scripts\python.exe -m unittest test_notebook_replays -v
+.\.venv\Scripts\python.exe -m unittest test_backprop_memory_flow -v
 ```
 
 The gate-flow generator saves feedback-decay, LSTM-state and retention-comparison
@@ -131,8 +164,11 @@ charts alongside the paired gate replays. It uses the same recorded arithmetic a
 the lesson and adds source fingerprints; it never trains a model. The musical
 generator trains both tiny cue-echo models and exports measured guesses and state
 arithmetic, audio, and playback timing with provenance metadata. Neither downloads data.
-All explicit exporters also refresh the notebook's embedded PNG attachments
-without changing cell sources, outputs, or metadata.
+The backprop exporter refreshes only its own captures and marked player.
+The other explicit exporters refresh notebook PNG/GIF attachments and the seven marked
+HTML-player outputs. They preserve learning cell sources, experiment outputs,
+and unrelated metadata. Player snapshots include source/output hashes so a
+rebuild refreshes changed saved players rather than leaving stale HTML.
 The gate exporter also rebuilds the one-token layer replay using the shared
 [GRU layer recorder/renderer](gru_layer_flow.py), which the encoder/decoder preview
 reuses for the same cell rule with learned word profiles.
@@ -140,5 +176,9 @@ The [LSTM recorder/exporter](lstm_layer_flow.py) separately verifies the native
 (h, c) contract and builds the LSTM close-up plus conceptual attention-access
 diagram. Musical provenance fingerprints cover both the experiment and this
 LSTM recorder.
+The shared [motion-graphics renderer](memory_visuals.py) uses the recorded
+values from those helpers. [Spacing checks](test_memory_visuals.py) enforce
+contained text, non-overlapping labels, readable type, and connectors that do
+not cross text. No cloud image model is required to rebuild these graphics.
 
 **Next:** [Chapter 02 — Tokenization and Embeddings](../02-tokenization-and-embeddings/README.md).

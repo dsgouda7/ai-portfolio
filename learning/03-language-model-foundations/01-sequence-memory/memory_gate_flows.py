@@ -9,11 +9,13 @@ import re
 
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from matplotlib.patches import FancyBboxPatch
 from PIL import Image, ImageSequence
 import torch
 
-from gru_layer_flow import LAYER_PHASES, draw_layer, layer_figure, record_layer_step
+from gru_layer_flow import LAYER_PHASES, record_layer_step
+from memory_visuals import (
+    MOTION_FRAMES, INTERVAL_MS, draw_scene, gru_scene, scalar_scene,
+)
 
 
 HERE = Path(__file__).resolve().parent
@@ -61,8 +63,11 @@ def refresh_image_attachments():
     import base64
     for cell in notebook["cells"]:
         for name, attachment in cell.get("attachments", {}).items():
-            if "image/png" in attachment:
-                attachment["image/png"] = base64.b64encode((HERE / "images" / name).read_bytes()).decode("ascii")
+            for mime in ("image/png", "image/gif"):
+                if mime in attachment:
+                    attachment[mime] = base64.b64encode((HERE / "images" / name).read_bytes()).decode("ascii")
+    from notebook_replays import refresh_embedded_replays
+    refresh_embedded_replays(notebook, images_directory=HERE / "images")
     if NOTEBOOK.read_bytes() != before:
         raise RuntimeError("The notebook changed while its image attachments were being refreshed.")
     NOTEBOOK.write_bytes((json.dumps(notebook, ensure_ascii=False, indent=1) + ending).encode("utf-8"))
@@ -94,6 +99,7 @@ def fingerprint(notebook: dict) -> str:
     ]
     sources.append(Path(__file__).read_text(encoding="utf-8"))
     sources.append((HERE / "gru_layer_flow.py").read_text(encoding="utf-8"))
+    sources.append((HERE / "memory_visuals.py").read_text(encoding="utf-8"))
     syntax = "\n".join(ast.dump(ast.parse(source)) for source in sources)
     return hashlib.sha256(syntax.encode("utf-8")).hexdigest()
 
@@ -128,115 +134,43 @@ def recorded_steps(notebook: dict) -> dict[str, list[MemoryStep]]:
     return {"lstm": lstm, "gru": gru}
 
 
-def draw_gate_flow(axis, kind: str, steps: list[MemoryStep], frame: int) -> None:
+def draw_gate_flow(axis, kind: str, steps: list[MemoryStep], frame: int, *, progress=0.0) -> None:
     if kind not in {"lstm", "gru"} or not 0 <= frame < len(steps) * len(PHASES):
         raise ValueError("Choose a recorded LSTM/GRU flow frame.")
     index, phase = divmod(frame, len(PHASES))
-    step = steps[index]
-    axis.clear()
-    axis.set(xlim=(0, 1), ylim=(0, 1), facecolor=BACKGROUND)
-    axis.axis("off")
-    title = "LSTM: keep, write, then choose what to show" if kind == "lstm" else "GRU: reset the proposal, then keep or replace"
-    axis.text(0.5, 0.97, title, ha="center", va="top", fontsize=18, color=TEXT, weight="bold")
-    axis.text(0.5, 0.915, "Chosen scalar controls, not a trained music model. All displayed states are calculated.",
-              ha="center", fontsize=11, color=TEXT)
-    for position, event in enumerate(steps):
-        axis.text(0.19 + position * 0.12, 0.86, event.note, ha="center",
-                  fontsize=15, color=RESULT if position == index else "#94a3b8",
-                  weight="bold" if position == index else "normal")
-    axis.text(0.5, 0.805, f"Note {index + 1}/{len(steps)} | {PHASES[phase]}",
-              ha="center", color=RESULT, fontsize=14, weight="bold")
-
-    def box(x, y, label, value, color, active):
-        axis.add_patch(FancyBboxPatch(
-            (x - 0.085, y - 0.055), 0.17, 0.11, boxstyle="round,pad=0.01",
-            facecolor="#26364a" if active else BACKGROUND, edgecolor=color,
-            linewidth=3 if active else 1.2,
-        ))
-        axis.text(x, y + 0.018, label, ha="center", va="center", color=TEXT, fontsize=11)
-        axis.text(x, y - 0.022, f"{value:+.4f}", ha="center", va="center", color=color, fontsize=14)
-
-    def arrow(start, end, color):
-        axis.annotate("", xy=end, xytext=start, arrowprops=dict(arrowstyle="->", color=color, lw=2))
-
-    box(0.12, 0.68, "old cell c" if kind == "lstm" else "old hidden h", step.old, MEMORY, phase == 0)
-    box(0.35, 0.68, "KEEP f" if kind == "lstm" else "KEEP z", step.keep, CONTROL, phase == 1)
-    box(0.58, 0.68, "retained old", step.retained, MEMORY, phase == 2)
-    arrow((0.215, 0.68), (0.25, 0.68), MEMORY)
-    arrow((0.445, 0.68), (0.485, 0.68), MEMORY)
-
-    if kind == "lstm":
-        if step.show is None:
-            raise ValueError("An LSTM recording needs its output/show control.")
-        box(0.12, 0.43, "proposed content", step.proposal, WRITE, phase == 0)
-        box(0.35, 0.43, "WRITE i", step.write, CONTROL, phase == 1)
-        box(0.58, 0.43, "permitted new", step.written, WRITE, phase == 2)
-        arrow((0.215, 0.43), (0.25, 0.43), WRITE)
-        arrow((0.445, 0.43), (0.485, 0.43), WRITE)
-        box(0.85, 0.56, "new CELL c", step.carried, RESULT, phase == 3)
-        arrow((0.675, 0.68), (0.755, 0.58), MEMORY)
-        arrow((0.675, 0.43), (0.755, 0.54), WRITE)
-        axis.text(0.715, 0.555, "+", color=RESULT, fontsize=25, ha="center")
-        box(0.85, 0.29, "SHOW o", step.show, CONTROL, phase == 4)
-        box(0.57, 0.29, "exposed HIDDEN h", step.exposed, RESULT, phase == 4)
-        arrow((0.85, 0.495), (0.85, 0.355), RESULT)
-        arrow((0.755, 0.29), (0.665, 0.29), RESULT)
-        axis.text(0.91, 0.405, "tanh(c)", color=RESULT, fontsize=11, ha="center")
-        summary = (f"new cell = {step.retained:+.4f} + ({step.written:+.4f}) = {step.carried:+.4f}\n"
-                   f"exposed hidden = show {step.show:.2f} * tanh(cell) = {step.exposed:+.4f}")
-        boundary = "Carry BOTH c and h. Closing SHOW can hide c without erasing its stored value."
-    else:
-        if step.reset is None or step.input_proposal is None or step.memory_proposal is None:
-            raise ValueError("A GRU recording needs reset and both proposal contributions.")
-        box(0.12, 0.44, "input contribution", step.input_proposal, WRITE, phase == 0)
-        box(0.12, 0.24, "old-state mix", step.memory_proposal, MEMORY, phase == 0)
-        axis.plot([0.025, 0.012, 0.012, 0.025], [0.68, 0.68, 0.24, 0.24], color=MEMORY, linewidth=1.5)
-        arrow((0.012, 0.24), (0.025, 0.24), MEMORY)
-        box(0.35, 0.24, "RESET r", step.reset, CONTROL, phase == 1)
-        box(0.58, 0.39, "proposal n", step.proposal, WRITE, phase == 2)
-        arrow((0.215, 0.24), (0.25, 0.24), MEMORY)
-        arrow((0.445, 0.24), (0.485, 0.355), MEMORY)
-        arrow((0.215, 0.44), (0.485, 0.415), WRITE)
-        axis.text(0.45, 0.31, "+ then tanh", color=WRITE, fontsize=10, ha="center")
-        box(0.83, 0.39, "WRITTEN (1-z)*n", step.written, WRITE, phase == 2)
-        arrow((0.675, 0.39), (0.735, 0.39), WRITE)
-        axis.text(0.71, 0.47, f"write = {step.write:.2f}", color=CONTROL, fontsize=11, ha="center")
-        box(0.85, 0.68, "new HIDDEN h", step.carried, RESULT, phase in {3, 4})
-        arrow((0.675, 0.68), (0.755, 0.68), MEMORY)
-        arrow((0.83, 0.455), (0.85, 0.615), WRITE)
-        axis.text(0.705, 0.70, "+", color=RESULT, fontsize=23, ha="center")
-        summary = (f"proposal = tanh({step.input_proposal:+.3f} + "
-                   f"{step.reset:.2f} * {step.memory_proposal:+.3f}) = {step.proposal:+.4f}\n"
-                   f"new hidden = kept {step.retained:+.4f} + written {step.written:+.4f} = {step.carried:+.4f}")
-        boundary = "Carry ONE h. Reset acts on the proposal branch, not on the retained-old branch."
-    axis.text(0.04, 0.15, summary, color=TEXT, fontsize=12, linespacing=1.6, va="top")
-    axis.text(0.04, 0.028, boundary, color=RESULT, fontsize=11, weight="bold")
+    draw_scene(axis, scalar_scene(kind, steps[index]), phase, native=False, progress=progress,
+               note_position=f"note {index + 1}/{len(steps)}")
 
 
 def render_flows(notebook: dict) -> None:
     recordings = recorded_steps(notebook)
     source_hash = fingerprint(notebook)
     for kind, steps in recordings.items():
-        figure, axis = plt.subplots(figsize=(14, 8))
+        figure, axis = plt.subplots(figsize=(12.8, 8))
         figure.patch.set_facecolor(BACKGROUND)
         figure.subplots_adjust(left=0.02, right=0.98, top=0.95, bottom=0.025)
-        draw_gate_flow(axis, kind, steps, 2 * len(PHASES) + 3)
+        draw_scene(axis, scalar_scene(kind, steps[2]), None, native=False, note_position="note 3/6")
         prefix = HERE / "images" / f"01a-{kind}-gate-flow"
         figure.savefig(prefix.with_suffix(".png"), dpi=120, facecolor=BACKGROUND, metadata={
             "SourceFingerprint": source_hash, "Kind": kind.upper(),
             "TraceOrigin": "chosen controls; actual notebook state arithmetic; not fitted architecture scores",
         })
+        figure.savefig(prefix.with_suffix(".svg"), facecolor=BACKGROUND)
         animation = FuncAnimation(
-            figure, lambda frame, kind=kind, steps=steps, axis=axis: draw_gate_flow(axis, kind, steps, frame),
-            frames=len(steps) * len(PHASES), interval=1400, repeat=False,
+            figure, lambda frame, kind=kind, steps=steps, axis=axis: draw_gate_flow(
+                axis, kind, steps, frame // MOTION_FRAMES,
+                progress=(frame % MOTION_FRAMES) / (MOTION_FRAMES - 1),
+            ),
+            frames=len(steps) * len(PHASES) * MOTION_FRAMES, interval=INTERVAL_MS, repeat=False,
         )
         plt.close(figure)
         prefix.with_suffix(".html").write_text(responsive_animation_html(animation), encoding="utf-8")
-        animation.save(prefix.with_suffix(".gif"), writer="pillow", fps=1000 / 1400)
+        animation.save(prefix.with_suffix(".gif"), writer="pillow", fps=1000 / INTERVAL_MS)
         metadata = {
             "SourceFingerprint": source_hash, "Kind": kind.upper(), "Notes": [step.note for step in steps],
             "Phases": list(PHASES), "StateCount": 2 if kind == "lstm" else 1,
             "FinalCarried": steps[-1].carried, "FinalExposed": steps[-1].exposed,
+            "MotionFramesPerPhase": MOTION_FRAMES,
             "TraceOrigin": "chosen controls; actual notebook arithmetic; not trained gates",
         }
         with Image.open(prefix.with_suffix(".gif")) as image:
@@ -270,6 +204,9 @@ def render_evidence_charts(notebook: dict) -> None:
         plt.close(figure)
 
     with plt.rc_context({
+        "font.size": 15, "axes.titlesize": 17, "axes.labelsize": 15,
+        "xtick.labelsize": 13, "ytick.labelsize": 13, "legend.fontsize": 13,
+        "axes.titlepad": 14, "axes.labelpad": 10,
         "figure.facecolor": "#fffaf1", "axes.facecolor": "#fffaf1", "text.color": "#17324d",
         "axes.labelcolor": "#17324d", "xtick.color": "#17324d", "ytick.color": "#17324d",
     }):
@@ -331,31 +268,28 @@ def recorded_foundation_layer(notebook: dict):
 
 def render_foundation_layer(notebook: dict) -> None:
     step = recorded_foundation_layer(notebook)
-    figure, axis = layer_figure()
+    figure, axis = plt.subplots(figsize=(12.8, 8))
+    figure.patch.set_facecolor(BACKGROUND)
+    figure.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.025)
+    scene = gru_scene(step)
 
-    def draw(phase):
-        draw_layer(axis, step, phase, input_label="A3 profile", old_label="after D3",
-                   new_label="h_t", output_use="to caller / next layer")
-        for text in list(figure.texts):
-            text.remove()
-        figure.text(0.5, 0.985, "ONE token through ONE GRU layer", color=TEXT, ha="center",
-                    va="top", fontsize=19, weight="bold")
-        figure.text(0.5, 0.935, "Read A3 after D3 | actual initialized GRUCell(2, 2), not fitted music",
-                    color=TEXT, ha="center", fontsize=12)
-        figure.text(0.5, 0.89, f"{phase + 1}/{len(LAYER_PHASES)}  {LAYER_PHASES[phase]}",
-                    color=RESULT, ha="center", fontsize=13)
+    def draw(frame):
+        draw_scene(axis, scene, frame // MOTION_FRAMES, native=True,
+                   progress=(frame % MOTION_FRAMES) / (MOTION_FRAMES - 1))
 
     prefix = HERE / "images" / "01a-gru-token-layer-flow"
-    draw(len(LAYER_PHASES) - 1)
+    draw_scene(axis, scene, None, native=True)
     figure.savefig(prefix.with_suffix(".png"), dpi=120, facecolor=BACKGROUND, metadata={
         "SourceFingerprint": fingerprint(notebook), "Input": "A3", "InputWidth": "2",
         "HiddenWidth": "2", "OutputEqualsCarried": str(torch.equal(step.output, step.carried)),
         "Output": json.dumps(step.output.tolist()), "Carried": json.dumps(step.carried.tolist()),
     })
-    animation = FuncAnimation(figure, draw, frames=len(LAYER_PHASES), interval=1800, repeat=False)
+    figure.savefig(prefix.with_suffix(".svg"), facecolor=BACKGROUND)
+    animation = FuncAnimation(figure, draw, frames=len(LAYER_PHASES) * MOTION_FRAMES,
+                              interval=INTERVAL_MS, repeat=False)
     plt.close(figure)
     prefix.with_suffix(".html").write_text(responsive_animation_html(animation), encoding="utf-8")
-    animation.save(prefix.with_suffix(".gif"), writer="pillow", fps=1000 / 1800)
+    animation.save(prefix.with_suffix(".gif"), writer="pillow", fps=1000 / INTERVAL_MS)
     print(f"Saved {prefix.name}: {len(LAYER_PHASES)} stages; output and next-token state are identical.")
 
 

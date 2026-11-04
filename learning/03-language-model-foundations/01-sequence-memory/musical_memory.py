@@ -394,10 +394,10 @@ def echo_audio_panel(comparison: EchoComparison) -> HTML:
 def draw_music_frame(figure, comparison, frame):
     figure.clear()
     figure.set_facecolor(PAPER)
-    figure.suptitle(frame.title, color=INK, fontsize=18, weight="bold", y=0.97)
+    figure.suptitle(frame.title, color=INK, fontsize=23, weight="bold", y=0.985)
     from textwrap import fill
-    figure.text(0.04, 0.84, fill(frame.message, 115), color=INK, fontsize=12, va="top")
-    keyboard = figure.add_axes((0.055, 0.42, 0.39, 0.31))
+    figure.text(0.04, 0.925, fill(frame.message, 90), color=INK, fontsize=18, va="top")
+    keyboard = figure.add_axes((0.055, 0.63, 0.89, 0.17))
     keyboard.set(xlim=(0, 8), ylim=(0, 1.45))
     keyboard.axis("off")
     white_names = ("D3", "E3", "F3", "G3", "A3", "B3", "C4", "D4")
@@ -406,14 +406,14 @@ def draw_music_frame(figure, comparison, frame):
             (index, 0), 0.96, 1, facecolor="#8cdb9b" if note == frame.note else "white",
             edgecolor=INK, linewidth=1.5,
         ))
-        keyboard.text(index + 0.48, 0.1, note, ha="center", color=INK, fontsize=11)
+        keyboard.text(index + 0.48, 0.1, note, ha="center", color=INK, fontsize=18)
     for position in (1, 3, 4, 5, 7):
         keyboard.add_patch(Rectangle((position - 0.26, 0.48), 0.48, 0.52, facecolor=INK))
-    keyboard.text(0, 1.23, f"Sound: {frame.note or 'pause / PLAY marker (not a note)'}", color=INK, fontsize=12)
+    keyboard.text(0, 1.23, f"Sound: {frame.note or 'pause / PLAY marker (not a note)'}", color=INK, fontsize=18)
     if frame.note is not None:
         frequency = 440 * 2 ** ((MIDI[frame.note] - 69) / 12)
-        keyboard.text(0, -0.18, f"Synthesized tone: {frequency:.2f} Hz", color=INK, fontsize=11)
-    state_axis = figure.add_axes((0.59, 0.41, 0.36, 0.29))
+        keyboard.text(0, -0.30, f"Synthesized tone: {frequency:.2f} Hz", color=INK, fontsize=18)
+    state_axis = figure.add_axes((0.20, 0.26, 0.74, 0.28))
     bound = 1.0
     if frame.step is not None:
         step = frame.step
@@ -430,29 +430,29 @@ def draw_music_frame(figure, comparison, frame):
         state_axis.imshow(torch.cat(rows).numpy(), aspect="auto", cmap="coolwarm", vmin=-bound, vmax=bound)
         state_axis.set_yticks(range(len(labels)), labels)
         state_axis.set_xticks(range(12), range(12))
-        state_axis.set_title(title, color=INK, fontsize=10)
-        state_axis.tick_params(labelsize=9, colors=INK)
+        state_axis.set_title(title, color=INK, fontsize=18, pad=18)
+        state_axis.tick_params(labelsize=18, colors=INK)
     else:
         state_axis.axis("off")
         state_axis.text(0, 0.9, "Opening 1: D3 A3 D4\nOpening 2: D4 A3 D3\n\nSame 20 distracting notes.\nDifferent three-note echoes.",
-                        color=INK, fontsize=15, va="top", linespacing=1.5)
-    figure.text(0.055, 0.29, f"Expected echo {frame.case + 1}: "
+                        color=INK, fontsize=20, va="top", linespacing=1.5)
+    figure.text(0.055, 0.20, f"Expected echo {frame.case + 1}: "
                 + " ".join(NOTES[token] for token in comparison.answers[frame.case].tolist()),
-                color=INK, fontsize=14, weight="bold")
+                color=INK, fontsize=18, weight="bold")
     for index, mode in enumerate(MODES):
         trace = comparison.traces[mode][frame.case]
         correct = trace.generated == tuple(comparison.answers[frame.case].tolist())
         label = " ".join(NOTES[token] for token in trace.generated)
-        figure.text(0.055 + (index % 2) * 0.47, 0.21 - (index // 2) * 0.075,
+        figure.text(0.055 + (index % 2) * 0.47, 0.15 - (index // 2) * 0.045,
                     f"{mode}: {label}  [{'match' if correct else 'wrong'}]",
-                    color=COLORS[index], fontsize=12,
+                    color=COLORS[index], fontsize=18,
                     weight="bold" if frame.mode == mode else "normal")
-    figure.text(0.055, 0.035, "Piano = input while reading; actual predicted note while generating. "
-                f"Blue -{bound:.1f} / white 0 / red +{bound:.1f}. Gates stay in [0,1].", color=INK, fontsize=10)
+    figure.text(0.055, 0.030, "Piano = inputs while reading, predictions while generating.\n"
+                f"Blue -{bound:.1f} / white 0 / red +{bound:.1f}. Gates stay in [0,1].", color=INK, fontsize=18)
 
 
 def scorecard_figure(comparison):
-    figure, axes = plt.subplots(2, 1, figsize=(12, 7), gridspec_kw={"height_ratios": [1.4, 1]})
+    figure, axes = plt.subplots(2, 1, figsize=(12.8, 8), gridspec_kw={"height_ratios": [1.4, 1]})
     figure.set_facecolor(PAPER)
     rows = []
     for mode in MODES:
@@ -461,31 +461,35 @@ def scorecard_figure(comparison):
         whole = sum(trace.generated == tuple(comparison.answers[index].tolist()) for index, trace in enumerate(traces))
         rows.append([" ".join(NOTES[token] for token in trace.generated) for trace in traces] + [f"{first}/2", f"{whole}/2"])
     axes[0].axis("off")
-    axes[0].set_title(f"{comparison.kind}: actual free-running guesses", color=INK, fontsize=17, pad=20)
+    axes[0].set_title(f"{comparison.kind}: actual free-running guesses", color=INK, fontsize=23, pad=20)
     table = axes[0].table(
         cellText=rows, rowLabels=MODES,
         colLabels=["Echo D3 A3 D4", "Echo D4 A3 D3", "First note", "Whole echo"],
-        loc="center", cellLoc="center", colWidths=[0.28, 0.28, 0.16, 0.16],
+        loc="center", cellLoc="center", colWidths=[0.25, 0.25, 0.19, 0.19],
     )
     table.auto_set_font_size(False)
-    table.set_fontsize(11)
-    table.scale(1, 2)
+    table.set_fontsize(18)
+    table.scale(1, 2.3)
     for cell in table.get_celld().values():
         cell.set_text_props(color=INK)
         cell.set_facecolor(PAPER)
     axes[1].plot(range(1, len(comparison.losses) + 1), comparison.losses, color=COLORS[2])
     axes[1].set(xlabel="Optimizer step (both examples in every batch)", ylabel="Practice loss",
-                title="Only training uses correct previous answers; every echo above uses its own guesses")
+                title="Training uses correct previous inputs; echoes use their own guesses")
+    axes[1].tick_params(labelsize=18)
+    axes[1].xaxis.label.set_size(18)
+    axes[1].yaxis.label.set_size(18)
+    axes[1].title.set_size(18)
     axes[1].set_facecolor(PAPER)
     figure.text(0.05, 0.025, "Fitted recall of two openings, not held-out music quality. "
-                "No carry and opening erased use exactly the trained weights.", color=INK, fontsize=11)
-    figure.subplots_adjust(left=0.22, right=0.97, top=0.89, bottom=0.16, hspace=0.6)
+                "\nNo carry and opening erased use exactly the trained weights.", color=INK, fontsize=18)
+    figure.subplots_adjust(left=0.22, right=0.97, top=0.89, bottom=0.20, hspace=0.6)
     return figure
 
 
 def render_replay(comparison):
     frames = music_frames(comparison)
-    figure = plt.figure(figsize=(12, 7))
+    figure = plt.figure(figsize=(12.8, 10.5))
     pictures = []
     try:
         for frame in frames:
@@ -556,7 +560,8 @@ Sound is synthesized locally, not a piano recording.</p>
 
 def source_fingerprint():
     return hashlib.sha256(
-        Path(__file__).read_bytes() + (HERE / "lstm_layer_flow.py").read_bytes(),
+        Path(__file__).read_bytes() + (HERE / "lstm_layer_flow.py").read_bytes()
+        + (HERE / "memory_visuals.py").read_bytes(),
     ).hexdigest()
 
 

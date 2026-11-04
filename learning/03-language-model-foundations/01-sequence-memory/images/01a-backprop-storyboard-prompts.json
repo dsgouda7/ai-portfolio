@@ -1,0 +1,11 @@
+[
+  {
+    "filename": "01a-backprop-saved-cards.png",
+    "semantic_anchor": "A wrong ending sends training back through the saved cards",
+    "aspect_ratio": "16:9",
+    "prompt": "Create a sparse, accurate educational storyboard on warm cream paper, landscape 16:9. Navy text, teal notecards, orange feedback, purple shared-weight recipe. Title: 'Keep the cards. Teach the reader.' Exactly TWO spacious horizontal panels. TOP panel labelled '1. Read forward'. Show three teal cards left to right: 'D3 -> h1', 'A3 -> h2', 'D4 -> h3'. Navy arrows connect them. To the right, one orange box 'Wrong guess for note 4'. Below this row say 'Training saves the cards and their calculations'. BOTTOM panel labelled '2. Inspect the saved cards'. Repeat the three teal cards in the SAME left-to-right positions, now labelled only 'h1', 'h2', 'h3'; these are saved copies, not new calculations. Orange arrows point LEFT from the wrong-guess side to h3, then h2, then h1. Under the bottom row, a single purple box reads 'Collect feedback. Update shared weights ONCE.' Footer: 'The reader carries one card. Training can inspect earlier cards.' Make the direction of the arrows unmistakable. Large simple letters and generous whitespace. Small musical-note doodles in the margins only. This is a conceptual storyboard, not a measurement or a literal software architecture.",
+    "acceptance_criteria": "Two panels only; forward order D3, A3, D4 with h1, h2, h3; backward order h3, h2, h1; saved earlier cards visibly available during training; a single shared-weight update after feedback is collected; all labels legible at notebook width.",
+    "prohibited_content": "Changing notes during backward, creating new hidden states during backward, separate trainable weights per position, an optimizer update at every card, gates or attention, equations, fabricated measurements, tiny text, logos, copyrighted characters.",
+    "alt_text": "Reading D3, A3 and D4 creates h1, h2 and h3. After a wrong note-4 guess, training inspects those saved cards in reverse and collects feedback before updating the shared weights once."
+  }
+]
