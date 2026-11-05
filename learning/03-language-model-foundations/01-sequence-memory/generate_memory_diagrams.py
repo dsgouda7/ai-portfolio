@@ -50,7 +50,7 @@ def arrow(ax, start, end, text=None, color=INK):
 
 def save(fig, name):
     DIRECTORY.mkdir(exist_ok=True)
-    fig.savefig(DIRECTORY / name, dpi=110, facecolor=PAPER)
+    fig.savefig(DIRECTORY / name, dpi=110, facecolor=fig.get_facecolor())
     plt.close(fig)
     print(name)
 
@@ -77,24 +77,14 @@ def order_story():
 
 
 def notecard_story():
-    fig, ax = canvas(
-        "One reader. A changing notecard.",
-        "The three boxes below are three uses of the SAME update rule.",
+    from backprop_memory_flow import record_trace
+    from sequence_studio import draw_studio, studio_figure
+
+    fig, ax = studio_figure()
+    draw_studio(
+        ax, record_trace(), stage=2, overview=True,
+        caption="Every read produces h: carry it onward and expose it to the shared note head.",
     )
-    positions = [1.1, 6.0, 10.9]
-    notes = ["D3", "A3", "D4"]
-    for index, (x, note) in enumerate(zip(positions, notes)):
-        card(ax, x + 0.7, 6.25, 2.4, 0.8, f"Read {note}", ORANGE)
-        arrow(ax, (x + 1.9, 6.15), (x + 1.9, 5.55))
-        card(ax, x, 4.25, 3.8, 1.2, "Same update rule\nsame weights", PURPLE)
-        arrow(ax, (x + 1.9, 4.15), (x + 1.9, 3.55))
-        card(ax, x + 0.15, 2.45, 3.5, 0.95, f"Notecard after {note}")
-        if index < 2:
-            arrow(ax, (x + 3.7, 2.95), (positions[index + 1] - 0.1, 4.65))
-    label(ax, 0.45, 4.85, "blank\ncard", size=12)
-    arrow(ax, (0.5, 4.8), (0.95, 4.8))
-    label(ax, 8, 1.45, "Current note + old card -> fresh card. Then pass that card onward.", size=20, weight="bold")
-    label(ax, 8, 0.55, "The card is a short row of numbers, not stored English. New phrases start with a fresh blank card.", size=14)
     save(fig, "01a-02-one-reader-changing-card.png")
 
 

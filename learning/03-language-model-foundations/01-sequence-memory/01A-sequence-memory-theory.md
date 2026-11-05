@@ -23,6 +23,14 @@ card, combine them, then squeeze the result into a new card. The recipe stays
 fixed while reading a phrase; the temporary card changes. Same recipe doesn't
 mean equal influence: each note arrives with different numbers and history.
 
+D3 pairs with blank h0 to make h1. A3 pairs with incoming h1 to make h2.
+Keep the note and incoming card beside the new card, not just the new card alone.
+
+The new h has two jobs: carry into the next read, and expose its values to a
+shared note-prediction head. Here the cell's output and carried hidden state
+are the **same h**, not two unrelated vectors. The head makes note scores:
+h1 predicts note two, h2 predicts note three, h3 predicts note four.
+
 An old note survives only through the cards it helped make. Each new note
 rewrites the same small summary, not a separate slot for each past position.
 Its effect can weaken, mix with newer clues, or be overwritten. Farther-back
@@ -33,8 +41,10 @@ Forgetting isn't inevitable, but different final cards don't prove distant recal
 
 ## 3. Reading goes forward; teaching comes back
 
-Read D3, A3, D4 to make h1, h2, h3. Use h3 to predict note four.
-If the guess is wrong, don't update weights yet.
+Read D3, A3, D4 to make h1, h2, h3 and a next-note output at each read.
+The initialized head guesses D3, A3, A3. This replay grades only note four
+against D3; the earlier guesses are visible, but aren't additional losses.
+When that last guess is wrong, don't update weights yet.
 
 Training kept the earlier cards and their calculations. It inspects h3,
 then h2 that helped create h3, then h1 that helped create h2:

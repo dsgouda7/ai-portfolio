@@ -14,6 +14,7 @@ Follow an early clue through increasingly demanding memory tasks.
 
 - [Illustrated stories](images) — Static sketches with the same note names, cards, colors, and plain-English distinctions used in the notebooks.
 - [Saved-card backprop replay](images/01a-backprop-saved-cards.html) · [MAI storyboard](images/01a-backprop-saved-cards.png) · [recorder/exporter](backprop_memory_flow.py) · [checks](test_backprop_memory_flow.py) — Inspect h3, h2, h1 before one shared-weight update; contrast full feedback with a detach boundary that preserves forward cards.
+- [Cinematic music studio](sequence_studio.py) — Show every read's carried h and exposed h-to-head prediction branch with real initialized next-note guesses, piano-key inputs and flowing memory ribbons.
 - [Local diagram generator](generate_memory_diagrams.py) — Rebuild the sketches without a model or network; measured outputs still come from executing the lessons.
 - [LSTM/GRU gate-flow generator](memory_gate_flows.py) — Rebuild matching animations, controllable replays and static captures from the lesson's actual recorded state arithmetic.
 - [Gate-flow checks](test_memory_gate_flows.py) — Verify carry/replacement/exposure differences, reset-route consequences, GRUCell parity and source-aware capture contracts.

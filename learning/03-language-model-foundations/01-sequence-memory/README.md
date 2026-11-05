@@ -30,7 +30,16 @@ Essential explanations remain visible without Mermaid or JavaScript support.
 
 Section 2 now opens the training trail explicitly: create h1, h2, h3, make
 a wrong note-four guess, inspect those saved cards in reverse, then update
-the shared weights once. Its [MAI storyboard](images/01a-backprop-saved-cards.png)
+the shared weights once. Every step keeps its note and incoming state visible:
+D3 + h0 makes h1, A3 + h1 makes h2, and D4 + h2 makes h3; h0 starts blank.
+The same input pairs stay beside the saved cards during backward inspection.
+Every produced h now has two visible exits: carry it into the next read, and
+expose that same h to a shared note head. The head scores the next note at
+every step, not only the last. The replay shows real initialized guesses
+D3, A3, A3 for notes two, three, four; only note four's loss is traced.
+The [cinematic studio renderer](sequence_studio.py) uses piano-key inputs,
+folded memory cards, luminous carry ribbons and separate prediction beams.
+Its [MAI storyboard](images/01a-backprop-saved-cards.png)
 is paired with a [measured local replay](images/01a-backprop-saved-cards.html).
 The replay reuses the notebook's two-value recurrence and a hand-picked
 prediction head. Detaching after h1 preserves all forward cards and the guess
