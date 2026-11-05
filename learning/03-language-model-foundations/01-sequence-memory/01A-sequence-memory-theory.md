@@ -85,7 +85,29 @@ must be learned. First open the LSTM, then the GRU.
 
 ## 5. Keep some, write some, show some
 
-An **LSTM** carries two vectors: cell memory **c** and exposed hidden **h**.
+The **cell state c** is a fixed-width row of memory numbers carried between
+LSTM steps. It is temporary activation data for the current phrase, not trained
+weights or a transcript. Its width counts features, not past note positions.
+
+In one deliberately chosen coordinate, write +0.8 for a D3 opening or -0.8
+for D4. Later A3 inputs arrive, but KEEP=1 and WRITE=0 preserve the number.
+The opening survives as a current numeric value, not an archived note.
+Overwrite that coordinate at the final A3 and its distinction disappears.
+This is a hand-designed storage example, not a claim that a trained neuron
+has that meaning. Real training learns useful patterns across the vector.
+
+Our plain RNN carried one h. An **LSTM** carries a pair with different jobs:
+
+- **Cell state c:** the contents kept and edited through the memory lane.
+- **Hidden state h:** a squashed, gated view of the new c. The note head reads
+  it now; the next step also uses it, with the next input, to choose controls.
+
+Keep/add updates c without squashing the whole memory after every write.
+Squash/SHOW makes h. Keeping contents and exposing a view are different jobs.
+
+Neither is an independent note transcript. Before A3, c1 supplies old contents;
+A3 plus h1 choose controls and propose new content. The update makes c2, then SHOW exposes
+h2. **Both h2 and c2 travel to D4.** Only h2 feeds the note head directly.
 
 | Part | Job |
 |---|---|
@@ -97,6 +119,11 @@ An **LSTM** carries two vectors: cell memory **c** and exposed hidden **h**.
 Controls are dimmers between zero and one. Memory and proposal values can be
 signed. Retained old memory plus permitted writing becomes new c; SHOW exposes
 part of its squashed view. Closing only SHOW can hide c without erasing it.
+
+Closing SHOW can make h zero while c stays unchanged. A zero h is therefore
+not necessarily a blank LSTM. In the actual A3 probe, changing only old c
+leaves the controls unchanged but changes new c/h; changing only old h changes
+the controls. c supplies what is edited; h helps choose how to edit it.
 
 First choose controls by hand. The zero-SHOW probe leaves nonzero c intact.
 A chosen 95% carry route passes about 0.36 of feedback after twenty transitions,

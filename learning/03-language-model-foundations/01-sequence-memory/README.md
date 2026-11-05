@@ -50,7 +50,27 @@ All lesson visuals are embedded in 01A, including the full-resolution MAI
 storyboard, PNG/GIF fallbacks, SVG companions, and all seven HTML players.
 The musical players embed their WAV recordings; the notebook's audio links
 jump to those players rather than requiring separate files. The notebook has
-a 55 MB limit to retain these original assets without reducing their quality.
+a 65 MB limit to retain these original assets and the LSTM role illustrations without reducing their quality.
+
+The LSTM section first explains **c as a fixed-width numeric workspace**,
+not weights or a transcript. Its [memory timeline](images/01a-lstm-cell-vs-hidden.png)
+shows one deliberately chosen coordinate being written, kept through later
+notes, and overwritten. That toy coordinate's meaning is hand-picked; real
+training learns distributed numerical patterns. Only then does the lesson
+introduce h as the gated readout and next-step control context.
+The [complete A3 step](images/01a-lstm-two-state-step.png) shows the actual
+keep/add arithmetic and **both states** travelling onward, with only h
+feeding the note head directly. The
+[measured role probe](lstm_state_roles.py) holds one incoming vector fixed
+while changing the other, and closes only SHOW to demonstrate unchanged c
+with zero h. The [numeric comparison](images/01a-lstm-state-roles-trace.png)
+contains actual LSTMCell values, not generated measurements.
+All three LSTM figures share the RNN studio's navy backdrop, piano-key inputs,
+folded cards, soft carry ribbons and circular controls. Warm paper makes the
+c numbers prominent; cyan marks h, and violet separates the note-head branch.
+The music-studio cues stay around the mechanism, without scenery competing
+with labels. Regenerate them locally with [lstm_state_roles.py](lstm_state_roles.py);
+the measured labels stay exact and no model-service call is needed.
 
 01A references saved feedback/state charts and LSTM/GRU gate-flow animations,
 with embedded static fallbacks and embedded controllable HTML replays.
@@ -160,12 +180,14 @@ Rebuild the measured gate-flow captures from the notebook's recorded updates:
 ```powershell
 .\.venv\Scripts\python.exe .\memory_gate_flows.py
 .\.venv\Scripts\python.exe .\backprop_memory_flow.py
+.\.venv\Scripts\python.exe .\lstm_state_roles.py
 .\.venv\Scripts\python.exe .\lstm_layer_flow.py
 .\.venv\Scripts\python.exe .\musical_memory.py
 .\.venv\Scripts\python.exe -m unittest test_memory_gate_flows test_musical_memory test_gru_layer_flow test_lstm_layer_flow -v
 .\.venv\Scripts\python.exe -m unittest test_memory_visuals -v
 .\.venv\Scripts\python.exe -m unittest test_notebook_replays -v
 .\.venv\Scripts\python.exe -m unittest test_backprop_memory_flow -v
+.\.venv\Scripts\python.exe -m unittest test_lstm_state_roles -v
 ```
 
 The gate-flow generator saves feedback-decay, LSTM-state and retention-comparison

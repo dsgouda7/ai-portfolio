@@ -24,7 +24,7 @@ REPLAY_FILES = (
     "01a-musical-gru-memory.html",
 )
 EMBED_VERSION = 1
-NOTEBOOK_SIZE_LIMIT = 55_000_000
+NOTEBOOK_SIZE_LIMIT = 65_000_000
 PNG_URL = re.compile(r"data:image/png;base64,([A-Za-z0-9+/=\\\r\n]+)")
 IMAGE_LINK = re.compile(r"(!?)\[([^\]\n]+)\]\((?:images/|attachment:)([^)\n]+)\)")
 IMAGE_MIMES = {
