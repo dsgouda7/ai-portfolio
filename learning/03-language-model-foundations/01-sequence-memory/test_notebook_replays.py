@@ -17,7 +17,8 @@ import numpy as np
 from PIL import Image
 
 from notebook_replays import (
-    NOTEBOOK_SIZE_LIMIT, REPLAY_FILES, _packed_html, embed_notebook_images,
+    ERROR_FEEDBACK_FILE, NATIVE_PLAYER_MARKERS, NOTEBOOK_SIZE_LIMIT, REPLAY_FILES,
+    TANH_TRACKER_FILE, _packed_html, embed_notebook_images,
     refresh_embedded_replays, saved_replay,
 )
 
@@ -84,6 +85,89 @@ class NotebookReplayTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "no embedded PNG"):
             _packed_html(b"<p>not a replay</p>")
 
+    def test_native_tanh_tracker_is_embedded_without_png_frames_or_external_sources(self):
+        result = saved_replay(TANH_TRACKER_FILE).data
+        document = unescape(re.search(r'srcdoc="([^"]+)"', result)[1])
+        self.assertIn('sandbox="allow-scripts"', result)
+        self.assertNotIn("allow-same-origin", result)
+        self.assertIn("Math.tanh", document)
+        self.assertIn('id="input-slider"', document)
+        self.assertIn('id="input-number"', document)
+        media = MediaParser()
+        media.feed(document)
+        self.assertEqual(media.sources, [])
+        with TemporaryDirectory() as directory:
+            (Path(directory) / TANH_TRACKER_FILE).write_text("<p>not the tracker</p>", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "interactive player"):
+                saved_replay(TANH_TRACKER_FILE, images_directory=Path(directory))
+
+    def test_tracker_refresh_preserves_empty_source_and_refuses_added_code(self):
+        display = {
+            "cell_type": "code", "source": [], "metadata": {"saved_replay": {"file": TANH_TRACKER_FILE}},
+            "outputs": [], "execution_count": None,
+        }
+        book = {"cells": [display]}
+        refresh_embedded_replays(book)
+        self.assertEqual(display["source"], [])
+        self.assertEqual(len(display["outputs"]), 1)
+        snapshot = deepcopy(book)
+        refresh_embedded_replays(book)
+        self.assertEqual(book, snapshot)
+        display["source"] = ["print('keep my code')"]
+        with self.assertRaisesRegex(ValueError, "display cell changed"):
+            refresh_embedded_replays(book)
+
+    def test_error_feedback_tracker_is_self_contained_and_code_free(self):
+        result = saved_replay(ERROR_FEEDBACK_FILE).data
+        document = unescape(re.search(r'srcdoc="([^"]+)"', result)[1])
+        self.assertIn('id="weight-scale"', document)
+        self.assertIn('id="preset-vanishing"', document)
+        self.assertIn('id="preset-exploding"', document)
+        self.assertIn('id="writing-weight"', document)
+        self.assertIn('id="output-value"', document)
+        self.assertIn('id="writing-gradient"', document)
+        self.assertNotIn('id="prediction-slider"', document)
+        self.assertIn('id="recorded-cases"', document)
+        media = MediaParser()
+        media.feed(document)
+        self.assertEqual(media.sources, [])
+        display = {
+            "cell_type": "markdown", "source": [], "metadata": {"saved_replay": {"file": ERROR_FEEDBACK_FILE}},
+        }
+        refresh_embedded_replays({"cells": [display]})
+        self.assertEqual(len(display["source"]), 1)
+        self.assertNotIn("\n", display["source"][0])
+        self.assertNotIn("outputs", display)
+        self.assertIn('data-saved-replay=', display["source"][0])
+        self.assertEqual(unescape(re.search(r'srcdoc="([^"]+)"', display["source"][0])[1]), document)
+
+    def test_markdown_player_refresh_is_idempotent_and_preserves_user_edits(self):
+        display = {
+            "cell_type": "markdown", "source": [], "metadata": {"saved_replay": {"file": ERROR_FEEDBACK_FILE}},
+        }
+        book = {"cells": [display]}
+        refresh_embedded_replays(book)
+        snapshot = deepcopy(book)
+        refresh_embedded_replays(book)
+        self.assertEqual(book, snapshot)
+        display["source"] = [display["source"][0] + "My edited caption"]
+        with self.assertRaisesRegex(ValueError, "Markdown player changed"):
+            refresh_embedded_replays(book)
+
+    def test_cached_player_with_old_height_is_refreshed(self):
+        display = {
+            "cell_type": "code", "source": [], "metadata": {"saved_replay": {"file": ERROR_FEEDBACK_FILE}},
+            "outputs": [], "execution_count": None,
+        }
+        book = {"cells": [display]}
+        refresh_embedded_replays(book)
+        snapshot = deepcopy(book)
+        old_html = display["outputs"][0]["data"]["text/html"].replace("height:760px", "height:960px")
+        display["outputs"][0]["data"]["text/html"] = old_html
+        display["metadata"]["saved_replay"]["output_sha256"] = hashlib.sha256(old_html.encode()).hexdigest()
+        refresh_embedded_replays(book)
+        self.assertEqual(book, snapshot)
+
     def test_musical_frame_payload_and_clock_survive_lossless_packaging(self):
         with TemporaryDirectory() as directory:
             pixels, path = self.fixture(Path(directory))
@@ -123,6 +207,22 @@ class NotebookReplayTests(unittest.TestCase):
             refresh_embedded_replays(book, images_directory=path.parent)
             self.assertEqual(book, snapshot)
 
+    def test_refresh_accepts_valid_html_stored_as_lines_without_replacing_the_output(self):
+        with TemporaryDirectory() as directory:
+            _, path = self.fixture(Path(directory))
+            display = {
+                "cell_type": "code", "source": [f'saved_replay("{path.name}")'],
+                "metadata": {"saved_replay": {"file": path.name}},
+                "outputs": [], "execution_count": None,
+            }
+            book = {"cells": [display]}
+            refresh_embedded_replays(book, images_directory=path.parent)
+            html = display["outputs"][0]["data"]["text/html"]
+            display["outputs"][0]["data"]["text/html"] = html.splitlines(keepends=True)
+            snapshot = deepcopy(book)
+            refresh_embedded_replays(book, images_directory=path.parent)
+            self.assertEqual(book, snapshot)
+
     def test_notebook_has_all_saved_players_with_persistent_html_outputs(self):
         book = json.loads((HERE / "01A-sequence-memory-theory.ipynb").read_text(encoding="utf-8"))
         cells = [cell for cell in book["cells"] if "saved_replay" in cell.get("metadata", {})]
@@ -130,9 +230,15 @@ class NotebookReplayTests(unittest.TestCase):
         self.assertEqual(len(cells), len(REPLAY_FILES))
         for cell in cells:
             filename = cell["metadata"]["saved_replay"]["file"]
-            self.assertEqual("".join(cell["source"]), f'saved_replay("{filename}")')
-            self.assertEqual(len(cell["outputs"]), 1)
-            html = cell["outputs"][0]["data"]["text/html"]
+            if filename in NATIVE_PLAYER_MARKERS:
+                self.assertEqual(cell["cell_type"], "markdown")
+                self.assertNotIn("outputs", cell)
+                self.assertNotIn("execution_count", cell)
+                html = "".join(cell["source"])
+            else:
+                self.assertEqual("".join(cell["source"]), f'saved_replay("{filename}")')
+                self.assertEqual(len(cell["outputs"]), 1)
+                html = "".join(cell["outputs"][0]["data"]["text/html"])
             self.assertIn('srcdoc="', html)
             self.assertIn(f'data-saved-replay="{filename}"', html)
         self.assertLess((HERE / "01A-sequence-memory-theory.ipynb").stat().st_size, NOTEBOOK_SIZE_LIMIT)
@@ -182,9 +288,11 @@ class NotebookReplayTests(unittest.TestCase):
                 item for item in cell.get("outputs", []) if "text/html" in item.get("data", {})
             ]
             if marker:
-                self.assertEqual(len(outputs), 1)
-            for output in outputs:
-                document = "".join(output["data"]["text/html"])
+                self.assertEqual(len(outputs), 0 if cell["cell_type"] == "markdown" else 1)
+            documents = ["".join(output["data"]["text/html"]) for output in outputs]
+            if marker and cell["cell_type"] == "markdown":
+                documents.append("".join(cell["source"]))
+            for document in documents:
                 frame = re.search(r'srcdoc="([^"]+)"', document)
                 if frame:
                     document = unescape(frame[1])

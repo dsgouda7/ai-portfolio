@@ -3,7 +3,9 @@
 import json
 from pathlib import Path
 import shutil
+import sys
 from tempfile import TemporaryDirectory
+from types import ModuleType
 import unittest
 from unittest.mock import patch
 
@@ -25,6 +27,25 @@ class BackpropMemoryFlowTests(unittest.TestCase):
     def setUpClass(cls):
         cls.full = record_trace()
         cls.truncated = record_trace(truncated=True)
+
+    def test_rerunning_reader_refreshes_a_cached_helper_missing_the_note_head(self):
+        book = json.loads(NOTEBOOK.read_text(encoding="utf-8"))
+        cell = next(cell for cell in book["cells"] if cell["id"] == "ac9aca71")
+        stale = ModuleType("backprop_memory_flow")
+        stale.__file__ = str(HERE / "backprop_memory_flow.py")
+        stale.NOTES = ("D3", "A3", "D4")
+        namespace = {
+            "torch": torch, "melody": "D3 A3 D4 D3 A3 D4".split(),
+            "note_audio_panel": lambda *_args, **_kwargs: None,
+        }
+        with patch.dict(sys.modules, {"backprop_memory_flow": stale}):
+            with self.assertRaisesRegex(ImportError, "NOTE_HEAD_WEIGHTS"):
+                exec("from backprop_memory_flow import NOTES, NOTE_HEAD_WEIGHTS", namespace)
+            exec(compile("".join(cell["source"]), "notebook_reader", "exec"), namespace)
+        self.assertEqual(namespace["NOTE_HEAD_WEIGHTS"], NOTE_HEAD_WEIGHTS)
+        self.assertEqual(namespace["next_notes"], ["D3", "A3", "A3"])
+        for expected, actual in zip(self.full.states[1:], namespace["states"]):
+            torch.testing.assert_close(actual.double(), expected, rtol=1e-6, atol=1e-7)
 
     def test_full_backward_reaches_every_saved_card_and_accumulates_shared_weights(self):
         self.assertEqual(self.full.guess, "A3")
@@ -118,6 +139,21 @@ class BackpropMemoryFlowTests(unittest.TestCase):
         finally:
             plt.close(figure)
 
+    def test_notecard_introduction_puts_prediction_before_the_storage_constraint(self):
+        book = json.loads(NOTEBOOK.read_text(encoding="utf-8"))
+        cell = next(cell for cell in book["cells"] if cell["id"] == "6dce1587")
+        source = " ".join("".join(cell["source"]).split())
+        self.assertLess(source.index("history helps predict"), source.index("fixed-length vector"))
+        self.assertLess(source.index("complete ordered phrase"), source.index("fixed-length vector"))
+        self.assertIn("instead of starting again from the opening", source)
+        self.assertIn("useful details can be lost", source)
+        self.assertNotIn("smallest useful notecard", source.lower())
+        for distinction in (
+            "not the training corpus", "not a literal musician's workflow",
+            "not looking up stored songs", "hand-picked", "reads h without changing it",
+        ):
+            self.assertIn(distinction, source)
+
     def test_every_station_has_distinct_carry_and_prediction_paths(self):
         figure, axis = canvas("", "")
         try:
@@ -180,7 +216,7 @@ class BackpropMemoryFlowTests(unittest.TestCase):
         book = json.loads(NOTEBOOK.read_text(encoding="utf-8"))
         player = next(cell for cell in book["cells"] if cell["id"] == "backprop-saved-card-replay")
         self.assertEqual(len(player["outputs"]), 1)
-        html = player["outputs"][0]["data"]["text/html"]
+        html = "".join(player["outputs"][0]["data"]["text/html"])
         self.assertIn(f'data-saved-replay="{PREFIX}.html"', html)
         self.assertIn('srcdoc="', html)
         self.assertLess(NOTEBOOK.stat().st_size, NOTEBOOK_SIZE_LIMIT)

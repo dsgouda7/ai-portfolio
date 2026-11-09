@@ -14,6 +14,12 @@ from PIL import Image
 
 
 HERE = Path(__file__).resolve().parent
+TANH_TRACKER_FILE = "01a-tanh-value-tracker.html"
+ERROR_FEEDBACK_FILE = "01a-error-feedback-tracker.html"
+NATIVE_PLAYER_MARKERS = {
+    TANH_TRACKER_FILE: "tanh-value-tracker",
+    ERROR_FEEDBACK_FILE: "error-feedback-tracker",
+}
 REPLAY_FILES = (
     "01a-backprop-saved-cards.html",
     "01a-lstm-gate-flow.html",
@@ -22,6 +28,9 @@ REPLAY_FILES = (
     "01a-gru-gate-flow.html",
     "01a-gru-token-layer-flow.html",
     "01a-musical-gru-memory.html",
+    "01a-gradient-sensitivity-replay.html",
+    TANH_TRACKER_FILE,
+    ERROR_FEEDBACK_FILE,
 )
 EMBED_VERSION = 1
 NOTEBOOK_SIZE_LIMIT = 65_000_000
@@ -99,12 +108,23 @@ def _packed_html(raw: bytes) -> str:
     )
 
 
+def _player_height(filename: str) -> int:
+    return 760 if filename == ERROR_FEEDBACK_FILE else 1050 if "musical" in filename else 740
+
+
 def saved_replay(filename: str, *, images_directory: Path | None = None) -> HTML:
     if filename not in REPLAY_FILES:
         raise ValueError(f"Unknown saved lesson replay: {filename}")
     path = (images_directory if images_directory is not None else HERE / "images") / filename
-    packed = _packed_html(path.read_bytes())
-    height = 1050 if "musical" in filename else 740
+    raw = path.read_bytes()
+    if filename in NATIVE_PLAYER_MARKERS:
+        packed = raw.decode("utf-8")
+        marker = NATIVE_PLAYER_MARKERS[filename]
+        if f'data-player="{marker}"' not in packed or "<script>" not in packed:
+            raise ValueError("The saved tracker does not contain its interactive player.")
+    else:
+        packed = _packed_html(raw)
+    height = _player_height(filename)
     title = filename.removesuffix(".html").replace("01a-", "").replace("-", " ")
     return HTML(
         f'<iframe title="{escape(title, quote=True)}" sandbox="allow-scripts" '
@@ -122,24 +142,38 @@ def refresh_embedded_replays(notebook: dict, *, images_directory: Path | None = 
         if replay is None:
             continue
         filename = replay["file"]
-        if cell["cell_type"] != "code" or filename not in REPLAY_FILES:
+        native_markdown = filename in NATIVE_PLAYER_MARKERS and cell["cell_type"] == "markdown"
+        if filename not in REPLAY_FILES or (not native_markdown and cell["cell_type"] != "code"):
             raise ValueError("Saved replay metadata must identify a supported display cell.")
-        if "".join(cell["source"]).strip() != f'saved_replay("{filename}")':
+        source = "".join(cell["source"]).strip()
+        expected_source = "" if filename in NATIVE_PLAYER_MARKERS else f'saved_replay("{filename}")'
+        if native_markdown and source and hashlib.sha256(source.encode()).hexdigest() != replay.get("output_sha256"):
+            raise ValueError("The saved Markdown player changed; do not overwrite its source.")
+        if not native_markdown and source != expected_source:
             raise ValueError("The saved replay display cell changed; do not overwrite its output.")
         digest = hashlib.sha256((directory / filename).read_bytes()).hexdigest()
         outputs = cell.get("outputs", [])
-        output_html = outputs[0].get("data", {}).get("text/html", "") if len(outputs) == 1 else ""
+        output_html = source if native_markdown else (
+            "".join(outputs[0].get("data", {}).get("text/html", "")) if len(outputs) == 1 else ""
+        )
         if (replay.get("source_sha256") == digest and replay.get("embed_version") == EMBED_VERSION
                 and output_html.startswith("<iframe ")
+                and f"height:{_player_height(filename)}px" in output_html
                 and replay.get("output_sha256") == hashlib.sha256(output_html.encode()).hexdigest()):
             continue
         html = saved_replay(filename, images_directory=directory).data
-        cell["outputs"] = [{
-            "output_type": "display_data",
-            "data": {"text/html": html, "text/plain": f"Embedded saved player: {filename}"},
-            "metadata": {},
-        }]
-        cell["execution_count"] = None
+        if native_markdown:
+            html = html.replace("\r", "&#13;").replace("\n", "&#10;")
+            cell["source"] = [html]
+            cell.pop("outputs", None)
+            cell.pop("execution_count", None)
+        else:
+            cell["outputs"] = [{
+                "output_type": "display_data",
+                "data": {"text/html": html, "text/plain": f"Embedded saved player: {filename}"},
+                "metadata": {},
+            }]
+            cell["execution_count"] = None
         replay.update({
             "source_sha256": digest,
             "output_sha256": hashlib.sha256(html.encode()).hexdigest(),

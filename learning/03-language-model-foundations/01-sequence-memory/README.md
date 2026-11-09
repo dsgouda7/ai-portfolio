@@ -26,6 +26,7 @@ follow `D3 A3 D4` through ordered seats, a changing notecard, backward feedback,
 LSTM and GRU controls. The lab shows the exact shifted note pairs, what blank seats do to
 a final state, and why stopping the reader and skipping blank answers are separate jobs.
 Each illustration has a plain-English reading guide next to its measured check.
+01A adds short local keys for symbols, gate letters, subscripts and multiplication.
 Essential explanations remain visible without Mermaid or JavaScript support.
 
 Section 2 now opens the training trail explicitly: create h1, h2, h3, make
@@ -33,31 +34,78 @@ a wrong note-four guess, inspect those saved cards in reverse, then update
 the shared weights once. Every step keeps its note and incoming state visible:
 D3 + h0 makes h1, A3 + h1 makes h2, and D4 + h2 makes h3; h0 starts blank.
 The same input pairs stay beside the saved cards during backward inspection.
-Every produced h now has two visible exits: carry it into the next read, and
-expose that same h to a shared note head. The head scores the next note at
-every step, not only the last. The replay shows real initialized guesses
+Every produced h has two visible uses: carry it into the next read, and pass
+it to a separate next-note prediction layer (the head). The RNN cell makes h
+first; that extra layer then reads h with its own `W_out` weights to score
+the next note. The same prediction layer is reused at every step, not only
+the last. The replay shows real initialized guesses
 D3, A3, A3 for notes two, three, four; only note four's loss is traced.
 The [cinematic studio renderer](sequence_studio.py) uses piano-key inputs,
 folded memory cards, luminous carry ribbons and separate prediction beams.
-Its [MAI storyboard](images/01a-backprop-saved-cards.png)
+The [numeric notecard close-up](images/01a-rnn-notecard-closeup.png) opens the
+actual D4 update: the current input and old h2 pass through their displayed
+shared matrices, combine, and become h3. The card contains computed features,
+not written notes.
+Its [restrained studio storyboard](images/01a-backprop-saved-cards.png)
 is paired with a [measured local replay](images/01a-backprop-saved-cards.html).
 The replay reuses the notebook's two-value recurrence and a hand-picked
 prediction head. Detaching after h1 preserves all forward cards and the guess
 while stopping feedback into h1. This is a training horizon, not a claim that
 an RNN's carried information has a fixed-age context window.
+The backward window and detach boundary are training-loop choices, not
+`nn.RNN`, `nn.LSTM` or `nn.GRU` constructor settings.
 
-All lesson visuals are embedded in 01A, including the full-resolution MAI
-storyboard, PNG/GIF fallbacks, SVG companions, and all seven HTML players.
+All lesson visuals are embedded in 01A, including the full-resolution studio
+storyboard, PNG/GIF fallbacks, SVG companions, and all ten HTML players.
 The musical players embed their WAV recordings; the notebook's audio links
 jump to those players rather than requiring separate files. The notebook has
 a 65 MB limit to retain these original assets and the LSTM role illustrations without reducing their quality.
 
-The LSTM section first explains **c as a fixed-width numeric workspace**,
-not weights or a transcript. Its [memory timeline](images/01a-lstm-cell-vs-hidden.png)
+Sections 2-4 now build gated-memory intuition from **vanishing and exploding
+gradients**, rather than treating them as a warning after the gates.
+The [measured gradient probes](gradient_memory.py) show tanh saturation,
+using the same tiny +0.0001 nudge near zero and near a flat edge. These are
+changes to an internal feature, not prediction-versus-target errors.
+The [interactive tanh tracker](images/01a-tanh-value-tracker.html) replaces
+the Python nudge exercise: slide or enter a value, or play a sweep, to inspect
+the output, local backward factor and the same +0.0001 nudge response.
+They then show
+the actual two-feature reader's backward sensitivity across repeated A3 inputs,
+and a zero-centred scalar RNN whose bounded states coexist with amplified
+feedback. The [error-feedback tracker](images/01a-error-feedback-tracker.html)
+uses a draggable memory-weight scale with compact Vanishing/Exploding presets.
+Panel 1 shows weights generating the output and error; panel 2 shows the
+backward gradient. All 71 slider positions use actual autograd recordings,
+not interpolated gradients. Input, other weights and target stay fixed. Its
+[recorder](error_feedback_flow.py) uses PyTorch autograd and a half-squared-error
+loss, not note classification. The Python verification is optional.
+The older [backward replay](images/01a-gradient-sensitivity-replay.html)
+and repeated numerical checks are now in an optional technical appendix,
+outside the main reading flow. Two short explanations beside the primary
+animation distinguish vanishing from exploding gradients. The slider changes
+the recurrent weight; the cards show the stored hidden state h, not weights.
+The appendix's replay remains a per-unit reference with 21 positions:
+the values are sensitivity magnitudes relative to each final card, not hidden
+values, memory amounts or probabilities. Color-matched decimal labels and a
+printed raw-versus-normalized table explain its logarithmic scale.
+Actual writing-weight SGD updates
+show that clipping reduces a surge but does not enlarge fading credit.
+
+The LSTM refinement first tries an [unsquashed total](images/01a-unsquashed-total.png):
+different note orders still collide despite perfect first-write feedback.
+It then introduces **c as a fixed-width numeric workspace**, not raw input
+history, weights or a transcript. Its [memory timeline](images/01a-lstm-cell-vs-hidden.png)
 shows one deliberately chosen coordinate being written, kept through later
 notes, and overwritten. That toy coordinate's meaning is hand-picked; real
 training learns distributed numerical patterns. Only then does the lesson
 introduce h as the gated readout and next-step control context.
+The [controlled carry comparison](images/01a-protected-cell-feedback.png)
+separates direct c feedback from its bounded h readout. GRU follows the same
+complaint: [old h bypasses the proposal's squash](images/01a-gru-protected-update.png),
+without requiring a separate c. Native LSTMCell and GRUCell stress tests keep
+KEEP at 0.99 and change only a candidate recurrent weight, exposing another
+route that can amplify the full gradient. These are controlled sensitivity
+experiments, not trained-architecture rankings or recommended weight settings.
 The [complete A3 step](images/01a-lstm-two-state-step.png) shows the actual
 keep/add arithmetic and **both states** travelling onward, with only h
 feeding the note head directly. The
@@ -81,10 +129,13 @@ The four primary GIFs are embedded notebook attachments, so relative-path
 resolution and JavaScript are not needed for playback. Their SVG companions
 remain crisp when zoomed. Motion interpolates marker positions, never invented
 intermediate gate or state values.
-All seven HTML players are stored inside notebook display outputs, not loaded
-through relative iframe URLs. Each runs in its own sandboxed frame, so its
+Eight recorded HTML players are stored in notebook display outputs; the two
+interactive trackers are embedded directly in Markdown cells, with no code-input box.
+None uses a relative iframe URL. Each runs in its own sandboxed frame, so its
 controls cannot collide with another replay. PNG frames are packed as lossless
 WebP: every pixel and all playback/audio timing remain unchanged.
+The tanh and error-feedback trackers use self-contained SVG and JavaScript.
+The latter scales recorded unit-sensitivity trajectories by the current signed error.
 Both follow the same repeated `D3 A3 D4` phrase. Chosen scalar controls expose
 retained, written, carried and exposed values; GRU interventions differentiate
 the complete scalar update. Two-value `LSTMCell` and `GRUCell` checks compute
@@ -146,19 +197,25 @@ Run each notebook from a fresh kernel. They share readable
 Small CPU examples use one PyTorch thread to avoid spending more time scheduling than learning.
 
 01A's saved visuals require no training run: static diagrams and GIF fallbacks
-are notebook attachments, and seven saved HTML players appear beside their
+are notebook attachments, and ten saved HTML players appear beside their
 explanations. **Trust the notebook outputs** to use interactive HTML; viewers
 that block scripts or frames can use the PNG/GIF fallbacks. The short hidden
 display cells only read saved players, not generate images or animations.
-Rerun setup and a display cell to reload a player from disk without training.
+The tanh and error-feedback trackers are Markdown HTML, not empty Python cells.
+VS Code renders these widgets in a trusted workspace; untrusted renderers retain
+the static figures and comparisons. The shared exporter refreshes their embedded HTML.
+Rerun setup and the recorded-player display cells to reload those players without training.
 **Run All** from a fresh kernel for the learning experiments and training;
 the setup supports both repository-root and chapter working directories.
 Rerunning 01A's setup reloads its local musical helper, so an existing kernel
 does not keep an older copy missing newly added audio functions.
+The first recurrent-reader cell also reloads its backprop helper before
+importing the shared note-head weights. After helper edits, rerun that cell
+to refresh a cached module without restarting the kernel.
 Changing an experiment changes its printed evidence, not the saved default captures.
 Sound starts only after clicking an embedded player's native audio Play button. All replays
 are offline, use visible text buttons rather than an external icon font, fit narrow
-output panes, and show an initial image even when scripts are disabled.
+output panes, and show an initial image or static tracker readout when scripts are disabled.
 
 ## Rebuild the illustrations
 
@@ -180,6 +237,8 @@ Rebuild the measured gate-flow captures from the notebook's recorded updates:
 ```powershell
 .\.venv\Scripts\python.exe .\memory_gate_flows.py
 .\.venv\Scripts\python.exe .\backprop_memory_flow.py
+.\.venv\Scripts\python.exe .\gradient_memory.py
+.\.venv\Scripts\python.exe .\error_feedback_flow.py
 .\.venv\Scripts\python.exe .\lstm_state_roles.py
 .\.venv\Scripts\python.exe .\lstm_layer_flow.py
 .\.venv\Scripts\python.exe .\musical_memory.py
@@ -188,6 +247,8 @@ Rebuild the measured gate-flow captures from the notebook's recorded updates:
 .\.venv\Scripts\python.exe -m unittest test_notebook_replays -v
 .\.venv\Scripts\python.exe -m unittest test_backprop_memory_flow -v
 .\.venv\Scripts\python.exe -m unittest test_lstm_state_roles -v
+.\.venv\Scripts\python.exe -m unittest test_gradient_memory -v
+.\.venv\Scripts\python.exe -m unittest test_error_feedback_flow -v
 ```
 
 The gate-flow generator saves feedback-decay, LSTM-state and retention-comparison
@@ -196,10 +257,19 @@ the lesson and adds source fingerprints; it never trains a model. The musical
 generator trains both tiny cue-echo models and exports measured guesses and state
 arithmetic, audio, and playback timing with provenance metadata. Neither downloads data.
 The backprop exporter refreshes only its own captures and marked player.
-The other explicit exporters refresh notebook PNG/GIF attachments and the seven marked
-HTML-player outputs. They preserve learning cell sources, experiment outputs,
+The other explicit exporters refresh notebook PNG/GIF attachments and the ten marked
+HTML-player embeds. They preserve learning prose/code, experiment outputs,
 and unrelated metadata. Player snapshots include source/output hashes so a
 rebuild refreshes changed saved players rather than leaving stale HTML.
+The gradient exporter rebuilds its six measured figures, static/GIF/HTML
+backward replay and the quiet section-2 storyboard without changing model
+weights or running the echo trainer. It refreshes its notebook attachments and
+marked player while preserving experiment sources and outputs. Viewing the
+saved notebook requires no separate image files.
+The error-feedback recorder regenerates its HTML player from the template and
+actual forward/backward values in `error_feedback_flow.py`. Edit that generator,
+not the generated HTML. Run it before `memory_gate_flows.py` to embed a revised
+player; it records gradients without fitting a model.
 The gate exporter also rebuilds the one-token layer replay using the shared
 [GRU layer recorder/renderer](gru_layer_flow.py), which the encoder/decoder preview
 reuses for the same cell rule with learned word profiles.

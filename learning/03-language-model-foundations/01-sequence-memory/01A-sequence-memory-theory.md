@@ -6,213 +6,253 @@ Use beside [01A](01A-sequence-memory-theory.ipynb), then test batches in
 
 ## 1. Same notes, different tune
 
-Play **D3 A3 D4**, then **D4 A3 D3**. Each contains the same notes once,
-but the tunes differ. Counting throws away the distinction.
+Play **D3 A3 D4**, then **D4 A3 D3**. Counting gives the same bag of notes,
+but the tunes differ. Ordered seats retain a distinction that pooling removes.
+Recurrence adds a reading rule reusable beyond a fixed input window.
 
-Ordered input seats preserve it. Batch, time and feature axes answer:
-which phrase, which position, and which numbers describe that note?
-A dense network with ordered inputs can use order too. Recurrence adds
-a reading rule reusable beyond a fixed window.
+**Note names:** D/A = pitch; 3/4 = octave, not a vector dimension.
 
-**Complaint:** how do we read another note without keeping a growing transcript?
+**Complaint:** the latest note alone is not enough. How does the phrase's context
+reach the next guess?
 
-## 2. One reader, a changing notecard
+## 2. Carry the context forward
 
-The weights are a card-writing recipe: mix the current note, mix the previous
-card, combine them, then squeeze the result into a new card. The recipe stays
-fixed while reading a phrase; the temporary card changes. Same recipe doesn't
-mean equal influence: each note arrives with different numbers and history.
+After D3 A3 D4, D4 alone can have different continuations in different phrases.
+Training teaches the weights musical patterns; prediction also needs the
+current phrase's context. The model applies learned patterns, not a lookup
+of stored songs.
 
-D3 pairs with blank h0 to make h1. A3 pairs with incoming h1 to make h2.
-Keep the note and incoming card beside the new card, not just the new card alone.
+One option is to keep the complete ordered phrase and process it again for
+each new guess. An RNN instead carries forward the result of processing the
+past. Each new note updates a fixed-size working summary without starting
+again from the opening. The carried state stays the same size as the phrase
+grows; useful details can be lost.
 
-The new h has two jobs: carry into the next read, and expose its values to a
-shared note-prediction head. Here the cell's output and carried hidden state
-are the **same h**, not two unrelated vectors. The head makes note scores:
-h1 predicts note two, h2 predicts note three, h3 predicts note four.
+Our notecard is that summary, h: a numerical description of the current
+phrase, not the training corpus or a lossless code for every note. The card
+is a reminder analogy, not a musician's literal workflow. Training shapes
+which distinctions help prediction: for the later echo, distinguish the
+openings rather than store every distraction separately.
 
-An old note survives only through the cards it helped make. Each new note
-rewrites the same small summary, not a separate slot for each past position.
-Its effect can weaken, mix with newer clues, or be overwritten. Farther-back
-notes cross more rewrites, so have more chances to get lost in translation.
-Forgetting isn't inevitable, but different final cards don't prove distant recall.
+Three notes fit in a transcript. They make this reusable reading process
+inspectable; they do not prove compression is necessary. Relevant history
+is needed, but a fixed-size summary is this architecture's choice.
+Our arithmetic reader uses hand-picked inputs and weights to show the mechanics.
 
-**Complaint:** can a wrong ending teach the recipe to preserve the opening?
+**From note to numbers:** D3/A3/D4 name the notes; `x` is the numeric input
+representing the current note, not another memory state.
 
-## 3. Reading goes forward; teaching comes back
+| Note on the keyboard | Reader input | Incoming memory | New memory |
+|---|---|---|---|
+| D3 | `x1 = [1, 0]` | `h0 = [0, 0]` | `h1` |
+| A3 | `x2 = [0, 1]` | `h1` | `h2` |
+| D4 | `x3 = [1, 1]` | `h2` | `h3` |
 
-Read D3, A3, D4 to make h1, h2, h3 and a next-note output at each read.
-The initialized head guesses D3, A3, A3. This replay grades only note four
-against D3; the earlier guesses are visible, but aren't additional losses.
-When that last guess is wrong, don't update weights yet.
+`x1` encodes D3; `h1` is computed after reading D3. They are different objects.
+The diagram's `D3 + h0` means two reader inputs: separate weights mix the
+encoded note and incoming memory before adding their contributions.
 
-Training kept the earlier cards and their calculations. It inspects h3,
-then h2 that helped create h3, then h1 that helped create h2:
-**backpropagation through time**. Each inspection calculates how changing
-that card and the weights used there would affect the final error.
-All uses contribute to the same weights. Collect their corrections, then
-update the shared recipe once. One update involves several backward checks.
+**Notation:** `x` = input vector; `h` = running memory; `W` = shared weight matrix;
+`b` = bias (added offset); `t` = note step; `d` = vector width.
+In `x3/h3`, 3 is the step; in `D3`, 3 is the octave.
 
-Full backprop reaches the start of the recorded phrase. Truncated backprop
-stops at a chosen boundary. In the notebook, detaching after h1 preserves
-every forward card and the guess, but stops feedback entering h1.
-That boundary is the **backpropagation horizon**, not necessarily how old
-the information in the carried card is. A Transformer's context window
-instead limits which earlier positions a prediction can directly consult.
+Each read mixes the new input with old h and squeezes the result with tanh.
+The RNN cell makes memory h first, not a guessed note.
 
-Saving earlier cards doesn't guarantee useful feedback reaches them.
-Repeated rewrites may make their influence on the final guess tiny.
-Training can inspect the trail and still struggle to teach the opening.
-The chosen 65% feedback route falls below 1% after eleven transitions;
-it illustrates repeated shrinking, not a universal RNN percentage.
+A separate **next-note prediction layer** reads h and gives D3/A3/D4 each
+a score; the highest score becomes the guess. That extra layer is called a
+**prediction head**. It has its own weights, `W_out`. **Shared** means the
+same prediction layer is reused after every note, not a new layer per step.
+It reads h without changing it; the same memory goes to the next RNN read.
+After D3, h1 helps guess note two; after A3, h2 helps guess note three.
+An independent phrase starts with a fresh card; the shared weights remain.
 
-**Complaint:** can a training safety brake bring vanished feedback back?
+> **Optional:** The same D3 A3 D4 reader, written out (`h0 = 0`; this toy omits bias).
+>
+> **Notation:** $x_{\mathrm{D3}}$ = D3's input vector; $h_i$ = memory after note $i$;
+> $W_x$, $W_h$ = shared input/memory weight matrices; $W_x x$ = matrix-vector multiply; $\tanh$ = elementwise squash to $(-1,1)$.
+>
+> $$
+> \begin{aligned}
+> h_1 &= \tanh(W_x x_{\mathrm{D3}} + W_h h_0) \\
+> h_2 &= \tanh(W_x x_{\mathrm{A3}} + W_h h_1) \\
+>     &= \tanh(W_x x_{\mathrm{A3}} + W_h \tanh(W_x x_{\mathrm{D3}} + W_h h_0)) \\
+> h_3 &= \tanh(W_x x_{\mathrm{D4}} + W_h h_2) \\
+>     &= \tanh(W_x x_{\mathrm{D4}} + W_h \tanh(W_x x_{\mathrm{A3}} + W_h \tanh(W_x x_{\mathrm{D3}} + W_h h_0)))
+> \end{aligned}
+> $$
+>
+> Each note's input mixes with the previous, already-tanh-ed h before another tanh; the same weights are reused.
 
-## 4. Clipping stops a surge, not a fade
+Open the actual D4 step: its input `x3 = [1, 1]` and old h2 are separate. h2 contains
+`[0.1894, 0.7090]`, not the written notes D3 and A3. The input weights give
+`[0.5000, 1.1000]`; the memory weights give `[0.1846, 0.3356]`.
+Add, then squash: new h3 is `[0.5945, 0.8928]`. Those are context features;
+the extra prediction layer reads them to make next-note scores.
 
-Repeated amplification can make gradients explode. Clipping caps an overly
-large gradient after backward and before the optimizer step.
+`W_x/W_h/W_out` mix input/memory/head features. `@` (or `W x`) is matrix-vector
+multiplication; `*` is scalar/elementwise multiplication, not matrix multiplication.
 
-A cap cannot enlarge a tiny gradient, recreate forgotten evidence or shorten
-its route.
+**Complaint:** can the wrong ending teach the recipe what to preserve?
 
-**Complaint:** why should every new note have to rewrite all of our memory?
+## 3. Read forward once; inspect the trail backward
 
-LSTMs and GRUs add learned controls for retaining old evidence and accepting
-new changes. The aim is to carry clues forward and leave a better teaching
-route backward. Neither stores every note or guarantees success; the controls
-must be learned. First open the LSTM, then the GRU.
+The initialized head guesses D3, A3, A3. Grade only note four against D3 in
+this close-up. Do not update the weights yet.
 
-## 5. Keep some, write some, show some
+Training saved h1, h2, h3 and their calculations. It follows the error through
+the head, then inspects the D4/h2, A3/h1 and D3/h0 reader steps in reverse.
+Each inspection asks how a small change there would affect the ending.
+All uses contribute to the same weights; collect contributions, then update
+the recipe once. This is backpropagation through time.
 
-The **cell state c** is a fixed-width row of memory numbers carried between
-LSTM steps. It is temporary activation data for the current phrase, not trained
-weights or a transcript. Its width counts features, not past note positions.
+Full backprop reaches the recorded phrase's start. Truncated backprop stops
+at a detached boundary. Detaching after h1 preserves every forward card but
+blocks feedback into h1. That is a backpropagation horizon, not a maximum age
+for carried information or a Transformer's forward context window.
 
-In one deliberately chosen coordinate, write +0.8 for a D3 opening or -0.8
-for D4. Later A3 inputs arrive, but KEEP=1 and WRITE=0 preserve the number.
-The opening survives as a current numeric value, not an archived note.
-Overwrite that coordinate at the final A3 and its distinction disappears.
-This is a hand-designed storage example, not a claim that a trained neuron
-has that meaning. Real training learns useful patterns across the vector.
+You choose this window in the **training loop**, not the RNN layer's constructor.
+Choose a chunk length, run backward per chunk, then detach the carried state
+before the next chunk: h for RNN/GRU, both h and c for LSTM. The numbers carry
+forward; gradients do not cross that boundary.
 
-Our plain RNN carried one h. An **LSTM** carries a pair with different jobs:
+**Complaint:** examining an old card does not guarantee useful feedback reaches it.
 
-- **Cell state c:** the contents kept and edited through the memory lane.
-- **Hidden state h:** a squashed, gated view of the new c. The note head reads
-  it now; the next step also uses it, with the next input, to choose controls.
+## 4. Small states can have fading or surging feedback
 
-Keep/add updates c without squashing the whole memory after every write.
-Squash/SHOW makes h. Keeping contents and exposing a view are different jobs.
+This RNN's tanh keeps h between -1 and +1. Sigmoid gate controls later use
+zero to one. Think of tanh as a soft squeeze: near zero, a tiny push mostly
+passes through; near 3, the output is already almost +1 and hardly moves.
+These are test values before tanh, not notes or stored h.
+That responsiveness is the local gradient: a step that barely reacts forward
+also passes little feedback backward. Use the saved tracker at 0 and 3 to see it.
+Repeated weak responses can make the opening hard to teach; recurrent weights
+can also amplify feedback, as the next replay shows.
 
-Neither is an independent note transcript. Before A3, c1 supplies old contents;
-A3 plus h1 choose controls and propose new content. The update makes c2, then SHOW exposes
-h2. **Both h2 and c2 travel to D4.** Only h2 feeds the note head directly.
+The weights first generate a prediction; comparing it with target 0.5 creates
+the error. Then gradients travel backward through the recorded reads.
+Drag only the memory weight: the 0.8 and 1.2 presets show vanishing and exploding
+feedback. Around 1, feedback is nearly unchanged. Input, writing weight and
+prediction weight stay fixed; the slider changes a weight, not the output directly.
+Here the recurrent weight is a reusable parameter; the stored hidden state h
+is the changing numeric memory. They are different objects.
 
-| Part | Job |
-|---|---|
-| Forget gate | How much old c to **keep** |
-| Input gate | How much proposed content to **write** |
-| Output gate | How much squashed new c to **show** as h |
-| Candidate | Proposed signed content, not a fourth gate |
+Both guesses are wrong and all memory values remain small and nonzero.
+Yet the opening input weight receives a gradient of about -0.005764 in the
+vanishing case, versus -17.616600 in the exploding case. These are actual
+parameter gradients, not weight-update sizes. The toy uses half-squared error,
+not note classification; no optimizer step is shown.
 
-Controls are dimmers between zero and one. Memory and proposal values can be
-signed. Retained old memory plus permitted writing becomes new c; SHOW exposes
-part of its squashed view. Closing only SHOW can hide c without erasing it.
+The optional appendix's older graph is a per-unit reference: final sensitivity is set to 1,
+independently of the error size. Its opening values are about 0.00481 for cyan,
+38.34 for red and 0.00000802 for the piano reader. Its logarithmic axis makes
+tiny responses visible; these numbers are not memory amounts or probabilities.
 
-Closing SHOW can make h zero while c stays unchanged. A zero h is therefore
-not necessarily a blank LSTM. In the actual A3 probe, changing only old c
-leaves the controls unchanged but changes new c/h; changing only old h changes
-the controls. c supplies what is edited; h helps choose how to edit it.
+Vanishing gradients give almost no guidance about how the opening was
+processed. Exploding gradients can make the optimizer change weights too
+drastically. Neither term says the stored numbers vanish or explode.
+Weak feedback makes it harder to learn which early clues to preserve;
+it does not erase an existing card.
 
-First choose controls by hand. The zero-SHOW probe leaves nonzero c intact.
-A chosen 95% carry route passes about 0.36 of feedback after twenty transitions,
-far more than the chosen 65% route. This compares routes, not trained architectures.
+Clipping caps a large gradient after backward and before the optimizer step.
+The measured writing-weight update shrinks on the amplified route; the weak
+update stays weak. Clipping is a brake, not a memory repair.
 
-Then open the real **A3 step after D3**. Learned Linear projections of input
-and previous h produce four chunks: input, forget, candidate, output.
-Old c bypasses these projections and enters the keep lane.
-Manual arithmetic matches PyTorch's **both** states at every note.
+**Complaint:** why force a clue through a fresh remapping and squeeze at every read?
 
-After note six, notes one and six can both influence the same current pair.
-Neither is guaranteed recoverable. The head reads h to score note seven;
-the chosen seventh note plus old h and c drive the next update. Output h also
-feeds an upper layer in a stack; each layer carries its own pair through time.
+## 5. Protect the memory; squash the view
 
-**Complaint:** correct gate arithmetic still isn't learned memory.
+Try removing the squeeze and adding every note's proposal. With D3 = +0.8,
+D4 = -0.8 and A3 = +0.2, two different opening orders both finish at +0.4.
+Feedback to the first written number remains 1. Perfect additive feedback
+did not make the representation preserve order.
 
-Play either opening, add twenty identical distractions, then request its echo.
-The untrained LSTM guesses **D4 D4 D4** for both. At 240 updates it still
-confuses them; at 480, both free-running echoes match.
-The one-variable drill reproduces the shorter fit's failure.
+**Refinement:** choose what to keep, what to write, and what to expose.
 
-Erase **both h and c** after the opening: both echoes become **D4 A3 D4**,
-neither correct. Reset before every read instead: both become **D3 A3 D4**.
-One happens to match; distinguishing both cues is the meaningful test.
-Resetting only h could leave evidence in c.
+LSTM c is a fixed-width row of memory numbers: activation data for the current
+phrase, not weights, raw inputs or a complete past-note transcript. Training
+learns useful patterns and rules for retaining them.
 
-Teacher forcing supplies correct previous answers during fitting, never the
-current answer. Generation feeds back actual guesses. The audio plays those
-guesses, not hidden values converted into pretend pitches.
+In a chosen coordinate, write +0.8 for D3 or -0.8 for D4, then close WRITE
+while later notes arrive. The current number preserves the opening. Overwrite
+it and that coordinate loses the distinction. Real representations need not
+give individual coordinates neat note labels.
 
-**Complaint:** must every gated reader carry two separate vectors?
+KEEP retains part of old c; WRITE admits part of a signed candidate.
+They are independent controls. The update keeps/adds without squashing all
+new c. SHOW selects from tanh(new c) to make h.
 
-## 6. One carried note: GRU reset, keep, replace
+Both travel onward: c supplies contents; the next input and h choose controls
+and proposed content. Only h directly feeds the note head. Closing SHOW can
+make h zero without erasing c.
 
-A **GRU** carries one h and exposes that same h. No separate c or SHOW gate.
-It offers a smaller interface, not guaranteed better memory.
+**LSTM key:** `f/i/o` = KEEP/WRITE/SHOW; `g` = signed proposal;
+`c1` = memory after note 1, while `c[0]` selects its first feature.
 
-RESET controls old-state information entering the proposal. KEEP controls
-direct retention of old h; its complement controls writing the proposal.
-Unlike LSTM, keeping and writing aren't independent.
+With fixed KEEP near 1, direct carry feedback survives better. KEEP 0.99
+retains about 0.818 after twenty transitions; 0.9 retains about 0.122.
+Five +0.8 writes can make c = 4 while h remains below 1. That h readout can
+still saturate and weaken feedback.
 
-Closing RESET doesn't erase the direct keep lane. Keeping everything preserves
-old h; replacing everything removes that direct contribution, but the proposal
-may still use old h unless RESET is closed too. The scalar interventions
-measure these consequences and their feedback.
+The native stress test changes a candidate's old-h weight while KEEP stays
+0.99. Another recurrent route can amplify the full gradient. The direct
+KEEP derivative is not the whole learned-cell derivative. Protected memory,
+sensible updates and clipping are complementary, not guarantees.
 
-The real-cell check matches PyTorch. Its reset acts **after** projecting old
-state in the candidate branch. Output now and hidden carried onward have
-identical values; the separate note head turns them into scores.
+**Complaint:** a correct memory mechanism still needs to learn what matters.
 
-Reuse exactly the LSTM's questions, head shape and trainer. The original GRU
-fits both echoes in 240 updates. Erase opening h and both echo **D4 A3 D3**:
-only one matches. No carry gives **D3 A3 D3**, matching neither whole echo.
-Erasure removes forward evidence; detach would preserve values but block feedback.
+The native arithmetic matches both LSTM states. The echo task then asks the
+model to retain one of two openings across twenty distractions. At 240 updates
+the LSTM still confuses them; at 480 both fitted echoes match. Erasing both h
+and c removes their distinction. This is fitted recall, not composition.
 
-Different parameter counts and fitting budgets don't establish a ranking.
-Both experiments test two training examples, not composition or unseen songs.
+## 6. A GRU protects old h outside the proposal
 
-### Same cells, different jobs
+Could one vector provide a useful retention route? GRU carries and exposes
+the same h, with no separate c or SHOW gate.
 
-An encoder-decoder is **wiring**: a reader's final summary initializes a writer.
-Either can use LSTM or GRU. The writer also reads a start token and then
-previous output tokens while carrying its own state. Attention isn't required.
+**GRU key:** `r/z/n` = RESET/KEEP/proposal; `1-z` = WRITE.
+Gate fractions multiply matching features; `n` here is not a note-position label.
 
-Gates control **features inside memory**. Optional source attention keeps a
-bank of **source-position states**, letting the writer consult every position
-before each output. Access doesn't mean equal weight: relevant positions can
-contribute more. The weighted view changes, while the bank stays available.
-Recurrent source states already reflect order; attention alone doesn't add it.
+Tanh forms the proposed replacement. KEEP retains old h directly; its
+complement writes the proposal. The combined result is not squashed again.
+With a valid bounded starting h and bounded candidates, this blend stays
+bounded while retained content avoids the proposal's squash.
 
-Keep the full implementation for [03D](../03-language-models/03D-recurrent-encoder-decoder-to-attention.ipynb).
+RESET controls old-state information entering the proposal, not the direct
+KEEP lane. Close RESET and KEEP can still preserve old h.
 
-## 7. Stop reading blanks; stop grading blanks
+With RESET closed and fixed controls, twenty KEEP fractions determine
+old-state feedback. Learned gates and candidate paths add other responses.
+The native GRU stress test shows amplification despite KEEP = 0.99 and bounded
+states. Clipping remains a training guardrail here too.
 
-Next, 01B separates two batch problems. Packing stops a short phrase's reader
-at its last real note; padding alone can change the final state.
-Loss masking stops grading blank answers after unpacking.
-Stopping reading and stopping grading are different jobs.
+GRU keeping/writing are complements; LSTM's are independent. GRU cannot hide
+a separate memory while leaving it intact. Neither architecture is always
+better or immune to vanishing/exploding gradients.
 
-## 8. Change the clue, not the explanation
+The original GRU fits both echoes in 240 updates. Erasing opening h makes the
+answers identical. Different budgets and parameter counts are not a ranking.
 
-01B changes a future input and checks earlier scores stay unchanged.
-01C changes only a practiced phrase's opening cue and measures its ending.
-These are causal checks, not claims of new-key generalization.
+## 7. Memory, wiring and access are different jobs
 
-**Watch for:** confusing changing state with changing weights; expecting a
-summary to retain every position; erasing only half an LSTM state; calling
-attention equal weighting; treating fitted recall as musical understanding.
+An encoder-decoder is wiring: a reader's summary initializes a writer.
+Either can use LSTM or GRU. The writer carries state and reads previous outputs.
 
-**Remember:** carry evidence forward, teach backward, and test what survives
-by changing one clue while keeping everything else fixed.
+Optional source attention keeps source-position states available to revisit.
+Access does not mean equal weight. Gates control features inside recurrent
+memory; attention selects among saved positions. The implementation continues
+in [03D](../03-language-models/03D-recurrent-encoder-decoder-to-attention.ipynb).
+
+## 8. Test the clue, not a convenient curve
+
+01B separates stopping the reader at a phrase's end from skipping padded
+answers in the loss. It also changes future input and checks earlier scores.
+01C changes one opening cue and measures its ending.
+
+**Watch for:** confusing weights with states; bounded values with stable
+gradients; unsquashed memory with a transcript; a protected lane with a
+guaranteed full gradient; fitted recall with general musical skill.
+
+**Remember:** carry useful evidence forward, teach backward, protect both
+routes where possible, and measure what survived.

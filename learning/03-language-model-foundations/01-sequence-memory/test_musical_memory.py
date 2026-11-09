@@ -13,6 +13,7 @@ from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
 import wave
+from xml.etree import ElementTree
 
 import numpy as np
 from PIL import Image
@@ -20,6 +21,7 @@ import torch
 
 import musical_memory
 from memory_gate_flows import refresh_image_attachments
+from notebook_replays import IMAGE_MIMES
 from musical_memory import (
     EchoGRU, EchoLSTM, MIDI, MODES, MusicFrame, fit_echo_model, make_echo_questions, music_frames,
     replay_html, run_echo_experiment, source_fingerprint, synthesize_timeline, wav_bytes,
@@ -148,7 +150,18 @@ class MusicalMemoryTests(unittest.TestCase):
         self.assertIn("opening_note_audio(melody)", cells["eb7df241"])
         self.assertIn("note_audio_panel(", cells["ac9aca71"])
         self.assertIn("melody[:3][::-1]", cells["ac9aca71"])
-        self.assertIn("not notes generated", cells["ac9aca71"])
+        panels = []
+        namespace = {
+            "torch": torch, "melody": "D3 A3 D4 D3 A3 D4".split(),
+            "note_audio_panel": lambda clips, **options: panels.append((clips, options)),
+        }
+        exec(compile(cells["ac9aca71"], "reader_audio", "exec"), namespace)
+        clips, options = panels[0]
+        self.assertEqual([label for label, _ in clips], [
+            "Original input", "Reversed input", "Head guesses after each input",
+        ])
+        self.assertEqual(clips[-1][1], namespace["next_notes"])
+        self.assertIn("not fed back into the reader", options["description"])
         self.assertIn("echo_audio_panel(echo_comparison)", cells["musical-echo-training"])
         self.assertNotIn("gru_real_r[0].tolist()", cells["gru-real-cell-parity"])
         self.assertNotIn("round(value, 3)", cells["ac9aca71"])
@@ -186,11 +199,16 @@ class MusicalMemoryTests(unittest.TestCase):
             for target in re.findall(r"\]\(([^)]+)\)", text):
                 if target.startswith("attachment:"):
                     name = target.removeprefix("attachment:")
-                    mime = "image/gif" if name.endswith(".gif") else "image/png"
-                    embedded = base64.b64decode(cell["attachments"][name][mime])
-                    self.assertEqual(embedded, (HERE / "images" / name).read_bytes())
-                    with Image.open(BytesIO(embedded)) as image:
-                        self.assertGreater(image.width, 500)
+                    mime = IMAGE_MIMES[Path(name).suffix.lower()]
+                    data = "".join(cell["attachments"][name][mime])
+                    if mime == "image/svg+xml":
+                        self.assertEqual(data, (HERE / "images" / name).read_text(encoding="utf-8"))
+                        self.assertEqual(ElementTree.fromstring(data).tag, "{http://www.w3.org/2000/svg}svg")
+                    else:
+                        embedded = base64.b64decode(data)
+                        self.assertEqual(embedded, (HERE / "images" / name).read_bytes())
+                        with Image.open(BytesIO(embedded)) as image:
+                            self.assertGreater(image.width, 500)
                     attachments += 1
                 elif not target.startswith(("https:", "#")):
                     self.assertTrue((HERE / target.split("#")[0]).exists(), target)
