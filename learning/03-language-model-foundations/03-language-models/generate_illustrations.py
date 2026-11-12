@@ -3,6 +3,7 @@
 Run from any directory: python generate_illustrations.py [--manifest PROMPTS.json] [--only FILENAME]
 The default manifest is this chapter's 03A prompt file. Images are written beside the manifest.
 Existing images are kept unless --force is supplied. Requires Azure CLI sign-in.
+Manifest entries can set width and height; the default remains 1536 by 864.
 Adapted from the helper used for the original Chapter 03 curriculum images.
 API: https://learn.microsoft.com/azure/foundry/foundry-models/how-to/use-foundry-models-mai-image
 """
@@ -23,6 +24,14 @@ ENDPOINT = (
     "/mai/v1/images/generations?api-version=preview"
 )
 MODEL = "MAI-Image-2.6"
+
+
+def image_dimensions(entry):
+    width, height = entry.get("width", 1536), entry.get("height", 864)
+    if (any(isinstance(value, bool) or not isinstance(value, int) or value < 768
+            for value in (width, height)) or width * height > 2_359_296):
+        raise ValueError("MAI-Image-2.6 dimensions must be integers >= 768 with area <= 2,359,296.")
+    return width, height
 
 
 def main():
@@ -50,6 +59,7 @@ def main():
     if not pending:
         print("All requested images already exist. Use --force to regenerate.")
         return
+    dimensions = [image_dimensions(entry) for entry in pending]
     azure_cli = shutil.which("az")
     if azure_cli is None:
         raise RuntimeError("Azure CLI is missing. Install it and run az login first.")
@@ -63,7 +73,7 @@ def main():
     ).stdout.strip()
     if not token:
         raise RuntimeError("Azure CLI returned no access token. Run az login again.")
-    for entry in pending:
+    for entry, (width, height) in zip(pending, dimensions, strict=True):
         prompt = (
             entry["prompt"]
             + " Required elements: " + entry["acceptance_criteria"]
@@ -73,7 +83,7 @@ def main():
             ENDPOINT,
             data=json.dumps({
                 "model": MODEL, "prompt": prompt,
-                "width": 1536, "height": 864, "n": 1,
+                "width": width, "height": height, "n": 1,
             }).encode(),
             headers={
                 "Content-Type": "application/json",

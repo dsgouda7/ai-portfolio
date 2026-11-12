@@ -7,28 +7,24 @@ import math
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
-import numpy as np
 import torch
 from torch import Tensor, nn
 
 from backprop_memory_flow import (
-    NOTEBOOK, NOTES, NOTE_HEAD_WEIGHTS, _inputs_and_weights, compact_animation_frames,
+    NOTEBOOK, NOTES, NOTE_HEAD_WEIGHTS, _inputs_and_weights,
     record_trace, source_fingerprint as reader_fingerprint,
 )
 from lstm_state_roles import (
-    _arrow, _canvas, _figure, _label, _panel, trace_cell_memory,
+    _arrow, _canvas, _figure, _label, _panel,
 )
-from memory_gate_flows import responsive_animation_html
 from sequence_studio import (
-    BACKGROUND, CORAL, CYAN, GOLD, MUTED, TEXT, VIOLET, PLAYER_STYLE,
+    BACKGROUND, CYAN, GOLD, MUTED, TEXT, VIOLET,
     _instrument, _keyboard, draw_studio, studio_figure,
 )
 
 HERE = Path(__file__).resolve().parent
-REPLAY = "01a-gradient-sensitivity-replay"
 IMAGE_FILES = (
-    "01a-tanh-saturation.png", REPLAY + ".png",
+    "01a-tanh-saturation.png",
     "01a-unsquashed-total.png", "01a-protected-cell-feedback.png",
     "01a-gru-protected-update.png",
     "01a-rnn-notecard-closeup.png",
@@ -61,6 +57,20 @@ class MemoryProbe:
     exposed: tuple[float, ...]
     stored_feedback: float
     exposed_feedback: float
+
+
+@dataclass(frozen=True)
+class AdditiveProbe:
+    notes: tuple[str, ...]
+    inputs: tuple[tuple[float, ...], ...]
+    writes: tuple[tuple[float, ...], ...]
+    stored: tuple[tuple[float, ...], ...]
+    first_write_jacobian: tuple[tuple[float, ...], ...]
+
+    @property
+    def stored_feedback(self) -> tuple[float, ...]:
+        """Per-feature carry response, not a gradient norm."""
+        return tuple(row[index] for index, row in enumerate(self.first_write_jacobian))
 
 
 @dataclass(frozen=True)
@@ -178,12 +188,28 @@ def _memory_probe(states: list[Tensor], exposed: list[Tensor]) -> MemoryProbe:
     )
 
 
-def unsquashed_total(opening: str) -> MemoryProbe:
-    history = trace_cell_memory(opening)
-    states = [torch.tensor(history[0].proposal, dtype=torch.float64, requires_grad=True)]
-    for step in history[1:]:
-        states.append(states[-1] + step.proposal)
-    return _memory_probe(states, states)
+def unsquashed_total(opening: str, *, path: Path = NOTEBOOK) -> AdditiveProbe:
+    """Add the reader's fixed input projections without recurrent mixing or squash."""
+    if not isinstance(opening, str) or opening not in ("D3", "D4"):
+        raise ValueError("Choose D3 or D4 for this opening-order comparison.")
+    codes, input_weights, _ = _inputs_and_weights(path)
+    other = "D4" if opening == "D3" else "D3"
+    notes = (opening, "A3", other, "A3")
+    inputs = codes[[NOTES.index(note) for note in notes]]
+    writes = inputs @ input_weights.T
+    states = [writes[0].clone().requires_grad_()]
+    for current in writes[1:]:
+        states.append(states[-1] + current)
+    jacobian = torch.stack([
+        torch.autograd.grad(states[-1][feature], states[0], retain_graph=feature < inputs.shape[1] - 1)[0]
+        for feature in range(inputs.shape[1])
+    ])
+    return AdditiveProbe(
+        notes, tuple(tuple(current.tolist()) for current in inputs),
+        tuple(tuple(write.tolist()) for write in writes),
+        tuple(tuple(state.detach().tolist()) for state in states),
+        tuple(tuple(row.tolist()) for row in jacobian),
+    )
 
 
 def lstm_carry(keep: float = 0.99, *, opening: float = 0.8,
@@ -310,85 +336,51 @@ def draw_notecard(axis, probe: NotecardProbe) -> None:
 
 def draw_saturation(axis) -> None:
     _canvas(axis)
-    _label(axis, 9, 10.35, "Same tiny nudge. Different output changes.", 28, weight="bold")
-    _label(axis, 9, 9.55, "Nudge one internal feature by +0.0001. This is not a predicted note versus a target.", 17, MUTED)
-    _label(axis, 3.8, 8.65, "Internal value BEFORE tanh", 19, GOLD)
-    _label(axis, 13.65, 8.65, "Card value AFTER tanh", 19, CYAN)
+    _label(axis, 9, 10.35, "A soft squeeze: responsive middle, flat edges.", 27, weight="bold")
+    _label(axis, 9, 9.55, "Tanh keeps each memory value between -1 and +1. It does not react equally everywhere.", 17, MUTED)
+    values = torch.linspace(-4, 4, 161, dtype=torch.float64)
+    axis.plot(4.5 + values.numpy() * 0.8, 5.6 + values.tanh().numpy() * 1.8,
+              color=CYAN, linewidth=3)
+    axis.plot([1.3, 7.7], [5.6, 5.6], color=MUTED, linewidth=1, alpha=0.5)
+    for output, y in ((-1, 3.8), (1, 7.4)):
+        axis.plot([1.3, 7.7], [y, y], color=MUTED, linestyle="--", linewidth=1, alpha=0.5)
+        _label(axis, 0.9, y, f"{output:+d}", 16, MUTED)
+    _label(axis, 4.5, 8.25, "Output after the squeeze", 18, CYAN)
+    _label(axis, 4.5, 2.8, "Input before the squeeze: -4 to +4", 17, MUTED)
+    _label(axis, 13.0, 8.25, "Same input change: +0.0001", 19, GOLD)
     nudge = 0.0001
-    for start, y, description in ((0.0, 6.25, "Near the centre"), (3.0, 3.25, "Near the flat edge")):
-        before, after = math.tanh(start), math.tanh(start + nudge)
-        _label(axis, 3.8, y + 1.85, description, 18, MUTED)
-        _panel(axis, 1.0, y, 5.6, 1.3, f"before: {start:.4f}\nafter nudge: {start + nudge:.4f}", GOLD, 21)
-        _arrow(axis, (6.75, y + 0.65), (10.15, y + 0.65), CYAN)
-        _label(axis, 8.45, y + 1.25, "tanh", 18, CYAN)
-        _panel(axis, 10.3, y, 6.7, 1.3, f"before: {before:.10f}\nafter nudge: {after:.10f}", CYAN, 21)
-        _label(axis, 3.8, y - 0.5, "Input change: +0.0001000000", 17, GOLD)
-        _label(axis, 13.65, y - 0.5, f"Output change: +{after - before:.10f}", 17, CYAN)
-    _label(axis, 9, 1.75, f"Local backward factor: 1.000000 near 0; {1 - math.tanh(3)**2:.6f} near 3.", 20)
-    _label(axis, 9, 1.05, "Near the flat edge, a small forward change and backward feedback both get weakened.", 17)
-    _label(axis, 9, 0.4, "Near zero, small changes pass almost unchanged. Tanh's shrinking is not equally strong everywhere.", 15, MUTED)
+    for start, y, description in ((0.0, 6.4, "Near the middle: input 0"),
+                                   (3.0, 3.9, "Near the flat edge: input 3")):
+        output = math.tanh(start)
+        change = math.tanh(start + nudge) - output
+        axis.scatter([4.5 + start * 0.8], [5.6 + output * 1.8], color=GOLD, s=60, zorder=5)
+        _panel(axis, 9.5, y, 7.1, 1.2,
+               f"{description}\nOutput change: +{change:.10f}", CYAN, 20)
+        _label(axis, 13.05, y - 0.45, f"About {change / nudge:.0%} of the change passes through.", 17, MUTED)
+    _label(axis, 9, 1.7, "At a flat edge, both a tiny forward change and backward feedback weaken.", 19)
+    _label(axis, 9, 0.85, "These are internal feature changes, not a wrong note and its answer.", 16, MUTED)
 
 
-def feedback_figure(frame: int = 20):
-    if not 0 <= frame <= 20:
-        raise ValueError("Choose one of the 21 recorded backward-inspection frames.")
-    probes = (
-        ("Scalar RNN: gain 0.8", recurrent_probe(), CYAN),
-        ("Scalar RNN: gain 1.2, zero-centred", recurrent_probe(1.2, opening=0), CORAL),
-        ("Actual two-feature piano reader", piano_probe(), GOLD),
-    )
-    figure, axis = plt.subplots(figsize=(16, 9), facecolor=BACKGROUND)
-    figure.subplots_adjust(left=0.085, right=0.97, top=0.79, bottom=0.25)
-    draw_feedback_chart(figure, axis, probes, frame)
-    return figure, axis, probes
-
-
-def draw_feedback_chart(figure, axis, probes, frame: int) -> None:
-    axis.clear()
-    axis.set_facecolor("#14283e")
-    index = 20 - frame
-    for label, probe, color in probes:
-        sizes = np.array(probe.feedback) / probe.feedback[-1]
-        axis.semilogy(np.arange(index, 21), sizes[index:], color=color, lw=2.5, label=label)
-    axis.set(xlim=(-0.4, 20.4), ylim=(1e-12, 1e3), xticks=(0, 5, 10, 15, 20))
-    axis.set_xlabel("0: opening card                 Forward reads                 20: final card", color=TEXT, fontsize=17)
-    axis.set_ylabel("Sensitivity relative to final card (= 1)", color=TEXT, fontsize=17)
-    axis.tick_params(colors=TEXT, labelsize=14)
-    axis.grid(color=MUTED, alpha=0.15)
-    for spine in axis.spines.values():
-        spine.set_color(MUTED)
-    axis.axvline(index, color=TEXT, alpha=0.4, linestyle="--")
-    axis.legend(facecolor=BACKGROUND, labelcolor=TEXT, edgecolor=MUTED, fontsize=14, loc="lower right")
-    for text in list(figure.texts):
-        text.remove()
-    figure.text(0.5, 0.94, "Bounded states. Fading or surging feedback.", ha="center",
-                fontsize=28, color=TEXT, fontfamily="DejaVu Serif", weight="bold")
-    figure.text(0.5, 0.875, "Read RIGHT to LEFT for backward feedback. We scale final sensitivity to 1, not the state value.",
-                ha="center", fontsize=17, color=MUTED)
-    for x, (_, probe, color) in zip((0.24, 0.5, 0.78), probes):
-        ratio = probe.feedback[index] / probe.feedback[-1]
-        figure.text(x, 0.12, f"Card {index} sensitivity ratio: {ratio:.6f}",
-                    ha="center", fontsize=16, color=color)
-    figure.text(0.5, 0.055, "Below 1: weaker response. Above 1: amplified response. These are not memory amounts or note probabilities.",
-                ha="center", fontsize=15, color=MUTED)
-
-
-def draw_unsquashed_total(axis) -> None:
+def draw_unsquashed_total(axis, *, path: Path = NOTEBOOK) -> None:
     _canvas(axis)
-    _label(axis, 9, 10.35, "Remove the squash. Still lose the order.", 28, weight="bold")
-    _label(axis, 9, 9.55, "Add every note's chosen proposal: no squash, and no decision about what to protect.", 17, MUTED)
+    vector = lambda values: "[" + ", ".join(f"{value:.2f}" for value in values) + "]"
+    _label(axis, 9, 10.35, "Plain addition preserves changes, not order.", 28, weight="bold")
+    _label(axis, 9, 9.55, "Same input weights -> decimal writes. Add each feature; no recurrent remix or squash.", 17, MUTED)
     for opening, y in (("D3", 6.1), ("D4", 2.9)):
-        history, probe = trace_cell_memory(opening), unsquashed_total(opening)
-        _label(axis, 1.3, y + 0.55, f"{opening}\nopening", 19)
-        for index, (x, step, value) in enumerate(zip((3.0, 6.4, 9.8, 13.2), history, probe.stored)):
-            _label(axis, x + 1.3, y + 2.15, step.note, 18, GOLD)
-            _keyboard(axis, x + 0.48, y + 1.35, step.note, visible=True)
-            _panel(axis, x, y, 2.6, 1.1, f"[{value:+.2f}]", GOLD, 24)
+        probe = unsquashed_total(opening, path=path)
+        _label(axis, 1.3, y + 0.55, "start\n[0.00, 0.00]", 19)
+        _arrow(axis, (2.35, y + 0.55), (2.9, y + 0.55), GOLD)
+        for index, (x, note, current, value) in enumerate(zip(
+            (3.0, 6.4, 9.8, 13.2), probe.notes, probe.writes, probe.stored, strict=True,
+        )):
+            _label(axis, x + 1.3, y + 2.15, note, 18, GOLD)
+            _label(axis, x + 1.3, y + 1.55, "add " + vector(current), 18, MUTED)
+            _panel(axis, x, y, 2.6, 1.1, "total\n" + vector(value), GOLD, 20)
             if index < 3:
                 _arrow(axis, (x + 2.7, y + 0.55), (x + 3.3, y + 0.55), GOLD)
-    _label(axis, 9, 2.1, "Different openings, same final A3, same total: +0.40.", 20)
-    _label(axis, 9, 1.3, "Feedback to the first written number is 1.0. Perfect carry alone did not preserve order.", 17)
-    _label(axis, 9, 0.55, "Unsquashed does not mean raw, complete or recoverable. We still need a useful representation.", 16, MUTED)
+    _label(axis, 9, 2.1, "Different orders. Same final A3. Same total: " + vector(probe.stored[-1]) + ".", 20)
+    _label(axis, 9, 1.3, "A +0.01 first-write nudge gives +0.01 in that final feature: 100% carry-through.", 17)
+    _label(axis, 9, 0.55, "A pair of totals is still not an ordered history.", 16, MUTED)
 
 
 def draw_cell_feedback(axis) -> None:
@@ -424,15 +416,16 @@ def draw_gru_feedback(axis) -> None:
     _keyboard(axis, 1.05, 4.7, "A3", visible=True)
     _label(axis, 1.9, 5.7, "input A3", 19, GOLD)
     _arrow(axis, (2.9, 5.0), (6.15, 5.0), GOLD)
-    _panel(axis, 6.3, 4.4, 4.6, 1.2, f"proposal: tanh(4)\n{math.tanh(4):+.4f}", VIOLET, 20)
-    _arrow(axis, (11.05, 5.0), (12.15, 7.25), VIOLET)
-    _label(axis, 12.7, 5.2, "WRITE 1-z", 16, VIOLET)
+    _panel(axis, 6.3, 4.4, 4.6, 1.2, f"squashed proposal\n{math.tanh(4):+.4f}", VIOLET, 20)
+    _arrow(axis, (11.05, 5.0), (12.15, 7.25), VIOLET, gid="gru-proposal-write")
+    _label(axis, 10.1, 6.35, "WRITE 1-z", 16, VIOLET)
+    axis.texts[-1].set_gid("gru-write-label")
     _label(axis, 8.6, 3.8, "RESET = 0: old h stays out of this proposal.", 16, MUTED)
     _arrow(axis, (14.6, 7.0), (14.6, 4.2), VIOLET)
     _instrument(axis, 14.6, 3.45, "head", VIOLET, gid="gru-head")
     _label(axis, 16.9, 6.15, "carry\nsame h", 16, CYAN)
     _label(axis, 14.6, 2.6, "note scores", 16, VIOLET)
-    _label(axis, 9, 1.6, f"Opening feedback after 20 transitions: {probe.stored_feedback:.6f}, not twenty tanh derivatives.", 18)
+    _label(axis, 9, 1.6, f"Opening feedback after 20 transitions: {probe.stored_feedback:.6f}. Old h bypasses the squeeze.", 18)
     _label(axis, 9, 0.65, "Bounded h is compatible with protected feedback. Learned gates and proposal routes still affect the full gradient.", 15, MUTED)
 
 
@@ -446,27 +439,15 @@ def export(path: Path = NOTEBOOK, directory: Path = HERE / "images") -> None:
             "gru_feedback": gru_carry().stored_feedback,
         }),
     }
-    for filename, draw in (
-        (IMAGE_FILES[0], draw_saturation), (IMAGE_FILES[2], draw_unsquashed_total),
-        (IMAGE_FILES[3], draw_cell_feedback), (IMAGE_FILES[4], draw_gru_feedback),
-        (IMAGE_FILES[5], lambda axis: draw_notecard(axis, notecard_probe(path=path))),
-    ):
+    for filename, draw in zip(IMAGE_FILES, (
+        draw_saturation, lambda axis: draw_unsquashed_total(axis, path=path),
+        draw_cell_feedback, draw_gru_feedback,
+        lambda axis: draw_notecard(axis, notecard_probe(path=path)),
+    ), strict=True):
         figure, axis = _figure()
         draw(axis)
         figure.savefig(directory / filename, dpi=100, facecolor=BACKGROUND, metadata=metadata)
         plt.close(figure)
-    figure, axis, probes = feedback_figure()
-    figure.savefig(directory / IMAGE_FILES[1], dpi=100, facecolor=BACKGROUND, metadata=metadata)
-    figure.set_dpi(80)
-    animation = FuncAnimation(
-        figure, lambda frame: draw_feedback_chart(figure, axis, probes, frame),
-        frames=21, interval=400, repeat=False,
-    )
-    plt.close(figure)
-    (directory / (REPLAY + ".html")).write_text(
-        PLAYER_STYLE + compact_animation_frames(responsive_animation_html(animation)), encoding="utf-8",
-    )
-    animation.save(directory / (REPLAY + ".gif"), writer="pillow", fps=2.5, dpi=80)
     figure, axis = studio_figure()
     draw_studio(axis, record_trace(path), stage=2, overview=True,
                 caption="One shared reader, three saved cards, a next-note guess at every read.")
@@ -478,11 +459,11 @@ def export(path: Path = NOTEBOOK, directory: Path = HERE / "images") -> None:
         image.resize((1280, 720), Image.Resampling.LANCZOS).save(
             directory / "01a-backprop-saved-cards-preview.png", optimize=True,
         )
-    print("Saved six measured figures, a 21-frame feedback replay, and the quieter section-2 storyboard.")
+    print("Saved five measured figures and the quieter section-2 storyboard.")
 
 
 def refresh_notebook_captures(path: Path = NOTEBOOK, directory: Path = HERE / "images") -> None:
-    from notebook_replays import NOTEBOOK_SIZE_LIMIT, embed_notebook_images, refresh_embedded_replays
+    from notebook_replays import NOTEBOOK_SIZE_LIMIT, embed_notebook_images
 
     raw = path.read_bytes()
     book = json.loads(raw)
@@ -491,17 +472,12 @@ def refresh_notebook_captures(path: Path = NOTEBOOK, directory: Path = HERE / "i
         raise ValueError("Notebook serialization changed; refresh with a notebook-aware editor.")
     sources = ["".join(cell["source"]) for cell in book["cells"]]
     owners = {}
-    for filename in IMAGE_FILES + (REPLAY + ".gif", "01a-backprop-saved-cards.png"):
+    for filename in IMAGE_FILES + ("01a-backprop-saved-cards.png",):
         matches = [cell for cell in book["cells"] if f"attachment:{filename}" in "".join(cell["source"])]
         if len(matches) != 1:
             raise ValueError(f"Expected exactly one notebook owner for {filename}.")
         owners[matches[0]["id"]] = matches[0]
     embed_notebook_images({"cells": list(owners.values())}, images_directory=directory, refresh_existing=True)
-    players = [cell for cell in book["cells"]
-               if cell.get("metadata", {}).get("saved_replay", {}).get("file") == REPLAY + ".html"]
-    if len(players) != 1:
-        raise ValueError("Expected exactly one marked gradient-sensitivity player.")
-    refresh_embedded_replays({"cells": players}, images_directory=directory)
     if sources != ["".join(cell["source"]) for cell in book["cells"]] or path.read_bytes() != raw:
         raise RuntimeError("Notebook sources changed during gradient capture refresh.")
     encoded = (json.dumps(book, ensure_ascii=False, indent=1) + ending).encode()

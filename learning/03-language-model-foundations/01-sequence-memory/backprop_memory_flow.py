@@ -194,8 +194,7 @@ def render_replay(path: Path = NOTEBOOK, directory: Path = HERE / "images") -> N
 
 
 def refresh_notebook_captures(path: Path = NOTEBOOK, directory: Path = HERE / "images") -> None:
-    import base64
-    from notebook_replays import refresh_embedded_replays
+    from notebook_replays import embed_notebook_images, refresh_embedded_replays
 
     before = path.read_bytes()
     book = json.loads(before)
@@ -205,14 +204,7 @@ def refresh_notebook_captures(path: Path = NOTEBOOK, directory: Path = HERE / "i
     prose = next(cell for cell in book["cells"] if cell["id"] == "968f14e7")
     replay = next(cell for cell in book["cells"] if cell["id"] == "backprop-saved-card-replay")
     sources = [cell["source"] for cell in book["cells"]]
-    for filename, mime in (
-        (PREFIX + ".png", "image/png"),
-        (PREFIX + "-trace.png", "image/png"),
-        (PREFIX + ".gif", "image/gif"),
-    ):
-        prose.setdefault("attachments", {})[filename] = {
-            mime: base64.b64encode((directory / filename).read_bytes()).decode("ascii"),
-        }
+    embed_notebook_images({"cells": [prose]}, images_directory=directory, refresh_existing=True)
     refresh_embedded_replays({"cells": [replay]}, images_directory=directory)
     if [cell["source"] for cell in book["cells"]] != sources or path.read_bytes() != before:
         raise RuntimeError("Notebook sources changed during capture refresh.")

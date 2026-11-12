@@ -1,0 +1,17 @@
+[
+  {
+    "filename": "01a-lstm-state-objects.png",
+    "semantic_anchor": "LSTM c is a carried numeric workspace; h is its gated readout and next-step context. Both have the same two-feature width in this lesson, and only h is read directly by the prediction head.",
+    "aspect_ratio": "16:9",
+    "model": "MAI-Image-2.6",
+    "prompt": "Premium cinematic educational illustration asset, landscape 16:9, matching a midnight music-studio learning diagram. Deep navy background #0d1b2e, restrained studio lighting, tactile materials, luminous edges, rich but uncluttered. Exactly TWO separate front-facing objects, of EQUAL visual size and capacity, with a generous empty gap between them. LEFT HALF: a warm ivory-and-gold memory ledger tray with exactly TWO large blank recessed panels side by side, subtle paper grain, brushed gold frame, one restrained folded-paper detail. This is the durable workspace object. RIGHT HALF: a cool cyan glass readout card with exactly TWO large blank display panels side by side, crisp translucent rim, cyan glow, tactile slate backing. This is the exposed readout object. Each object stays completely inside its own half, approximately centered at one-quarter and three-quarters of the image width. Keep both equally large, straight-on and easy to crop separately. Background stays dark and quiet; subtle original piano-studio cues only at the far edges. The two objects are reusable icons, not a complete diagram. All labels, arrows, controls, state values and prediction probabilities will be rendered OUTSIDE the artwork by code.",
+    "acceptance_criteria": "One gold workspace object on the left and one cyan readout object on the right, clearly separated, equally sized, each with two empty panels. Rich crafted midnight-studio style. No generated labels or data. No visual suggestion that c has more features than h. Clean object boundaries suitable for independent crops.",
+    "prohibited_content": "Any text, letters, digits, equations, probabilities, graph data, arrows, diagrams, extra state objects, more than two panels per object, people, hands, logos, watermarks, copyrighted characters, tilted perspective, bright white background or clutter covering the objects.",
+    "alt_text": "Two equally sized, blank two-panel studio objects: a gold workspace ledger for c and a cyan readout card for h. The animation places actual state labels and numbers beside them, never on top of them.",
+    "crop_boxes": {
+      "cell": [130, 190, 690, 725],
+      "hidden": [840, 190, 1420, 725]
+    },
+    "postprocessing": "The original MAI PNG is retained. The renderer crops the two reviewed object regions and letterboxes each into an equal-sized icon; all labels and measured values remain outside those icons."
+  }
+]

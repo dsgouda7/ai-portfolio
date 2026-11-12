@@ -1,6 +1,8 @@
 """Verify gradient-led motivation without treating gated memory as a guarantee."""
 
 import base64
+import contextlib
+from io import StringIO
 import json
 import math
 from pathlib import Path
@@ -12,15 +14,16 @@ from matplotlib.patches import FancyArrowPatch
 from PIL import Image
 import torch
 
+from backprop_memory_flow import _inputs_and_weights
 from gradient_memory import (
-    HERE, IMAGE_FILES, NOTEBOOK, REPLAY, clipping_probe, draw_cell_feedback,
-    draw_gru_feedback, draw_saturation, draw_unsquashed_total, feedback_figure,
+    HERE, IMAGE_FILES, NOTEBOOK, clipping_probe, draw_cell_feedback,
+    draw_gru_feedback, draw_saturation, draw_unsquashed_total, export,
     gru_carry, lstm_carry, native_gated_probe, piano_probe, recurrent_probe,
     refresh_notebook_captures, source_fingerprint, draw_notecard, notecard_probe,
     unsquashed_total,
 )
 from lstm_state_roles import _figure
-from notebook_replays import ERROR_FEEDBACK_FILE, TANH_TRACKER_FILE
+from notebook_replays import ERROR_FEEDBACK_FILE
 
 
 class GradientMemoryTests(unittest.TestCase):
@@ -86,16 +89,27 @@ class GradientMemoryTests(unittest.TestCase):
         self.assertLess(saturated.feedback[0], ordinary.feedback[0] / 1000)
         self.assertTrue(all(abs(state[0]) < 1 for state in saturated.states[1:]))
 
-    def test_saturation_lesson_embeds_a_tracker_instead_of_python_exercise_code(self):
+    def test_saturation_comparison_measures_both_regions_in_one_static_figure(self):
+        figure, axis = _figure()
+        try:
+            draw_saturation(axis)
+            labels = " ".join(text.get_text() for text in axis.texts)
+            for start in (0.0, 3.0):
+                change = math.tanh(start + 0.0001) - math.tanh(start)
+                self.assertIn(f"+{change:.10f}", labels)
+                self.assertIn(f"{change / 0.0001:.0%}", labels)
+            curve = axis.lines[0]
+            inputs = (curve.get_xdata() - 4.5) / 0.8
+            expected = 5.6 + torch.as_tensor(inputs).tanh().numpy() * 1.8
+            torch.testing.assert_close(torch.as_tensor(curve.get_ydata()), torch.as_tensor(expected))
+        finally:
+            plt.close(figure)
         book = json.loads(NOTEBOOK.read_bytes())
-        cell = next(cell for cell in book["cells"] if cell["id"] == "gradient-saturation-probe")
+        cell = next(cell for cell in book["cells"] if cell["id"] == "gradient-saturation-intro")
         self.assertEqual(cell["cell_type"], "markdown")
         self.assertNotIn("outputs", cell)
-        self.assertEqual(cell["metadata"]["saved_replay"]["file"], TANH_TRACKER_FILE)
-        document = "".join(cell["source"])
-        self.assertIn("Math.tanh", document)
-        self.assertIn("output change", document)
-        self.assertIn('sandbox="allow-scripts"', document)
+        self.assertIn("01a-tanh-saturation.png", cell["attachments"])
+        self.assertFalse(any(cell["id"] == "gradient-saturation-probe" for cell in book["cells"]))
 
     def test_native_piano_reader_has_two_features_and_a_connected_weak_opening_route(self):
         short, long = piano_probe(5), piano_probe(50)
@@ -109,6 +123,7 @@ class GradientMemoryTests(unittest.TestCase):
     def test_clipping_caps_an_actual_writer_weight_update(self):
         probe = clipping_probe(1.2, opening=0)
         self.assertGreater(abs(probe.raw_gradient), 30)
+        self.assertAlmostEqual(probe.raw_gradient, -(1.2**20), places=10)
         self.assertAlmostEqual(abs(probe.clipped_gradient), 1, places=6)
         self.assertAlmostEqual(probe.raw_update, -0.01 * probe.raw_gradient)
         self.assertAlmostEqual(probe.clipped_update, -0.01 * probe.clipped_gradient)
@@ -123,10 +138,80 @@ class GradientMemoryTests(unittest.TestCase):
     def test_unsquashed_totals_can_lose_order_with_perfect_gradient_carry(self):
         first, other = unsquashed_total("D3"), unsquashed_total("D4")
         self.assertNotEqual(first.stored[0], other.stored[0])
-        self.assertAlmostEqual(first.stored[-1], 0.4)
-        self.assertAlmostEqual(first.stored[-1], other.stored[-1])
-        self.assertEqual(first.stored_feedback, 1)
-        self.assertEqual(other.stored_feedback, 1)
+        self.assertEqual(first.notes, ("D3", "A3", "D4", "A3"))
+        self.assertEqual(other.notes, ("D4", "A3", "D3", "A3"))
+        self.assertEqual(first.inputs, ((1, 0), (0, 1), (1, 1), (0, 1)))
+        self.assertEqual(other.inputs, ((1, 1), (0, 1), (1, 0), (0, 1)))
+        for actual, expected in (
+            (first.stored, ((0.70, 0.30), (0.50, 1.10), (1.00, 2.20), (0.80, 3.00))),
+            (other.stored, ((0.50, 1.10), (0.30, 1.90), (1.00, 2.20), (0.80, 3.00))),
+        ):
+            torch.testing.assert_close(torch.tensor(actual, dtype=torch.float64),
+                                       torch.tensor(expected, dtype=torch.float64), rtol=0, atol=1e-6)
+        self.assertEqual(first.stored[-1], other.stored[-1])
+        _, input_weights, _ = _inputs_and_weights(NOTEBOOK)
+        for probe in (first, other):
+            writes = torch.tensor(probe.inputs, dtype=torch.float64) @ input_weights.T
+            torch.testing.assert_close(torch.tensor(probe.writes, dtype=torch.float64), writes, rtol=0, atol=0)
+            torch.testing.assert_close(torch.tensor(probe.stored, dtype=torch.float64),
+                                       writes.cumsum(0), rtol=0, atol=1e-14)
+            self.assertEqual(probe.stored_feedback, (1, 1))
+            self.assertEqual(probe.first_write_jacobian, ((1, 0), (0, 1)))
+
+    def test_additive_figure_shows_the_actual_fractional_writes_and_totals(self):
+        figure, axis = _figure()
+        try:
+            draw_unsquashed_total(axis)
+            labels = " ".join(text.get_text() for text in axis.texts)
+            for opening in ("D3", "D4"):
+                probe = unsquashed_total(opening)
+                for values in (*probe.writes, *probe.stored):
+                    self.assertIn("[" + ", ".join(f"{value:.2f}" for value in values) + "]", labels)
+            self.assertIn("[0.80, 3.00]", labels)
+            self.assertIn("100% carry-through", labels)
+            self.assertNotIn("add [1, 0]", labels)
+            self.assertNotIn("add [0, 1]", labels)
+        finally:
+            plt.close(figure)
+
+    def test_linear_remixing_can_keep_order_without_a_squash(self):
+        endings = []
+        for opening in ("D3", "D4"):
+            state = 0.0
+            for write in unsquashed_total(opening).writes:
+                state = 0.8 * state + write[0]
+            endings.append(state)
+        self.assertAlmostEqual(endings[0], 0.4304, places=6)
+        self.assertAlmostEqual(endings[1], 0.4880, places=6)
+        self.assertGreater(abs(endings[0] - endings[1]), 0.05)
+
+    def test_additive_first_write_nudges_survive_in_the_matching_feature(self):
+        probe = unsquashed_total("D3")
+        writes = torch.tensor(probe.writes, dtype=torch.float64)
+        for feature in range(2):
+            nudged = writes.clone()
+            nudged[0, feature] += 0.01
+            expected = torch.zeros(2, dtype=torch.float64)
+            expected[feature] = 0.01
+            torch.testing.assert_close(nudged.sum(0) - writes.sum(0), expected, rtol=0, atol=1e-14)
+
+    def test_additive_notebook_check_reloads_the_helper_and_has_current_outputs(self):
+        book = json.loads(NOTEBOOK.read_bytes())
+        cell = next(cell for cell in book["cells"] if cell["id"] == "unsquashed-total-probe")
+        source = "".join(cell["source"])
+        self.assertIn("importlib.reload", source)
+        with contextlib.redirect_stdout(StringIO()) as captured:
+            exec(compile(source, "unsquashed-total-probe", "exec"), {})
+        text = captured.getvalue()
+        for value in ("[0.70, 0.30]", "[-0.20, 0.80]", "[0.50, 1.10]", "[0.80, 3.00]"):
+            self.assertIn(value, text)
+        self.assertTrue(all(output["output_type"] != "error" for output in cell.get("outputs", [])))
+        if cell.get("outputs"):
+            saved = "".join(
+                "".join(output["text"]) if isinstance(output["text"], list) else output["text"]
+                for output in cell["outputs"] if output["output_type"] == "stream"
+            )
+            self.assertEqual(saved, text)
 
     def test_lstm_c_is_not_bounded_but_h_is_and_the_readout_can_saturate(self):
         probe = lstm_carry(1, opening=0, write=1, delay=5)
@@ -186,6 +271,7 @@ class GradientMemoryTests(unittest.TestCase):
             lambda: recurrent_probe(gain=float("nan")), lambda: lstm_carry(-0.1),
             lambda: lstm_carry(proposal=2), lambda: gru_carry(opening=2),
             lambda: gru_carry(reset=1.1), lambda: clipping_probe(1.2, opening=0, max_norm=0),
+            lambda: unsquashed_total("A3"), lambda: unsquashed_total(None),
         ):
             with self.assertRaises(ValueError):
                 call()
@@ -214,26 +300,14 @@ class GradientMemoryTests(unittest.TestCase):
             finally:
                 plt.close(figure)
 
-    def test_feedback_replay_renders_all_recorded_frames_without_made_up_values(self):
-        for frame in (0, 10, 20):
-            figure, axis, probes = feedback_figure(frame)
-            try:
-                figure.canvas.draw()
-                for line, (_, probe, _) in zip(axis.lines[:3], probes):
-                    self.assertEqual(len(line.get_ydata()), frame + 1)
-                    expected = [value / probe.feedback[-1] for value in probe.feedback[20-frame:]]
-                    self.assertEqual(list(line.get_ydata()), expected)
-                self.assertIn("final card (= 1)", axis.get_ylabel())
-                self.assertTrue(any("RIGHT to LEFT" in text.get_text() for text in figure.texts))
-                for _, probe, _ in probes:
-                    ratio = probe.feedback[20-frame] / probe.feedback[-1]
-                    self.assertTrue(any(f"{ratio:.6f}" in text.get_text() for text in figure.texts))
-                for text in figure.texts:
-                    bounds = text.get_window_extent(figure.canvas.get_renderer())
-                    self.assertTrue(figure.bbox.contains(bounds.x0, bounds.y0), text.get_text())
-                    self.assertTrue(figure.bbox.contains(bounds.x1, bounds.y1), text.get_text())
-            finally:
-                plt.close(figure)
+    def test_export_writes_only_the_retained_static_evidence(self):
+        with TemporaryDirectory() as directory:
+            target = Path(directory)
+            export(directory=target)
+            expected = set(IMAGE_FILES) | {
+                "01a-backprop-saved-cards.png", "01a-backprop-saved-cards-preview.png",
+            }
+            self.assertEqual({path.name for path in target.iterdir()}, expected)
 
     def test_gru_diagram_separates_one_update_from_twenty_step_feedback(self):
         figure, axis = _figure()
@@ -242,34 +316,41 @@ class GradientMemoryTests(unittest.TestCase):
             labels = " ".join(text.get_text() for text in axis.texts)
             self.assertIn(f"new h: {gru_carry(delay=1).stored[-1]:+.4f}", labels)
             self.assertIn(f"{gru_carry().stored_feedback:.6f}", labels)
+            write = next(text for text in axis.texts if text.get_gid() == "gru-write-label")
+            x, y = write.get_position()
+            self.assertLess(x, 12.15)
+            self.assertGreater(y, 5.6)
+            self.assertLess(y, 7.25)
+            self.assertTrue(any(patch.get_gid() == "gru-proposal-write" for patch in axis.patches))
         finally:
             plt.close(figure)
 
     def test_saved_evidence_is_fingerprinted_and_embedded(self):
         book = json.loads(NOTEBOOK.read_bytes())
-        for filename in IMAGE_FILES + (REPLAY + ".gif",):
+        for filename in IMAGE_FILES:
             owner = next(cell for cell in book["cells"]
                          if f"attachment:{filename}" in "".join(cell["source"]))
-            mime = "image/gif" if filename.endswith(".gif") else "image/png"
-            self.assertEqual(base64.b64decode(owner["attachments"][filename][mime]),
+            self.assertEqual(base64.b64decode(owner["attachments"][filename]["image/png"]),
                              (HERE / "images" / filename).read_bytes())
-            if mime == "image/png":
-                with Image.open(HERE / "images" / filename) as image:
-                    self.assertEqual(image.info["SourceFingerprint"], source_fingerprint())
-            else:
-                with Image.open(HERE / "images" / filename) as image:
-                    self.assertEqual(image.n_frames, 21)
-                    duration = 0
-                    for frame in range(image.n_frames):
-                        image.seek(frame)
-                        duration += image.info["duration"]
-                    self.assertEqual(duration, 21 * 400)
+            with Image.open(HERE / "images" / filename) as image:
+                self.assertEqual(image.info["SourceFingerprint"], source_fingerprint())
 
     def test_notebook_builds_gradient_motivation_before_cell_roles_and_gru_controls(self):
         book = json.loads(NOTEBOOK.read_bytes())
         ids = [cell["id"] for cell in book["cells"]]
         self.assertLess(ids.index("gradient-native-intro"), ids.index("embedded-01a-error-feedback"))
         self.assertLess(ids.index("embedded-01a-error-feedback"), ids.index("gradient-native-probe"))
+        start = ids.index("gradient-native-intro")
+        self.assertEqual(ids[start:start + 5], [
+            "gradient-native-intro", "embedded-01a-error-feedback",
+            "gradient-vanishing-intuition", "gradient-exploding-intuition", "5001b8f0",
+        ])
+        intro = next(cell for cell in book["cells"] if cell["id"] == "gradient-native-intro")
+        self.assertTrue("".join(intro["source"]).startswith(
+            "### Vanishing and exploding gradients in RNNs\n"
+        ))
+        self.assertFalse(any("Small numbers on the card can still produce large feedback"
+                             in "".join(cell["source"]) for cell in book["cells"]))
         player = next(cell for cell in book["cells"] if cell["id"] == "embedded-01a-error-feedback")
         self.assertEqual(player["cell_type"], "markdown")
         self.assertTrue("".join(player["source"]).startswith("<iframe "))
@@ -278,11 +359,81 @@ class GradientMemoryTests(unittest.TestCase):
         self.assertLess(ids.index("gradient-exploding-intuition"), ids.index("5001b8f0"))
         self.assertGreater(ids.index("gradient-native-probe"), ids.index("gradient-technical-appendix"))
         self.assertGreater(ids.index("9df9ac84"), ids.index("gradient-technical-appendix"))
-        self.assertLess(ids.index("gradient-saturation-probe"), ids.index("133e7838"))
+        self.assertLess(ids.index("gradient-saturation-intro"), ids.index("133e7838"))
         self.assertLess(ids.index("gradient-clipping-probe"), ids.index("133e7838"))
         self.assertLess(ids.index("unsquashed-total-probe"), ids.index("133e7838"))
         self.assertLess(ids.index("lstm-gradient-carry-probe"), ids.index("lstm-real-cell-parity"))
         self.assertLess(ids.index("gru-gradient-carry-probe"), ids.index("gru-real-cell-parity"))
+
+    def test_notebook_names_model_changes_and_distinguishes_values_from_parameters(self):
+        book = json.loads(NOTEBOOK.read_bytes())
+        sources = {cell["id"]: " ".join("".join(cell["source"]).split()) for cell in book["cells"]}
+        checks = {
+            "7d99e444": ("fourth note", "first note", "same last two notes",
+                         "hand-picked weights"),
+            "gradient-native-intro": ("two-number h", "one-number h",
+                                     "[0.001,-0.0005]", "earlier heads are previews"),
+            "5001b8f0": ("Separate stress test", "half-squared distance to 1.0",
+                        "0.01", "Within each raw/clipped pair"),
+            "gated-memory-demand": ("commutative", "recurrent mixing", "100% carry-through",
+                                   "[0.70,0.30]", "[0.71,0.30]", "[0.80,3.00]", "[0.81,3.00]"),
+            "133e7838": ("new storage probe", "not the result of the preceding vector sum"),
+            "lstm-readout-after-memory": ("computed values", "trainable weights",
+                                         "`g` means **proposal**", "**error-response g**"),
+            "lstm-native-intro": ("two input features", "initialized trainable weights",
+                                 "same native cell", "Two trainable Linear projections"),
+            "lstm-echo-intro": ("four input profiles", "twelve features per state",
+                               "three echo answers", "ending-only", "silent request",
+                               "A3 D4 A3 D3 repeated five times", "twenty note events"),
+            "gru-learned-gates-intro": ("initialized weights", "twelve-feature echo setup"),
+        }
+        for cell_id, phrases in checks.items():
+            for phrase in phrases:
+                with self.subTest(cell=cell_id, phrase=phrase):
+                    self.assertIn(phrase, sources[cell_id])
+
+    def test_opening_puzzle_requires_the_first_note_not_the_shared_suffix(self):
+        book = json.loads(NOTEBOOK.read_bytes())
+        opening = "".join(book["cells"][0]["source"])
+        examples = []
+        for line in opening.splitlines():
+            if line.startswith("| ") and line.count("|") == 3:
+                phrase, answer = (column.strip() for column in line.split("|")[1:-1])
+                notes = phrase.split()
+                if len(notes) == 3 and all(note in ("D3", "A3", "D4") for note in notes):
+                    examples.append((notes, answer))
+        self.assertEqual(len(examples), 2)
+        self.assertEqual(examples[0][0][1:], examples[1][0][1:])
+        self.assertNotEqual(examples[0][1], examples[1][1])
+        for notes, answer in examples:
+            self.assertEqual(answer, notes[0])
+        self.assertNotIn("PLAY", opening)
+        self.assertNotIn("twenty", opening.lower())
+
+    def test_notebook_bridges_link_to_the_actual_walkthrough_and_appendix_checks(self):
+        book = json.loads(NOTEBOOK.read_bytes())
+        cells = {cell["id"]: cell for cell in book["cells"]}
+        prose = "\n".join("".join(cell["source"]) for cell in book["cells"]
+                          if cell["cell_type"] == "markdown"
+                          and "saved_replay" not in cell["metadata"])
+        for anchor in ("memory-challenge", "rnn-gradient-microscope", "lstm-complete-read",
+                       "gradient-technical-checks", "fixed-fraction-retention",
+                       "retention-route-comparison"):
+            self.assertEqual(prose.count(f'<a id="{anchor}"></a>'), 1)
+        for cell_id, anchor in (
+            ("lstm-echo-intro", "memory-challenge"),
+            ("lstm-native-intro", "lstm-complete-read"),
+            ("gradient-clipping-reflection", "fixed-fraction-retention"),
+            ("saved-retention-comparison", "retention-route-comparison"),
+        ):
+            self.assertIn(f"](#{anchor})", "".join(cells[cell_id]["source"]))
+        ids = [cell["id"] for cell in book["cells"]]
+        self.assertLess(ids.index("lstm-gradient-carry-intro"), ids.index("lstm-gradient-carry-probe"))
+        self.assertLess(ids.index("lstm-gradient-carry-probe"), ids.index("lstm-gradient-carry-reading"))
+        self.assertIn("**What you measured:**", "".join(cells["lstm-gradient-carry-reading"]["source"]))
+        for cell_id in ("lstm-gradient-carry-intro", "gru-gradient-carry-intro"):
+            self.assertIn("stress", "".join(cells[cell_id]["source"]))
+        self.assertEqual(ids.index("retention-comparison-guide") + 1, ids.index("be857f77"))
 
     def test_regeneration_refresh_preserves_experiments_and_is_idempotent(self):
         before = json.loads(NOTEBOOK.read_bytes())
@@ -296,7 +447,7 @@ class GradientMemoryTests(unittest.TestCase):
             after = json.loads(first)
         for original, updated in zip(before["cells"], after["cells"]):
             self.assertEqual(original["source"], updated["source"])
-            if original["cell_type"] == "code" and original["id"] != "embedded-01a-gradient-sensitivity":
+            if original["cell_type"] == "code":
                 self.assertEqual(original, updated)
 
 

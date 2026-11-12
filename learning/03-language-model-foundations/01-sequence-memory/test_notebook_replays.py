@@ -18,7 +18,7 @@ from PIL import Image
 
 from notebook_replays import (
     ERROR_FEEDBACK_FILE, NATIVE_PLAYER_MARKERS, NOTEBOOK_SIZE_LIMIT, REPLAY_FILES,
-    TANH_TRACKER_FILE, _packed_html, embed_notebook_images,
+    _packed_html, embed_notebook_images,
     refresh_embedded_replays, saved_replay,
 )
 
@@ -85,25 +85,9 @@ class NotebookReplayTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "no embedded PNG"):
             _packed_html(b"<p>not a replay</p>")
 
-    def test_native_tanh_tracker_is_embedded_without_png_frames_or_external_sources(self):
-        result = saved_replay(TANH_TRACKER_FILE).data
-        document = unescape(re.search(r'srcdoc="([^"]+)"', result)[1])
-        self.assertIn('sandbox="allow-scripts"', result)
-        self.assertNotIn("allow-same-origin", result)
-        self.assertIn("Math.tanh", document)
-        self.assertIn('id="input-slider"', document)
-        self.assertIn('id="input-number"', document)
-        media = MediaParser()
-        media.feed(document)
-        self.assertEqual(media.sources, [])
-        with TemporaryDirectory() as directory:
-            (Path(directory) / TANH_TRACKER_FILE).write_text("<p>not the tracker</p>", encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "interactive player"):
-                saved_replay(TANH_TRACKER_FILE, images_directory=Path(directory))
-
     def test_tracker_refresh_preserves_empty_source_and_refuses_added_code(self):
         display = {
-            "cell_type": "code", "source": [], "metadata": {"saved_replay": {"file": TANH_TRACKER_FILE}},
+            "cell_type": "code", "source": [], "metadata": {"saved_replay": {"file": ERROR_FEEDBACK_FILE}},
             "outputs": [], "execution_count": None,
         }
         book = {"cells": [display]}
@@ -116,16 +100,26 @@ class NotebookReplayTests(unittest.TestCase):
         display["source"] = ["print('keep my code')"]
         with self.assertRaisesRegex(ValueError, "display cell changed"):
             refresh_embedded_replays(book)
+        with TemporaryDirectory() as directory:
+            (Path(directory) / ERROR_FEEDBACK_FILE).write_text("<p>not the tracker</p>", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "interactive player"):
+                saved_replay(ERROR_FEEDBACK_FILE, images_directory=Path(directory))
 
     def test_error_feedback_tracker_is_self_contained_and_code_free(self):
         result = saved_replay(ERROR_FEEDBACK_FILE).data
         document = unescape(re.search(r'srcdoc="([^"]+)"', result)[1])
         self.assertIn('id="weight-scale"', document)
-        self.assertIn('id="preset-vanishing"', document)
-        self.assertIn('id="preset-exploding"', document)
+        self.assertIn('id="gradient-status"', document)
+        self.assertIn('data:image/webp;base64,', document)
+        self.assertNotIn('id="preset-vanishing"', document)
+        self.assertNotIn('id="preset-exploding"', document)
         self.assertIn('id="writing-weight"', document)
-        self.assertIn('id="output-value"', document)
-        self.assertIn('id="writing-gradient"', document)
+        self.assertIn('class:"head-probability"', document)
+        self.assertIn('class:"memory-product"', document)
+        self.assertNotIn('aria-label="Final next-note error"', document)
+        self.assertIn('"writing-gradient"', document)
+        for element_id in ("cells", "forward-formula", "backward-formula", "update-formula", "long-phrase"):
+            self.assertIn(f'id="{element_id}"', document)
         self.assertNotIn('id="prediction-slider"', document)
         self.assertIn('id="recorded-cases"', document)
         media = MediaParser()
@@ -162,7 +156,8 @@ class NotebookReplayTests(unittest.TestCase):
         book = {"cells": [display]}
         refresh_embedded_replays(book)
         snapshot = deepcopy(book)
-        old_html = display["outputs"][0]["data"]["text/html"].replace("height:760px", "height:960px")
+        old_html = re.sub(r"height:\d+px", "height:600px", display["outputs"][0]["data"]["text/html"])
+        self.assertNotEqual(old_html, snapshot["cells"][0]["outputs"][0]["data"]["text/html"])
         display["outputs"][0]["data"]["text/html"] = old_html
         display["metadata"]["saved_replay"]["output_sha256"] = hashlib.sha256(old_html.encode()).hexdigest()
         refresh_embedded_replays(book)

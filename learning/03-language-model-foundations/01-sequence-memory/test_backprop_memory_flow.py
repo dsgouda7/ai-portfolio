@@ -143,14 +143,14 @@ class BackpropMemoryFlowTests(unittest.TestCase):
         book = json.loads(NOTEBOOK.read_text(encoding="utf-8"))
         cell = next(cell for cell in book["cells"] if cell["id"] == "6dce1587")
         source = " ".join("".join(cell["source"]).split())
-        self.assertLess(source.index("history helps predict"), source.index("fixed-length vector"))
+        self.assertLess(source.index("fourth-note puzzle"), source.index("fixed-length vector"))
         self.assertLess(source.index("complete ordered phrase"), source.index("fixed-length vector"))
-        self.assertIn("instead of starting again from the opening", source)
+        self.assertIn("same number of memory values", source)
         self.assertIn("useful details can be lost", source)
         self.assertNotIn("smallest useful notecard", source.lower())
         for distinction in (
-            "not the training corpus", "not a literal musician's workflow",
-            "not looking up stored songs", "hand-picked", "reads h without changing it",
+            "not the training corpus", "first note", "hidden state",
+            "hand-picked", "reads h without changing it",
         ):
             self.assertIn(distinction, source)
 

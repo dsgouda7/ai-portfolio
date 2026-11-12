@@ -1,0 +1,16 @@
+[
+  {
+    "filename": "01a-bptt-notebook-paper-mai.png",
+    "semantic_anchor": "A memorable original notebook-paper canvas for a verified handwritten explanation of one recurrent weight, direct and inherited effects, repeated products, and vanishing/exploding gradients.",
+    "aspect_ratio": "19:28 portrait",
+    "width": 1216,
+    "height": 1792,
+    "model": "MAI-Image-2.6",
+    "prompt": "Create a premium blank scientific notebook page as an original educational illustration asset, portrait 19:28. Straight-on overhead photography, no perspective distortion. A single warm ivory sheet fills nearly the entire canvas, with only a very narrow dark walnut desk border. Beautiful natural paper fibers, extremely subtle warm shading, very faint evenly spaced pale blue ruled lines, one thin faded red margin line about 10 percent from the left. The central 85 percent is clean, light, flat, low-contrast, completely EMPTY writing space. At the extreme upper-right corner only, a tiny original blue-ballpoint doodle of three simple piano keys hints at a musical learning example. Restrained cyan and warm coral pen-stroke accents at the far lower page corners, never through the writing area. Crisp archival-quality paper texture, memorable tactile study-notes aesthetic, not a generic digital slide. This is a blank canvas: an exact hand-lettered title, equations, underlines, circles, captions, and a cyan/coral comparison will be rendered later by code. Target filename: 01a-bptt-notebook-paper-mai.png.",
+    "acceptance_criteria": "One portrait blank ivory notebook sheet, extremely faint pale blue ruling, a faded red left margin, minute piano doodle only in the upper-right margin, narrow desk edge, central writing region consistently light and uncluttered. No generated mathematical content. The final code-composited image will be 3200 by 4800 pixels with verified Segoe Print equations.",
+    "prohibited_content": "Any words, letters, digits, equations, notation, labels, signatures, watermarks, logos, hands, people, pens covering the page, strong shadows across writing space, folds, perspective tilt, notebook rings, dense illustrations, decorative marks in the central writing area, copyrighted characters.",
+    "alt_text": "An original warm ivory ruled notebook page with a faded red margin and a tiny piano-key doodle; verified handwritten mathematics is added by the local compositor.",
+    "reference_style": "Adapted from the user-supplied handwritten reference: blue ink on warm ruled paper. Its notation and mathematical boundaries are corrected rather than copied.",
+    "postprocessing": "Retain the original warm MAI PNG unchanged as source artwork. Locally color-grade its texture to the notebook's dark navy theme, then render the complete differentiate/expand/substitute/distribute walkthrough in white, cyan, gold and coral handwriting at 3200x5600. Save an optimized 256-color PNG without reducing pixel dimensions. This dark revision uses no additional image-model request. Every equation and label is verified local rendering, not generated math."
+  }
+]

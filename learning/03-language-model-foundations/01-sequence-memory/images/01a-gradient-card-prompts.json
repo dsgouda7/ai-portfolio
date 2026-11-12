@@ -1,0 +1,12 @@
+[
+  {
+    "filename": "01a-gradient-memory-card.png",
+    "semantic_anchor": "Folded-card icons mark saved h beside solid RNN weight blocks; state labels and gradient values stay outside the artwork.",
+    "aspect_ratio": "16:9",
+    "prompt": "One reusable educational illustration asset, landscape 16:9. A SINGLE blank folded memory notecard, straight-on orthographic view, almost filling the canvas with very narrow margins. Match a restrained midnight music-studio learning diagram: navy background #172941, slate-blue card face #20364f, subtle cyan rim light, tactile paper texture, one small folded upper-right corner, softly rounded lower corners. The card is a broad horizontal rectangle. Its entire central 85 percent is FLAT, DARK, EMPTY and evenly lit so high-contrast live numbers can be placed over it later. The paper edges and folded corner make this visibly a memory notecard rather than a UI rectangle. Nothing else in the scene. The image is the stable card surface only; all state values, gradient values and moving feedback will be rendered programmatically above it.",
+    "acceptance_criteria": "Exactly one large blank folded card, front-facing and not tilted. Dark slate face, navy background, subtle cyan edge. Empty dark center suitable for legible numerical overlays. No generated measurements. The same image can be repeated beneath live values at three RNN steps.",
+    "prohibited_content": "Any text, letters, digits, labels, equations, arrows, graphs, gradients represented as data, extra cards, hands, people, musical instruments, bright white paper, dramatic perspective, clutter, logos, watermarks or copyrighted characters.",
+    "alt_text": "A blank slate-blue folded memory card, used as an icon for saved h. RNN blocks, numerical labels and gradient arrows are rendered separately, never on top of the icon.",
+    "model": "MAI-Image-2.6"
+  }
+]

@@ -14,11 +14,11 @@ from PIL import Image
 
 
 HERE = Path(__file__).resolve().parent
-TANH_TRACKER_FILE = "01a-tanh-value-tracker.html"
 ERROR_FEEDBACK_FILE = "01a-error-feedback-tracker.html"
+LSTM_FORWARD_FILE = "01a-lstm-forward-walkthrough.html"
 NATIVE_PLAYER_MARKERS = {
-    TANH_TRACKER_FILE: "tanh-value-tracker",
     ERROR_FEEDBACK_FILE: "error-feedback-tracker",
+    LSTM_FORWARD_FILE: "lstm-forward-walkthrough",
 }
 REPLAY_FILES = (
     "01a-backprop-saved-cards.html",
@@ -28,9 +28,8 @@ REPLAY_FILES = (
     "01a-gru-gate-flow.html",
     "01a-gru-token-layer-flow.html",
     "01a-musical-gru-memory.html",
-    "01a-gradient-sensitivity-replay.html",
-    TANH_TRACKER_FILE,
     ERROR_FEEDBACK_FILE,
+    LSTM_FORWARD_FILE,
 )
 EMBED_VERSION = 1
 NOTEBOOK_SIZE_LIMIT = 65_000_000
@@ -109,7 +108,9 @@ def _packed_html(raw: bytes) -> str:
 
 
 def _player_height(filename: str) -> int:
-    return 760 if filename == ERROR_FEEDBACK_FILE else 1050 if "musical" in filename else 740
+    if filename == LSTM_FORWARD_FILE:
+        return 1200
+    return 1800 if filename == ERROR_FEEDBACK_FILE else 1050 if "musical" in filename else 740
 
 
 def saved_replay(filename: str, *, images_directory: Path | None = None) -> HTML:

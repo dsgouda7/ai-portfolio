@@ -6,9 +6,22 @@ Use beside [01A](01A-sequence-memory-theory.ipynb), then test batches in
 
 ## 1. Same notes, different tune
 
+Start with a toy rule: **the fourth note repeats the first**.
+
+| Three notes heard | Required fourth note |
+|---|---|
+| D3 A3 D4 | D3 |
+| A3 A3 D4 | A3 |
+
+Both phrases end in A3 D4, but need different answers. Looking only at the
+latest note cannot solve both: the first note must survive two more reads.
+This is a made-up exercise, not a universal rule of music.
+
 Play **D3 A3 D4**, then **D4 A3 D3**. Counting gives the same bag of notes,
-but the tunes differ. Ordered seats retain a distinction that pooling removes.
-Recurrence adds a reading rule reusable beyond a fixed input window.
+but our rule needs D3 after the first and D4 after the second. Counts cannot
+tell us which note came first. Keep the notes in their original positions
+instead. An ordinary neural network can use ordered positions too; an RNN
+reads one note at a time and updates its memory using the same rule each time.
 
 **Note names:** D/A = pitch; 3/4 = octave, not a vector dimension.
 
@@ -17,26 +30,26 @@ reach the next guess?
 
 ## 2. Carry the context forward
 
-After D3 A3 D4, D4 alone can have different continuations in different phrases.
-Training teaches the weights musical patterns; prediction also needs the
-current phrase's context. The model applies learned patterns, not a lookup
-of stored songs.
+For our rule, D3 A3 D4 needs D3 next, while A3 A3 D4 needs A3. Knowing the rule
+is different from knowing this phrase's first note. Training shapes the
+weights; prediction also needs the current phrase's context. The small reader
+uses hand-picked weights to expose the mechanism, not a trained solution.
 
-One option is to keep the complete ordered phrase and process it again for
-each new guess. An RNN instead carries forward the result of processing the
-past. Each new note updates a fixed-size working summary without starting
-again from the opening. The carried state stays the same size as the phrase
-grows; useful details can be lost.
+One option is to keep the complete ordered phrase and read it again for each
+new guess. An RNN instead reads the next note, updates its numerical memory,
+and carries that memory forward. Its values change, but the number of memory
+values stays the same, even as the sequence grows.
 
-Our notecard is that summary, h: a numerical description of the current
-phrase, not the training corpus or a lossless code for every note. The card
-is a reminder analogy, not a musician's literal workflow. Training shapes
-which distinctions help prediction: for the later echo, distinguish the
-openings rather than store every distraction separately.
+Call that memory h, the hidden state. Our notecard is a picture for it, not a
+written list of notes or the training corpus. For the fourth-note puzzle, it
+needs enough information about the first note to produce the answer; it does
+not need to reproduce every input. Useful details can be lost.
 
-Three notes fit in a transcript. They make this reusable reading process
-inspectable; they do not prove compression is necessary. Relevant history
-is needed, but a fixed-size summary is this architecture's choice.
+Training helps it learn what to retain. Individual memory values need not
+have labels such as "first note"; several numbers can preserve the clue together.
+
+Three notes would be easy to store completely. We use this tiny example to
+see how recurrent memory works, not to claim that three notes require compression.
 Our arithmetic reader uses hand-picked inputs and weights to show the mechanics.
 
 **From note to numbers:** D3/A3/D4 name the notes; `x` is the numeric input
@@ -57,6 +70,8 @@ encoded note and incoming memory before adding their contributions.
 In `x3/h3`, 3 is the step; in `D3`, 3 is the octave.
 
 Each read mixes the new input with old h and squeezes the result with tanh.
+This keeps each value between -1 and +1 and makes the update nonlinear,
+not just another weighted sum.
 The RNN cell makes memory h first, not a guessed note.
 
 A separate **next-note prediction layer** reads h and gives D3/A3/D4 each
@@ -125,47 +140,121 @@ zero to one. Think of tanh as a soft squeeze: near zero, a tiny push mostly
 passes through; near 3, the output is already almost +1 and hardly moves.
 These are test values before tanh, not notes or stored h.
 That responsiveness is the local gradient: a step that barely reacts forward
-also passes little feedback backward. Use the saved tracker at 0 and 3 to see it.
+also passes little feedback backward. One static curve and a matching
+tiny-nudge comparison show both regions; no separate tanh lesson is needed.
 Repeated weak responses can make the opening hard to teach; recurrent weights
-can also amplify feedback, as the next replay shows.
+can also amplify feedback, as the next replay shows. Tanh alone cannot amplify it.
 
-The weights first generate a prediction; comparing it with target 0.5 creates
-the error. Then gradients travel backward through the recorded reads.
-Drag only the memory weight: the 0.8 and 1.2 presets show vanishing and exploding
-feedback. Around 1, feedback is nearly unchanged. Input, writing weight and
-prediction weight stay fixed; the slider changes a weight, not the output directly.
-Here the recurrent weight is a reusable parameter; the stored hidden state h
-is the changing numeric memory. They are different objects.
+The player returns to D3 → A3 → D4 and h0 → h1 → h2 → h3.
+It keeps the note encodings but uses one hidden feature to expose the arithmetic.
+The same chosen weights are reused, not randomized at each note.
+**Previous-memory multiplier** is the shared recurrent weight: how strongly
+old h enters the next read. **Input multipliers** are separate weights for
+the current note's two numbers.
+Grey weights stay fixed during a slider sweep; gold changes; cyan values are recomputed.
+Each block shows incoming h times the multiplier before adding the current
+input's contribution. A branch after each note shows the probability and
+loss for the actual next note: A3, D4, then D3. Earlier losses are preview
+readouts, not extra training objectives. The first prediction stays fixed
+because h0 is zero; later predictions respond to the multiplier.
 
-Both guesses are wrong and all memory values remain small and nonzero.
-Yet the opening input weight receives a gradient of about -0.005764 in the
-vanishing case, versus -17.616600 in the exploding case. These are actual
-parameter gradients, not weight-update sizes. The toy uses half-squared error,
-not note classification; no optimizer step is shown.
+The player labels loss as **Error** and backward feedback as **Ending-error
+response at h**, rather than bare L/g symbols. Selecting a block shows two
+actual reruns with memory slightly lower/higher and all weights fixed.
+Divide the error difference by the memory difference: that rate is g.
+Positive means increasing h raises error; negative means it lowers error;
+near-zero means little error guidance reaches this state. These are not updates.
 
-The optional appendix's older graph is a per-unit reference: final sensitivity is set to 1,
-independently of the error size. Its opening values are about 0.00481 for cyan,
-38.34 for red and 0.00000802 for the piano reader. Its logarithmic axis makes
-tiny responses visible; these numbers are not memory amounts or probabilities.
+### BPTT in RNNs: where the weight gradient comes from
+
+Forward makes the prediction; backward asks tiny "what if?" questions.
+Nudge one saved h, keep the weights fixed, and rerun the head.
+How much does ending loss change per unit of that nudge? That response is
+the derivative, not the loss or a weight update.
+
+A nudge to an earlier h passes through later reads before reaching the loss.
+Multiply their responses along that route. But changing the shared memory
+multiplier affects every read, so add the contributions from its uses.
+At one use, incoming h is held fixed to isolate the direct multiplication.
+It still has a history: earlier uses account for how the multiplier changed
+that incoming h. The product rule counts the direct and inherited effects;
+it does not invent an extra correction.
+
+In the one-feature 0.8 toy, D3/A3/D4 contribute approximately
+0, 0.00060022 and 0.00022508: total 0.00082530. SGD at 0.02 changes the
+multiplier to 0.79998349. The first contribution is zero because incoming h0
+is zero, not because feedback to h1 vanished. The notebook's
+[handwritten sheet](images/01a-bptt-memory-weight-explainer.png) shows these
+two routes and circles the repeated weight powers; the full matrix form is optional.
+The notebook keeps the detailed linear/exact substitutions collapsed so you
+can follow the memory story without repeating the arithmetic.
+
+The dark sheet follows the whole route: weight changes memory, memory
+changes the correct-note probability, and that probability changes error.
+Multiply those local responses. Its full product-rule derivative counts
+both the current multiplication and how earlier uses changed old memory;
+substituting earlier derivatives exposes the repeated powers. The actual
+tanh reader also multiplies by tanh responsiveness.
+
+The final guess is A3, but the correct next note is D3. Only that ending is
+graded. The note head turns its probability error into starting feedback g3.
+The loss describes the mistake; gradients guide corrections to the shared
+recipe. Earlier notes are more handoffs away from the ending, so their
+guidance can be muffled or amplified more times before weights are updated.
+The preview losses do not add feedback to this trace. To reach h2, g3 crosses
+the D4 cell's tanh response and memory multiplier. To reach h1, it crosses
+the A3 cell's pair as well. Earlier feedback has travelled through more factors.
+At 0.8 the three-state gradients are about 0.480, 0.600, 0.750;
+at 1.2 they are 1.081, 0.901, 0.751. Read backward from the last number.
+These are loss sensitivities, not stored memory, note importance or weight updates.
+
+For a concrete contrast, the 0.8 run gives D3 probability 0.33315 and ending
+loss 1.09917. The head supplies feedback about 0.750, not the loss itself.
+Backward, 0.750 times 0.8 gives 0.600; another times 0.8 gives 0.480.
+At 1.2, probability is 0.33300 and loss 1.09962, but feedback grows:
+about 0.751 times 1.2 gives 0.901, then about 1.081.
+These rounded examples include an almost-unit tanh response in the actual player.
+The loss is not being reduced as we walk backward; only its sensitivity changes.
+
+Three notes expose two links. Repeat the phrase seven times to see twenty:
+first/last feedback is about 0.011529 at 0.8 and 37.515271 at 1.2.
+Tanh's local response is also involved, so a multiplier above one is not
+by itself a guarantee of exploding feedback.
+
+Each cell also contributes to the same input and memory weight gradients.
+Backpropagation collects these contributions; it does not adjust weights or
+repair the error while walking backward. Sum first, then update each shared
+weight once. The player uses native SGD at 0.02 and actually reruns the same
+phrase with the new weights, showing the changed guess and cross-entropy loss.
 
 Vanishing gradients give almost no guidance about how the opening was
 processed. Exploding gradients can make the optimizer change weights too
 drastically. Neither term says the stored numbers vanish or explode.
 Weak feedback makes it harder to learn which early clues to preserve;
-it does not erase an existing card.
+the shared weights can still update, but little ending-specific guidance
+reaches their early uses. This does not erase an existing card. Amplified
+guidance can make an update overshoot; numerical overflow is a possible
+extreme, not an inevitable outcome.
 
 Clipping caps a large gradient after backward and before the optimizer step.
 The measured writing-weight update shrinks on the amplified route; the weak
 update stays weak. Clipping is a brake, not a memory repair.
+That check is a separate scalar target-1, half-squared-error experiment
+with SGD step size 0.01, not the note model's cross-entropy loss.
 
 **Complaint:** why force a clue through a fresh remapping and squeeze at every read?
 
 ## 5. Protect the memory; squash the view
 
-Try removing the squeeze and adding every note's proposal. With D3 = +0.8,
-D4 = -0.8 and A3 = +0.2, two different opening orders both finish at +0.4.
-Feedback to the first written number remains 1. Perfect additive feedback
-did not make the representation preserve order.
+Keep the original note codes, but reuse the reader's fixed input weights
+to write D3 = [0.70, 0.30], A3 = [-0.20, 0.80], D4 = [0.50, 1.10].
+These decimal writes are added, not new note encodings.
+Both D3 A3 D4 A3 and D4 A3 D3 A3 finish at [0.80, 3.00].
+Each feature passes first-write feedback unchanged. The two-number total
+keeps amounts, not their order: it is not a timeline.
+Nudge the first write from [0.70, 0.30] to [0.71, 0.30]: the final total
+becomes [0.81, 3.00]. That is 100% carry-through of a change.
+Plain addition loses order; a linear recurrence with recurrent mixing need not.
 
 **Refinement:** choose what to keep, what to write, and what to expose.
 
@@ -173,7 +262,10 @@ LSTM c is a fixed-width row of memory numbers: activation data for the current
 phrase, not weights, raw inputs or a complete past-note transcript. Training
 learns useful patterns and rules for retaining them.
 
-In a chosen coordinate, write +0.8 for D3 or -0.8 for D4, then close WRITE
+The inputs stay two-dimensional. Now open one internal workspace coordinate:
++0.8/-0.8 are chosen memory writes in a new storage probe, not the previous
+vector total or new input encodings.
+Write +0.8 for D3 or -0.8 for D4, then close WRITE
 while later notes arrive. The current number preserves the opening. Overwrite
 it and that coordinate loses the distinction. Real representations need not
 give individual coordinates neat note labels.
@@ -181,13 +273,22 @@ give individual coordinates neat note labels.
 KEEP retains part of old c; WRITE admits part of a signed candidate.
 They are independent controls. The update keeps/adds without squashing all
 new c. SHOW selects from tanh(new c) to make h.
+These controls are computed values; trainable shared weights calculate them.
+We set the values directly only in the hand-controlled sketches.
 
 Both travel onward: c supplies contents; the next input and h choose controls
 and proposed content. Only h directly feeds the note head. Closing SHOW can
 make h zero without erasing c.
 
+The forward walkthrough opens the real A3 read after D3. The note and old h
+choose HOW; old c supplies WHAT. Kept and written contents make new c.
+SHOW exposes part of its bounded view as new h. The head reads that h to
+predict a note; it does not read c directly. Both states still have two
+features and travel together to the next read.
+
 **LSTM key:** `f/i/o` = KEEP/WRITE/SHOW; `g` = signed proposal;
 `c1` = memory after note 1, while `c[0]` selects its first feature.
+This proposal `g` is not BPTT's error-response `g`.
 
 With fixed KEEP near 1, direct carry feedback survives better. KEEP 0.99
 retains about 0.818 after twenty transitions; 0.9 retains about 0.122.
@@ -201,10 +302,15 @@ sensible updates and clipping are complementary, not guarantees.
 
 **Complaint:** a correct memory mechanism still needs to learn what matters.
 
-The native arithmetic matches both LSTM states. The echo task then asks the
-model to retain one of two openings across twenty distractions. At 240 updates
-the LSTM still confuses them; at 480 both fitted echoes match. Erasing both h
+The native arithmetic matches both LSTM states. Now make the opening puzzle
+harder: retain the whole three-note opening through a longer gap, not just
+its first note through two reads. The middle is A3 D4 A3 D3 repeated five
+times: twenty note events, identical for both openings. A silent PLAY request
+asks for D3 A3 D4 or its reversal, D4 A3 D3, in order.
+At 240 updates the LSTM still confuses them; at 480 both fitted echoes match. Erasing both h
 and c removes their distinction. This is fitted recall, not composition.
+The native microscope uses two-feature states with initialized weights;
+the fitted echo uses four input profiles and twelve features per state.
 
 ## 6. A GRU protects old h outside the proposal
 
