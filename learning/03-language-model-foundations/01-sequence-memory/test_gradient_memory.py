@@ -22,11 +22,70 @@ from gradient_memory import (
     refresh_notebook_captures, source_fingerprint, draw_notecard, notecard_probe,
     unsquashed_total,
 )
+from gradient_what_if import draw_nudge, record_nudge
 from lstm_state_roles import _figure
 from notebook_replays import ERROR_FEEDBACK_FILE
 
 
 class GradientMemoryTests(unittest.TestCase):
+    def test_nudge_copies_only_the_first_saved_entry_and_reuses_the_frozen_head(self):
+        from backprop_memory_flow import NOTE_HEAD_WEIGHTS, NOTES
+        from torch.nn import functional as F
+
+        saved = notecard_probe().new_hidden.clone()
+        probe = record_nudge()
+        head = torch.tensor(NOTE_HEAD_WEIGHTS, dtype=saved.dtype)
+        for trial in probe.trials:
+            self.assertEqual(trial.memory[1], saved[1].item())
+            self.assertEqual(trial.memory[0], saved[0].item() + trial.change)
+            memory = torch.tensor(trial.memory, dtype=saved.dtype)
+            scores = head @ memory
+            self.assertEqual(trial.correct_probability, scores.softmax(0)[0].item())
+            self.assertEqual(trial.loss, F.cross_entropy(scores.unsqueeze(0), torch.tensor([0])).item())
+            self.assertEqual(trial.guess, NOTES[int(scores.argmax())])
+        torch.testing.assert_close(notecard_probe().new_hidden, saved, rtol=0, atol=0)
+
+    def test_nudge_exposes_a_useful_gradient_before_the_guessed_note_changes(self):
+        probe = record_nudge()
+        lower, original, higher = probe.trials
+        self.assertEqual([trial.guess for trial in probe.trials], ["A3"] * 3)
+        self.assertLess(lower.correct_probability, original.correct_probability)
+        self.assertLess(original.correct_probability, higher.correct_probability)
+        self.assertGreater(lower.loss, original.loss)
+        self.assertGreater(original.loss, higher.loss)
+        self.assertEqual(probe.loss_difference, higher.loss - lower.loss)
+        self.assertEqual(probe.memory_difference, higher.memory[0] - lower.memory[0])
+        self.assertAlmostEqual(probe.finite_difference, probe.exact_gradient, delta=1e-6)
+        self.assertLess(probe.finite_difference, 0)
+
+    def test_nudge_image_circles_the_changed_entry_and_shows_the_measured_comparison(self):
+        probe = record_nudge()
+        figure = draw_nudge(probe)
+        try:
+            figure.canvas.draw()
+            axis = figure.axes[0]
+            renderer = figure.canvas.get_renderer()
+            first = next(text for text in axis.texts if text.get_gid() == "nudged-entry")
+            fixed = next(text for text in axis.texts if text.get_gid() == "fixed-entry")
+            prefix = next(text for text in axis.texts if text.get_gid() == "memory-prefix")
+            circle = next(patch for patch in axis.patches if patch.get_gid() == "first-entry-circle")
+            circle_bounds = circle.get_window_extent(renderer)
+            first_bounds = first.get_window_extent(renderer)
+            self.assertTrue(circle_bounds.contains(first_bounds.x0, first_bounds.y0))
+            self.assertTrue(circle_bounds.contains(first_bounds.x1, first_bounds.y1))
+            self.assertFalse(circle_bounds.overlaps(fixed.get_window_extent(renderer)))
+            self.assertFalse(circle_bounds.overlaps(prefix.get_window_extent(renderer)))
+            labels = " ".join(text.get_text() for text in axis.texts)
+            for trial in (probe.trials[0], probe.trials[2]):
+                for value in (trial.memory[0], trial.correct_probability, trial.loss):
+                    self.assertIn(f"{value:.6f}", labels)
+            for text in axis.texts:
+                bounds = text.get_window_extent(renderer)
+                self.assertTrue(figure.bbox.contains(bounds.x0, bounds.y0), text.get_text())
+                self.assertTrue(figure.bbox.contains(bounds.x1, bounds.y1), text.get_text())
+        finally:
+            plt.close(figure)
+
     def test_notecard_contains_the_actual_d4_step_and_shared_head_scores(self):
         probe = notecard_probe()
         torch.testing.assert_close(probe.input_part, probe.input_weights @ probe.current_input, rtol=0, atol=0)
@@ -163,10 +222,9 @@ class GradientMemoryTests(unittest.TestCase):
         try:
             draw_unsquashed_total(axis)
             labels = " ".join(text.get_text() for text in axis.texts)
-            for opening in ("D3", "D4"):
-                probe = unsquashed_total(opening)
-                for values in (*probe.writes, *probe.stored):
-                    self.assertIn("[" + ", ".join(f"{value:.2f}" for value in values) + "]", labels)
+            probe = unsquashed_total("D3")
+            for values in (*probe.writes, *probe.stored):
+                self.assertIn("[" + ", ".join(f"{value:.2f}" for value in values) + "]", labels)
             self.assertIn("[0.80, 3.00]", labels)
             self.assertIn("100% carry-through", labels)
             self.assertNotIn("add [1, 0]", labels)
@@ -339,15 +397,14 @@ class GradientMemoryTests(unittest.TestCase):
         book = json.loads(NOTEBOOK.read_bytes())
         ids = [cell["id"] for cell in book["cells"]]
         self.assertLess(ids.index("gradient-native-intro"), ids.index("embedded-01a-error-feedback"))
-        self.assertLess(ids.index("embedded-01a-error-feedback"), ids.index("gradient-native-probe"))
         start = ids.index("gradient-native-intro")
-        self.assertEqual(ids[start:start + 5], [
+        self.assertEqual(ids[start:start + 3], [
             "gradient-native-intro", "embedded-01a-error-feedback",
-            "gradient-vanishing-intuition", "gradient-exploding-intuition", "5001b8f0",
+            "gradient-exploding-intuition",
         ])
         intro = next(cell for cell in book["cells"] if cell["id"] == "gradient-native-intro")
         self.assertTrue("".join(intro["source"]).startswith(
-            "### Vanishing and exploding gradients in RNNs\n"
+            "## 4 - One calculation; three feedback outcomes\n"
         ))
         self.assertFalse(any("Small numbers on the card can still produce large feedback"
                              in "".join(cell["source"]) for cell in book["cells"]))
@@ -355,15 +412,18 @@ class GradientMemoryTests(unittest.TestCase):
         self.assertEqual(player["cell_type"], "markdown")
         self.assertTrue("".join(player["source"]).startswith("<iframe "))
         self.assertEqual(player["metadata"]["saved_replay"]["file"], ERROR_FEEDBACK_FILE)
-        self.assertLess(ids.index("gradient-vanishing-intuition"), ids.index("5001b8f0"))
         self.assertLess(ids.index("gradient-exploding-intuition"), ids.index("5001b8f0"))
-        self.assertGreater(ids.index("gradient-native-probe"), ids.index("gradient-technical-appendix"))
-        self.assertGreater(ids.index("9df9ac84"), ids.index("gradient-technical-appendix"))
+        self.assertLess(ids.index("bptt-manual-check"), ids.index("5001b8f0"))
+        for removed in ("gradient-native-probe", "gradient-technical-appendix", "9df9ac84"):
+            self.assertNotIn(removed, ids)
         self.assertLess(ids.index("gradient-saturation-intro"), ids.index("133e7838"))
         self.assertLess(ids.index("gradient-clipping-probe"), ids.index("133e7838"))
         self.assertLess(ids.index("unsquashed-total-probe"), ids.index("133e7838"))
-        self.assertLess(ids.index("lstm-gradient-carry-probe"), ids.index("lstm-real-cell-parity"))
-        self.assertLess(ids.index("gru-gradient-carry-probe"), ids.index("gru-real-cell-parity"))
+        self.assertLess(ids.index("lstm-real-cell-parity"), ids.index("lstm-gradient-carry-probe"))
+        self.assertLess(ids.index("gru-real-cell-parity"), ids.index("gru-gradient-carry-probe"))
+        self.assertLess(ids.index("gru-real-cell-parity"), ids.index("gated-gradient-limits"))
+        self.assertLess(ids.index("gated-gradient-limits"), ids.index("lstm-echo-intro"))
+        self.assertLess(ids.index("lstm-echo-training"), ids.index("musical-echo-training"))
 
     def test_notebook_names_model_changes_and_distinguishes_values_from_parameters(self):
         book = json.loads(NOTEBOOK.read_bytes())
@@ -371,21 +431,22 @@ class GradientMemoryTests(unittest.TestCase):
         checks = {
             "7d99e444": ("fourth note", "first note", "same last two notes",
                          "hand-picked weights"),
-            "gradient-native-intro": ("two-number h", "one-number h",
-                                     "[0.001,-0.0005]", "earlier heads are previews"),
-            "5001b8f0": ("Separate stress test", "half-squared distance to 1.0",
-                        "0.01", "Within each raw/clipped pair"),
-            "gated-memory-demand": ("commutative", "recurrent mixing", "100% carry-through",
+            "gradient-native-intro": ("one number", "[0.001,-0.0005]",
+                                     "only the final prediction", "starting memory weight W_h"),
+            "5001b8f0": ("20 steps", "not 20 memory features", "1.0",
+                        "0.01", "same forward values and error"),
+            "gated-memory-demand": ("same total whichever order", "without tanh can still use order", "(100%)",
                                    "[0.70,0.30]", "[0.71,0.30]", "[0.80,3.00]", "[0.81,3.00]"),
-            "133e7838": ("new storage probe", "not the result of the preceding vector sum"),
+            "133e7838": ("one number inside c", "chosen memory writes", "not input codes"),
             "lstm-readout-after-memory": ("computed values", "trainable weights",
-                                         "`g` means **proposal**", "**error-response g**"),
-            "lstm-native-intro": ("two input features", "initialized trainable weights",
-                                 "same native cell", "Two trainable Linear projections"),
-            "lstm-echo-intro": ("four input profiles", "twelve features per state",
-                               "three echo answers", "ending-only", "silent request",
+                                         "`g` means **proposal**", "`dL/dh`"),
+            "lstm-native-intro": ("two input numbers", "not trained them yet",
+                                 "same PyTorch cell", "Two `Linear` calculations"),
+            "lstm-echo-intro": ("four-number code", "twelve numbers",
+                               "three echo answers", "one final guess", "silent request",
                                "A3 D4 A3 D3 repeated five times", "twenty note events"),
-            "gru-learned-gates-intro": ("initialized weights", "twelve-feature echo setup"),
+            "gru-learned-gates-intro": ("two memory numbers", "not been trained yet",
+                                      "larger memory before training"),
         }
         for cell_id, phrases in checks.items():
             for phrase in phrases:
@@ -394,7 +455,7 @@ class GradientMemoryTests(unittest.TestCase):
 
     def test_opening_puzzle_requires_the_first_note_not_the_shared_suffix(self):
         book = json.loads(NOTEBOOK.read_bytes())
-        opening = "".join(book["cells"][0]["source"])
+        opening = "".join(next(cell for cell in book["cells"] if cell["id"] == "7d99e444")["source"])
         examples = []
         for line in opening.splitlines():
             if line.startswith("| ") and line.count("|") == 3:
@@ -417,23 +478,21 @@ class GradientMemoryTests(unittest.TestCase):
                           if cell["cell_type"] == "markdown"
                           and "saved_replay" not in cell["metadata"])
         for anchor in ("memory-challenge", "rnn-gradient-microscope", "lstm-complete-read",
-                       "gradient-technical-checks", "fixed-fraction-retention",
-                       "retention-route-comparison"):
+                       "backprop-horizon"):
             self.assertEqual(prose.count(f'<a id="{anchor}"></a>'), 1)
         for cell_id, anchor in (
             ("lstm-echo-intro", "memory-challenge"),
             ("lstm-native-intro", "lstm-complete-read"),
-            ("gradient-clipping-reflection", "fixed-fraction-retention"),
-            ("saved-retention-comparison", "retention-route-comparison"),
         ):
             self.assertIn(f"](#{anchor})", "".join(cells[cell_id]["source"]))
         ids = [cell["id"] for cell in book["cells"]]
         self.assertLess(ids.index("lstm-gradient-carry-intro"), ids.index("lstm-gradient-carry-probe"))
         self.assertLess(ids.index("lstm-gradient-carry-probe"), ids.index("lstm-gradient-carry-reading"))
         self.assertIn("**What you measured:**", "".join(cells["lstm-gradient-carry-reading"]["source"]))
-        for cell_id in ("lstm-gradient-carry-intro", "gru-gradient-carry-intro"):
-            self.assertIn("stress", "".join(cells[cell_id]["source"]))
-        self.assertEqual(ids.index("retention-comparison-guide") + 1, ids.index("be857f77"))
+        self.assertIn("not a note-prediction error or the size of a weight update",
+                      " ".join("".join(cells["gated-gradient-limits-intro"]["source"]).split()))
+        self.assertFalse(any("fixed-fraction-retention" in "".join(cell["source"])
+                             for cell in book["cells"]))
 
     def test_regeneration_refresh_preserves_experiments_and_is_idempotent(self):
         before = json.loads(NOTEBOOK.read_bytes())

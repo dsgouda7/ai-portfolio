@@ -17,7 +17,7 @@ from memory_visuals import MOTION_FRAMES, INTERVAL_MS, draw_scene, lstm_scene
 
 
 HERE = Path(__file__).resolve().parent
-NOTEBOOK = HERE / "01A-sequence-memory-theory.ipynb"
+NOTEBOOK = HERE / "01A1-sequence-memory-worked-details.ipynb"
 LSTM_PHASES = (
     "Read A3, previous hidden h, AND previous cell c",
     "Two learned Linear projections: input and previous h (not c)",

@@ -108,20 +108,14 @@ class NotebookReplayTests(unittest.TestCase):
     def test_error_feedback_tracker_is_self_contained_and_code_free(self):
         result = saved_replay(ERROR_FEEDBACK_FILE).data
         document = unescape(re.search(r'srcdoc="([^"]+)"', result)[1])
-        self.assertIn('id="weight-scale"', document)
-        self.assertIn('id="gradient-status"', document)
-        self.assertIn('data:image/webp;base64,', document)
-        self.assertNotIn('id="preset-vanishing"', document)
-        self.assertNotIn('id="preset-exploding"', document)
-        self.assertIn('id="writing-weight"', document)
-        self.assertIn('class:"head-probability"', document)
-        self.assertIn('class:"memory-product"', document)
-        self.assertNotIn('aria-label="Final next-note error"', document)
-        self.assertIn('"writing-gradient"', document)
-        for element_id in ("cells", "forward-formula", "backward-formula", "update-formula", "long-phrase"):
+        self.assertEqual(document.count('data-case-header='), 3)
+        self.assertEqual(document.count('class="step"'), 6)
+        self.assertEqual(document.count('data-case='), 18)
+        self.assertIn('<table class="comparison">', document)
+        self.assertIn('data-player="gradient-three-cases"', document)
+        self.assertNotIn('type="range"', document)
+        for element_id in ("play", "next", "reset", "status"):
             self.assertIn(f'id="{element_id}"', document)
-        self.assertNotIn('id="prediction-slider"', document)
-        self.assertIn('id="recorded-cases"', document)
         media = MediaParser()
         media.feed(document)
         self.assertEqual(media.sources, [])
@@ -219,24 +213,46 @@ class NotebookReplayTests(unittest.TestCase):
             self.assertEqual(book, snapshot)
 
     def test_notebook_has_all_saved_players_with_persistent_html_outputs(self):
-        book = json.loads((HERE / "01A-sequence-memory-theory.ipynb").read_text(encoding="utf-8"))
-        cells = [cell for cell in book["cells"] if "saved_replay" in cell.get("metadata", {})]
+        books = [
+            json.loads((HERE / name).read_text(encoding="utf-8"))
+            for name in ("01A-sequence-memory-theory.ipynb", "01A1-sequence-memory-worked-details.ipynb")
+        ]
+        cells = [cell for book in books for cell in book["cells"]
+                 if "saved_replay" in cell.get("metadata", {})]
         self.assertEqual({cell["metadata"]["saved_replay"]["file"] for cell in cells}, set(REPLAY_FILES))
-        self.assertEqual(len(cells), len(REPLAY_FILES))
+        for book in books:
+            local = [cell["metadata"]["saved_replay"]["file"] for cell in book["cells"]
+                     if "saved_replay" in cell.get("metadata", {})]
+            self.assertEqual(len(local), len(set(local)))
         for cell in cells:
             filename = cell["metadata"]["saved_replay"]["file"]
-            if filename in NATIVE_PLAYER_MARKERS:
-                self.assertEqual(cell["cell_type"], "markdown")
+            if cell["cell_type"] == "markdown":
                 self.assertNotIn("outputs", cell)
                 self.assertNotIn("execution_count", cell)
                 html = "".join(cell["source"])
             else:
                 self.assertEqual("".join(cell["source"]), f'saved_replay("{filename}")')
-                self.assertEqual(len(cell["outputs"]), 1)
-                html = "".join(cell["outputs"][0]["data"]["text/html"])
+                outputs = [output for output in cell["outputs"] if "text/html" in output.get("data", {})]
+                self.assertEqual(len(outputs), 1)
+                html = "".join(outputs[0]["data"]["text/html"])
             self.assertIn('srcdoc="', html)
             self.assertIn(f'data-saved-replay="{filename}"', html)
+        self.assertLess((HERE / "01A1-sequence-memory-worked-details.ipynb").stat().st_size, NOTEBOOK_SIZE_LIMIT)
         self.assertLess((HERE / "01A-sequence-memory-theory.ipynb").stat().st_size, NOTEBOOK_SIZE_LIMIT)
+
+    def test_existing_animation_can_use_markdown_without_a_display_code_cell(self):
+        with TemporaryDirectory() as directory:
+            _, path = self.fixture(Path(directory))
+            cell = {"cell_type": "markdown", "source": [],
+                    "metadata": {"saved_replay": {"file": path.name}}}
+            book = {"cells": [cell]}
+            refresh_embedded_replays(book, images_directory=path.parent)
+            self.assertNotIn("outputs", cell)
+            self.assertNotIn("execution_count", cell)
+            self.assertIn(f'data-saved-replay="{path.name}"', "".join(cell["source"]))
+            snapshot = deepcopy(book)
+            refresh_embedded_replays(book, images_directory=path.parent)
+            self.assertEqual(book, snapshot)
 
     def test_png_and_svg_links_become_persistent_attachments_without_network_paths(self):
         with TemporaryDirectory() as directory:
@@ -263,7 +279,11 @@ class NotebookReplayTests(unittest.TestCase):
             self.assertEqual(book, snapshot)
 
     def test_notebook_visuals_and_audio_have_no_separate_asset_dependencies(self):
-        book = json.loads((HERE / "01A-sequence-memory-theory.ipynb").read_text(encoding="utf-8"))
+        books = [
+            json.loads((HERE / name).read_text(encoding="utf-8"))
+            for name in ("01A-sequence-memory-theory.ipynb", "01A1-sequence-memory-worked-details.ipynb")
+        ]
+        book = {"cells": [cell for item in books for cell in item["cells"]]}
         players = {}
         for cell in book["cells"]:
             if cell["cell_type"] == "markdown":

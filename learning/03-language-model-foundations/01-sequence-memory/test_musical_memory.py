@@ -37,7 +37,7 @@ class MusicalMemoryTests(unittest.TestCase):
     def setUpClass(cls):
         cls.comparison = run_echo_experiment()
         cls.frames = music_frames(cls.comparison)
-        cls.notebook = json.loads((HERE / "01A-sequence-memory-theory.ipynb").read_text(encoding="utf-8"))
+        cls.notebook = json.loads((HERE / "01A1-sequence-memory-worked-details.ipynb").read_text(encoding="utf-8"))
 
     def test_questions_require_the_opening_not_the_counts_or_last_note(self):
         prompts, practice, answers = make_echo_questions()
@@ -149,7 +149,7 @@ class MusicalMemoryTests(unittest.TestCase):
         cells = {cell["id"]: "".join(cell["source"]) for cell in self.notebook["cells"]}
         self.assertIn("opening_note_audio(melody)", cells["eb7df241"])
         self.assertIn("note_audio_panel(", cells["ac9aca71"])
-        self.assertIn("melody[:3][::-1]", cells["ac9aca71"])
+        self.assertNotIn("melody[:3][::-1]", cells["ac9aca71"])
         panels = []
         namespace = {
             "torch": torch, "melody": "D3 A3 D4 D3 A3 D4".split(),
@@ -158,7 +158,7 @@ class MusicalMemoryTests(unittest.TestCase):
         exec(compile(cells["ac9aca71"], "reader_audio", "exec"), namespace)
         clips, options = panels[0]
         self.assertEqual([label for label, _ in clips], [
-            "Original input", "Reversed input", "Head guesses after each input",
+            "Original input", "Head guesses after each input",
         ])
         self.assertEqual(clips[-1][1], namespace["next_notes"])
         self.assertIn("not fed back into the reader", options["description"])
@@ -276,7 +276,7 @@ import musical_memory
 
 assert callable(musical_memory.opening_note_audio)
 del musical_memory.opening_note_audio
-book = json.loads((chapter / "01A-sequence-memory-theory.ipynb").read_text(encoding="utf-8"))
+book = json.loads((chapter / "01A1-sequence-memory-worked-details.ipynb").read_text(encoding="utf-8"))
 setup = next(cell for cell in book["cells"] if cell["id"] == "eb7df241")
 namespace = {"__name__": "cached_kernel_probe"}
 exec(compile("".join(setup["source"]), "notebook setup", "exec"), namespace)

@@ -6,20 +6,25 @@ from dataclasses import asdict
 from html import unescape
 from io import BytesIO
 import json
+from math import hypot
 from pathlib import Path
 import re
+import shutil
+import subprocess
 from tempfile import TemporaryDirectory
 import unittest
 from xml.etree import ElementTree
 
-from PIL import Image
+import matplotlib.pyplot as plt
+from PIL import Image, ImageChops, ImageSequence
 import torch
 
 from backprop_memory_flow import NOTES, NOTE_HEAD_WEIGHTS, _inputs_and_weights
 from lstm_forward_flow import (
-    ART, ART_MANIFEST, NOTEBOOK, PHASES, PLAYER, STORYBOARD,
+    ART, ART_MANIFEST, GIF, NOTEBOOK, PHASES, PLAYER, STORYBOARD, ForwardFrame,
     export_player, export_storyboard, load_cell_and_inputs, note_readout,
-    read_recording, record_reads, render_player, role_images, scene,
+    flow_signals, gif_figure, gif_frames, gif_scene, read_recording, record_reads, render_player, role_images, scene,
+    vector,
 )
 from lstm_layer_flow import record_lstm_layer_step
 from lstm_state_roles import load_state_roles
@@ -100,7 +105,9 @@ class LSTMForwardFlowTests(unittest.TestCase):
             self.assertEqual(read.closed_show_readout.probabilities, (1 / 3,) * 3)
 
     def test_diagram_dependencies_require_new_h_before_prediction(self):
-        boxes, wires, _ = scene(record_reads()[1])
+        read = record_reads()[1]
+        boxes, wires, _ = scene(read)
+        destinations = {box.name: box for box in boxes}
         controls = next(box for box in boxes if box.name == "controls")
         self.assertEqual(controls.labels[0].text, "Compute controls")
         self.assertIn("Shared weights", controls.labels[1].text)
@@ -115,6 +122,8 @@ class LSTMForwardFlowTests(unittest.TestCase):
         self.assertEqual(incoming["show"], {"new-cell", "controls"})
         self.assertEqual(incoming["next-cell"], {"new-cell"})
         self.assertEqual(incoming["next-hidden"], {"new-hidden"})
+        self.assertEqual(destinations["next-cell"].labels[-1].text, vector(read.new_cell))
+        self.assertEqual(destinations["next-hidden"].labels[-1].text, vector(read.new_hidden))
 
     def test_recording_is_deterministic_without_global_rng_or_thread_changes(self):
         rng = torch.random.get_rng_state().clone()
@@ -128,12 +137,105 @@ class LSTMForwardFlowTests(unittest.TestCase):
         self.assertEqual(data["head_weights"], [list(row) for row in NOTE_HEAD_WEIGHTS])
         self.assertEqual(data["steps"], json.loads(json.dumps([asdict(read) for read in record_reads()])))
         self.assertEqual(len(data["scenes"]), 3)
-        self.assertEqual(len(PHASES), 7)
+        self.assertEqual(len(PHASES), 8)
+        for normal, closed, rows in zip(data["steps"], data["closed_steps"], data["readouts"], strict=True):
+            self.assertEqual(len(rows), 8)
+            self.assertEqual(normal["new_cell"], closed["new_cell"])
+            self.assertEqual(closed["new_hidden"], [0., 0.])
+            self.assertEqual(closed["show"], [0., 0.])
+            self.assertIn("KEEP * old c", rows[2])
+            self.assertIn("WRITE * proposed content", rows[3])
         for svg in data["scenes"]:
             root = ElementTree.fromstring(svg)
-            self.assertEqual(root.attrib["viewBox"], "0 0 1110 740")
+            self.assertEqual(root.attrib["viewBox"], "0 0 1110 790")
             self.assertEqual(len([node for node in root.iter("image")]), 2)
             self.assertEqual(len([node for node in root.iter("polyline") if node.attrib.get("data-to") == "prediction"]), 1)
+            wires = {node.attrib["id"]: node for node in root.iter("polyline")}
+            self.assertIn("control-signal", wires["write-control"].attrib["class"])
+            self.assertIn("content-signal", wires["proposal-to-write"].attrib["class"])
+            self.assertNotEqual(wires["write-control"].attrib["data-phases"],
+                                wires["keep-control"].attrib["data-phases"])
+            self.assertEqual(len(list(root.iter("animateMotion"))), len(wires))
+
+    def test_player_steps_preview_and_playback_preserve_the_recorded_state_routes(self):
+        node = shutil.which("node")
+        if node is None:
+            self.skipTest("Node is not installed")
+        player = render_player()
+        data = read_recording()
+        root = ElementTree.fromstring(data["scenes"][0])
+        elements = [
+            {"phases": element.attrib["data-phases"],
+             "signal": "signal" in element.attrib.get("class", "").split()}
+            for element in root.iter() if "data-phases" in element.attrib
+        ]
+        script = re.findall(r"<script>\s*(.*?)</script>", player, re.S)[0]
+        harness = r"""
+const input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+const assert=require('assert/strict');
+function run(reduced){
+ function element(){
+  const classes=new Set();
+  return {dataset:{},children:[],textContent:'',disabled:false,hidden:false,listeners:{},
+   classList:{toggle:(k,on)=>on?classes.add(k):classes.delete(k),contains:k=>classes.has(k)},
+   addEventListener:function(k,fn){this.listeners[k]=fn},
+   setAttribute:function(k,v){this[k]=v},append:function(v){this.children.push(v)},
+   replaceChildren:function(...v){this.children=v},
+   click:function(){if(!this.disabled)this.listeners.click({})}};
+ }
+ const ids={};for(const id of ['recorded-lstm','scene','play','pause','step','back','reset',
+  'preview','preview-note','motion-note','problem','phase','progress','active-lines','cell-output',
+  'hidden-output','prediction-output','cell-formula','hidden-formula','head-formula','proof'])ids[id]=element();
+ const main=element();main.dataset.playing='false';
+ const buttons=Array.from({length:3},(_,i)=>Object.assign(element(),{dataset:{note:String(i)}}));
+ const elements=input.elements.map(v=>Object.assign(element(),{dataset:{phases:v.phases},signal:v.signal}));
+ let motions=0,paused=0,tick=null;
+ const svg={pauseAnimations:()=>paused++,unpauseAnimations:()=>{}};
+ ids.scene.querySelector=()=>svg;
+ ids.scene.querySelectorAll=q=>q==='[data-phases]'?elements:
+  elements.filter(e=>e.signal&&e.classList.contains('active')).map(()=>({beginElement:()=>motions++}));
+ ids['recorded-lstm'].textContent=JSON.stringify(input.data);
+ const document={hidden:false,getElementById:id=>ids[id],querySelector:()=>main,
+  querySelectorAll:()=>buttons,createElement:()=>element(),addEventListener:()=>{}};
+ const window={matchMedia:()=>({matches:reduced}),addEventListener:()=>{}};
+ new Function('document','window','setTimeout','clearTimeout',input.script)(
+  document,window,fn=>{tick=fn;return 1},()=>{tick=null});
+ function check(note,phase){
+  assert.equal(main.dataset.step,String(note+1));assert.equal(main.dataset.phase,String(phase));
+  assert.deepEqual(ids['active-lines'].children.map(e=>e.textContent),input.data.readouts[note][phase]);
+ }
+ check(0,0);assert(ids.back.disabled);assert.equal(ids['cell-output'].textContent,'Not computed yet');
+ for(let phase=1;phase<=5;phase++){ids.step.click();check(0,phase);}
+ assert.equal(ids.preview.disabled,false);
+ ids.preview.click();assert.equal(main.dataset.preview,'true');
+ assert.deepEqual(JSON.parse(main.dataset.cell),input.data.steps[0].new_cell);
+ assert.deepEqual(JSON.parse(main.dataset.hidden),[0,0]);
+ ids.step.click();check(0,6);assert.equal(main.dataset.preview,'false');
+ ids.preview.click();assert.equal(ids['prediction-output'].textContent,'Uniform scores: no preferred note');
+ assert.deepEqual(JSON.parse(main.dataset.probabilities),[1/3,1/3,1/3]);
+ ids.step.click();check(0,7);assert.equal(main.dataset.preview,'false');
+ ids.step.click();check(1,0);ids.back.click();check(0,7);
+ ids.reset.click();check(0,0);buttons[1].click();check(1,0);
+ if(reduced){
+  assert(!ids.play.disabled);assert(ids.pause.disabled);assert.equal(motions,0);
+  assert.equal(ids['motion-note'].hidden,false);
+  ids.play.click();assert(motions>0);assert(tick);ids.pause.click();assert.equal(tick,null);
+ }else {
+  ids.play.click();check(0,0);assert(tick);assert(motions>0);
+  ids.pause.click();assert.equal(tick,null);assert.equal(main.dataset.playing,'false');assert(paused>0);
+  ids.pause.click();let guard=0;while(tick&&guard++<30)tick();
+  assert(ids.step.disabled);assert.equal(main.dataset.phase,'all');
+  assert.deepEqual(JSON.parse(main.dataset.cell),input.data.steps[2].new_cell);
+  assert.deepEqual(JSON.parse(main.dataset.hidden),input.data.steps[2].new_hidden);
+ }
+}
+run(false);run(true);console.log('LSTM controls, data routes and reduced motion passed');
+"""
+        result = subprocess.run([node, "-e", harness], input=json.dumps({
+            "data": data, "script": script, "elements": elements,
+        }), capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("LSTM controls, data routes and reduced motion passed", result.stdout)
 
     def test_exports_are_self_contained_and_reproducible(self):
         with TemporaryDirectory() as directory:
@@ -153,6 +255,165 @@ class LSTMForwardFlowTests(unittest.TestCase):
         manifest = json.loads(ART_MANIFEST.read_text(encoding="utf-8"))[0]
         self.assertEqual(manifest["model"], "MAI-Image-2.6")
         self.assertEqual(manifest["filename"], ART.name)
+
+    def test_gif_routes_wait_for_the_contributions_before_exposing_results(self):
+        self.assertEqual({name for name, _ in flow_signals(4, .25)},
+                         {"kept-to-add", "written-to-add"})
+        self.assertEqual({name for name, _ in flow_signals(4, .75)}, {"add-to-cell"})
+        self.assertEqual({name for name, _ in flow_signals(5, .25)},
+                         {"cell-to-show", "show-control"})
+        self.assertEqual({name for name, _ in flow_signals(5, .75)}, {"show-to-hidden"})
+        read = record_reads()[1]
+        for progress in (0., 1.):
+            figure = gif_figure(read, ForwardFrame(2, 2, progress, 120))
+            try:
+                texts = [text.get_text() for text in figure.axes[0].texts]
+                self.assertEqual(vector(read.retained) in texts, progress == 1.)
+                figure.canvas.draw()
+                renderer = figure.canvas.get_renderer()
+                labels = [text for text in figure.axes[0].texts if text.get_text()]
+                for index, text in enumerate(labels):
+                    bounds = text.get_window_extent(renderer)
+                    self.assertTrue(figure.bbox.contains(bounds.x0, bounds.y0), text.get_text())
+                    self.assertTrue(figure.bbox.contains(bounds.x1, bounds.y1), text.get_text())
+                    for other in labels[index + 1:]:
+                        self.assertFalse(bounds.overlaps(other.get_window_extent(renderer)),
+                                         (text.get_text(), other.get_text()))
+            finally:
+                plt.close(figure)
+        for phase, progress in ((-1, 0), (8, 0), (0, -1), (0, 1.1)):
+            with self.assertRaises(ValueError):
+                flow_signals(phase, progress)
+
+    def test_gif_spacing_gives_links_clear_lanes_without_changing_dependencies(self):
+        read = record_reads()[1]
+        boxes, wires, _ = gif_scene(read)
+        original_boxes, original_wires, _ = scene(read)
+        self.assertEqual({box.name for box in boxes}, {box.name for box in original_boxes} | {"head"})
+        self.assertEqual([(wire.name, wire.source, wire.target) for wire in wires],
+                         [(wire.name, wire.source, "head" if wire.name == "hidden-to-head" else wire.target)
+                          for wire in original_wires] + [("head-to-prediction", "head", "prediction")])
+        bounds = {box.name: box.bounds for box in boxes}
+        for left, right in (("input", "controls"), ("old-hidden", "controls"),
+                            ("controls", "written"), ("written", "show")):
+            x, _, width, _ = bounds[left]
+            self.assertGreaterEqual(bounds[right][0] - x - width, 80)
+        for top, bottom in (("new-cell", "show"), ("show", "new-hidden"),
+                            ("new-hidden", "prediction")):
+            _, y, _, height = bounds[top]
+            self.assertGreaterEqual(bounds[bottom][1] - y - height, 120)
+        for wire in wires:
+            length = sum(hypot(end[0] - start[0], end[1] - start[1])
+                         for start, end in zip(wire.points, wire.points[1:]))
+            self.assertGreaterEqual(length, 90, wire.name)
+            for start, end in zip(wire.points, wire.points[1:]):
+                self.assertTrue(start[0] == end[0] or start[1] == end[1], wire.name)
+                for box in boxes:
+                    if box.name in (wire.source, wire.target):
+                        continue
+                    x, y, width, height = box.bounds
+                    if start[1] == end[1]:
+                        blocked = y - 10 < start[1] < y + height + 10 and (
+                            max(min(start[0], end[0]), x - 10) < min(max(start[0], end[0]), x + width + 10))
+                    else:
+                        blocked = x - 10 < start[0] < x + width + 10 and (
+                            max(min(start[1], end[1]), y - 10) < min(max(start[1], end[1]), y + height + 10))
+                    self.assertFalse(blocked, (wire.name, box.name))
+        figure = gif_figure(read, ForwardFrame(2, 6, 1., 1600))
+        try:
+            arrows = [text.arrow_patch for text in figure.axes[0].texts
+                      if getattr(text, "arrow_patch", None) is not None]
+            self.assertTrue(arrows)
+            self.assertTrue(all(arrow.get_linewidth() >= 2.2 for arrow in arrows))
+        finally:
+            plt.close(figure)
+
+    def test_gif_show_comparison_preserves_storage_and_restores_normal_next_read(self):
+        read = record_reads()[1]
+        figure = gif_figure(read, ForwardFrame(2, 6, 1., 1600, True))
+        try:
+            texts = [text.get_text() for text in figure.axes[0].texts]
+            self.assertIn(vector(read.new_cell), texts)
+            self.assertIn(vector(read.closed_show_hidden), texts)
+            self.assertIn("Uniform: no preferred note", texts)
+        finally:
+            plt.close(figure)
+        carried = [frame for frame in gif_frames() if frame.phase == 7]
+        self.assertTrue(carried)
+        self.assertTrue(all(not frame.close_show for frame in carried))
+        next_read = record_reads()[2]
+        self.assertEqual(next_read.old_cell, read.new_cell)
+        self.assertEqual(next_read.old_hidden, read.new_hidden)
+
+    def test_linear_head_scores_appear_before_softmax_and_note_choice(self):
+        read = record_reads()[1]
+        boxes, wires, _ = gif_scene(read)
+        head = next(box for box in boxes if box.name == "head")
+        self.assertEqual(head.ready_progress, .5)
+        self.assertEqual({wire.source for wire in wires if wire.target == "head"}, {"new-hidden"})
+        self.assertEqual({wire.source for wire in wires if wire.target == "prediction"}, {"head"})
+        for progress in (.25, .5, 1.):
+            figure = gif_figure(read, ForwardFrame(2, 6, progress, 120))
+            try:
+                texts = [text.get_text() for text in figure.axes[0].texts]
+                self.assertEqual(vector(read.readout.scores) in texts, progress >= .5)
+                self.assertEqual(f"Next note: {read.readout.prediction} (max)" in texts, progress == 1.)
+                self.assertEqual("scores = W_out h2" in texts, progress >= .5)
+            finally:
+                plt.close(figure)
+        self.assertEqual({name for name, _ in flow_signals(6, .25)}, {"hidden-to-head"})
+        self.assertEqual({name for name, _ in flow_signals(6, .75)}, {"head-to-prediction"})
+
+    def test_gif_visited_blocks_and_links_stay_bright_through_comparison_and_next_read(self):
+        reads = record_reads()
+        bright = set()
+        for frame in gif_frames():
+            if frame.progress != 1. and not (frame.phase in (4, 5) and frame.progress == .75):
+                continue
+            figure = gif_figure(reads[frame.read_index - 1], frame)
+            try:
+                axis = figure.axes[0]
+                artists = list(axis.patches) + list(axis.lines)
+                artists += [text.arrow_patch for text in axis.texts
+                            if getattr(text, "arrow_patch", None) is not None]
+                styles = {artist.get_gid(): artist.get_alpha() for artist in artists
+                          if artist.get_gid() and artist.get_gid().startswith(("node-", "wire-"))}
+                for name in bright:
+                    self.assertEqual(styles[name], 1., (frame, name))
+                bright.update(name for name, alpha in styles.items() if alpha == 1.)
+                if frame.phase == 0 and frame.read_index == 2:
+                    self.assertLess(styles["node-new-cell"], 1.)
+                    self.assertLess(styles["wire-hidden-to-head"], 1.)
+                if frame.close_show:
+                    self.assertEqual(styles["node-prediction"], 1.)
+                    self.assertEqual(styles["wire-hidden-to-head"], 1.)
+            finally:
+                plt.close(figure)
+        boxes, wires, _ = gif_scene(reads[1])
+        self.assertEqual(bright, {f"node-{box.name}" for box in boxes}
+                         | {f"wire-{wire.name}" for wire in wires})
+
+    def test_saved_gif_contains_real_stages_visible_motion_and_bounded_playback(self):
+        specifications = gif_frames()
+        with Image.open(GIF) as image:
+            metadata = json.loads(image.info["comment"])
+            self.assertEqual(metadata["steps"], json.loads(json.dumps([asdict(read) for read in record_reads()])))
+            self.assertEqual(metadata["frames"], [asdict(frame) for frame in specifications])
+            self.assertEqual(metadata["head_input"], "new_hidden")
+            self.assertEqual(image.info["loop"], 0)
+            self.assertEqual(image.n_frames, len(specifications))
+            self.assertLessEqual(image.n_frames, 64)
+            total = 0
+            for frame, expected in zip(ImageSequence.Iterator(image), specifications, strict=True):
+                self.assertEqual(frame.info["duration"], expected.duration_ms)
+                total += frame.info["duration"]
+            self.assertGreaterEqual(total, 20_000)
+            self.assertLessEqual(total, 35_000)
+            image.seek(0)
+            first = image.convert("RGB")
+            image.seek(3)
+            self.assertIsNotNone(ImageChops.difference(first, image.convert("RGB")).getbbox())
+        self.assertLess(GIF.stat().st_size, 4_000_000)
 
     def test_native_markdown_embed_has_no_code_box_and_protects_manual_edits(self):
         result = saved_replay(LSTM_FORWARD_FILE).data

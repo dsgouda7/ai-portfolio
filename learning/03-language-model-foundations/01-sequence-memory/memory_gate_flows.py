@@ -1,4 +1,4 @@
-"""Replay recorded LSTM/GRU arithmetic from 01A without inventing state values."""
+"""Replay verified LSTM/GRU arithmetic used by 01A without inventing state values."""
 
 import ast
 from dataclasses import dataclass
@@ -9,6 +9,7 @@ import re
 
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+import numpy as np
 from PIL import Image, ImageSequence
 import torch
 
@@ -19,8 +20,8 @@ from memory_visuals import (
 
 
 HERE = Path(__file__).resolve().parent
-NOTEBOOK = HERE / "01A-sequence-memory-theory.ipynb"
-RECORDING_CELLS = ("eb7df241", "f6985b8c", "gru-controlled-recording")
+NOTEBOOK = HERE / "01A1-sequence-memory-worked-details.ipynb"
+RECORDING_CELLS = ("eb7df241", "gru-controlled-recording")
 BACKGROUND = "#1a1a2e"
 TEXT = "#e7edf7"
 MEMORY = "#76c6ff"
@@ -91,11 +92,33 @@ class MemoryStep:
     memory_proposal: float | None = None
 
 
+def _chosen_lstm_steps(notes: list[str]) -> list[MemoryStep]:
+    controls = (
+        (0.95, 0.80, 0.90, 0.70),
+        (0.95, 0.10, -0.20, 0.75),
+        (0.90, 0.05, 0.10, 0.80),
+        (0.98, 0.05, 0.00, 0.80),
+        (0.97, 0.05, 0.05, 0.85),
+        (0.96, 0.05, 0.00, 0.85),
+    )
+    steps = []
+    previous = 0.0
+    for note, (keep, write, proposal, show) in zip(notes, controls, strict=True):
+        retained, written = keep * previous, write * proposal
+        carried = retained + written
+        steps.append(MemoryStep(
+            note, previous, keep, write, proposal, retained, written,
+            carried, float(show * np.tanh(carried)), show=show,
+        ))
+        previous = carried
+    return steps
+
+
 def fingerprint(notebook: dict) -> str:
     cells = {cell["id"]: cell for cell in notebook["cells"]}
     sources = [
         "".join(cells[cell_id]["source"])
-        for cell_id in (*RECORDING_CELLS, "9df9ac84", "be857f77")
+        for cell_id in RECORDING_CELLS
     ]
     sources.append(Path(__file__).read_text(encoding="utf-8"))
     sources.append((HERE / "gru_layer_flow.py").read_text(encoding="utf-8"))
@@ -109,19 +132,8 @@ def recorded_steps(notebook: dict) -> dict[str, list[MemoryStep]]:
     namespace = {"__name__": "memory_gate_recording"}
     for cell_id in RECORDING_CELLS:
         exec(compile("".join(cells[cell_id]["source"]), cell_id, "exec"), namespace)
-    lstm, gru = [], []
-    previous = 0.0
+    lstm, gru = _chosen_lstm_steps(namespace["melody"]), []
     for index, note in enumerate(namespace["melody"]):
-        keep = float(namespace["forget"][index])
-        write = float(namespace["input_gate"][index])
-        proposal = float(namespace["candidate"][index])
-        carried = float(namespace["cell_history"][index])
-        lstm.append(MemoryStep(
-            note, previous, keep, write, proposal, keep * previous, write * proposal,
-            carried, float(namespace["hidden_history"][index]),
-            show=float(namespace["output"][index]),
-        ))
-        previous = carried
         trace = namespace["gru_history"][index]
         keep = float(namespace["gru_update"][index])
         gru.append(MemoryStep(
@@ -186,8 +198,29 @@ def render_flows(notebook: dict) -> None:
 def recorded_evidence(notebook: dict) -> dict:
     cells = {cell["id"]: cell for cell in notebook["cells"]}
     namespace = {"__name__": "memory_evidence_recording"}
-    for cell_id in ("eb7df241", "9df9ac84", "f6985b8c", "be857f77"):
-        exec(compile("".join(cells[cell_id]["source"]), cell_id, "exec"), namespace)
+    exec(compile("".join(cells["eb7df241"]["source"]), "eb7df241", "exec"), namespace)
+    lstm = _chosen_lstm_steps(namespace["melody"])
+    namespace.update({
+        key: np.array([getattr(step, field) for step in lstm], dtype=float)
+        for key, field in (
+            ("forget", "keep"), ("input_gate", "write"), ("candidate", "proposal"),
+            ("output", "show"), ("cell_history", "carried"), ("hidden_history", "exposed"),
+        )
+    })
+    distances = np.arange(1, 31)
+
+    def route_feedback(retention, distance):
+        opening = torch.tensor(1.0, requires_grad=True)
+        carried = opening
+        for _ in range(int(distance)):
+            carried = retention * carried
+        return torch.autograd.grad(carried, opening)[0].item()
+
+    namespace.update(
+        distances=distances,
+        vanilla_gradient=np.array([route_feedback(.65, gap) for gap in distances]),
+        lstm_gradient=np.array([route_feedback(.95, gap) for gap in distances]),
+    )
     return namespace
 
 

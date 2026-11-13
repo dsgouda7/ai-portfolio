@@ -116,7 +116,7 @@ class LSTMEchoTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.comparison = run_echo_experiment(kind="LSTM")
-        cls.book = json.loads((HERE / "01A-sequence-memory-theory.ipynb").read_text(encoding="utf-8"))
+        cls.book = json.loads((HERE / "01A1-sequence-memory-worked-details.ipynb").read_text(encoding="utf-8"))
 
     def test_actual_before_after_and_both_state_interventions(self):
         comparison = self.comparison
@@ -200,11 +200,12 @@ class LSTMEchoTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "LSTM or GRU"):
             run_echo_experiment(kind="attention")
 
-    def test_notebook_teaches_complete_lstm_before_gru_and_keeps_attention_a_preview(self):
+    def test_notebook_teaches_both_cells_before_the_shared_echo_and_keeps_attention_a_preview(self):
         sources = {cell["id"]: "".join(cell["source"]) for cell in self.book["cells"]}
         order = list(sources)
-        self.assertLess(order.index("lstm-echo-training"), order.index("gru-mechanics-intro"))
-        self.assertLess(order.index("lstm-real-cell-parity"), order.index("lstm-echo-training"))
+        self.assertLess(order.index("lstm-real-cell-parity"), order.index("gru-mechanics-intro"))
+        self.assertLess(order.index("gru-real-cell-parity"), order.index("lstm-echo-training"))
+        self.assertLess(order.index("lstm-echo-training"), order.index("musical-echo-training"))
         self.assertIn("echo_audio_panel(lstm_echo_comparison)", sources["lstm-echo-training"])
         self.assertIn("lstm_steps = 480", sources["lstm-echo-training"])
         boundary = sources["memory-wiring-attention"]

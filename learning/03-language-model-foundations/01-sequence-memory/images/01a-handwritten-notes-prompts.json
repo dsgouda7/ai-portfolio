@@ -1,0 +1,14 @@
+[
+  {
+    "filename": "01a-handwritten-paper.png",
+    "semantic_anchor": "A calm white-paper surface for exact, dynamically rendered handwritten gradient and recurrent-cell calculations.",
+    "aspect_ratio": "3:2",
+    "width": 1536,
+    "height": 1024,
+    "model": "MAI-Image-2.6",
+    "prompt": "A realistic flat scan of one completely blank sheet of premium WHITE notebook paper, landscape 3:2, filling the image edge to edge. Pure neutral white, not beige or grey. Very subtle natural paper fibres visible only at the outside edges, a tiny soft natural paper-edge shadow in the far corners, no perspective distortion. The central 95 percent is clean, flat, evenly lit white with absolutely no marks. Designed as the quiet background for a person's carefully handwritten worked mathematics. The mathematics and handwriting will be added from verified numerical records afterward, not generated in this image. Natural and tactile, but exceptionally restrained: a white page rather than an illustrated desk scene.",
+    "acceptance_criteria": "1536 by 1024 white paper surface; front-facing flat scan; clean empty centre; minimal edge texture; sufficient contrast for dark blue handwritten formulas; usable repeatedly behind changing live numerical substitutions without misleading marks.",
+    "prohibited_content": "Any letters, words, numbers, equations, scribbles, lines, ruled grids, diagrams, boxes, panels, dashboards, people, hands, pens, desk props, logos, watermarks, beige tint, dark background, decorative coffee stains, strong shadows or illegible invented mathematics.",
+    "alt_text": "MAI-generated clean white paper. Verified equations and values are rendered separately in an offline handwritten font."
+  }
+]

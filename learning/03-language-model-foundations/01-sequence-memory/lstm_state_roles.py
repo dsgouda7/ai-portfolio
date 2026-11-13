@@ -25,7 +25,7 @@ from sequence_studio import (
 
 
 HERE = Path(__file__).resolve().parent
-NOTEBOOK = HERE / "01A-sequence-memory-theory.ipynb"
+NOTEBOOK = HERE / "01A1-sequence-memory-worked-details.ipynb"
 CONTROLS = ("input_gate", "forget_gate", "candidate", "output_gate")
 PAPER, PAPER_INK, INK = "#ecdfc6", "#51391e", TEXT
 CELL, HIDDEN = GOLD, CYAN

@@ -1,31 +1,79 @@
-"""Check the displayed BPTT equations against scalar and matrix autograd."""
+"""Check the companion's RNN gradients against autograd and finite differences."""
 
 import ast
-import base64
 import contextlib
 from io import StringIO
 import json
 import math
-from pathlib import Path
 import re
-from tempfile import TemporaryDirectory
 import unittest
 
-import matplotlib.pyplot as plt
-from matplotlib import font_manager
-from PIL import Image
 import torch
 from torch.nn import functional as F
 
 from backprop_memory_flow import NOTEBOOK, NOTE_HEAD_WEIGHTS, _inputs_and_weights
-from bptt_math import (
-    BACKWARD_EQUATIONS, FONT, FORWARD_EQUATIONS, HANDWRITING_STYLE, HERE, IMAGE_FILES,
-    boards, export, math_figure, source_fingerprint,
-)
 from error_feedback_flow import record_probe
 
 
-class BpttMathTests(unittest.TestCase):
+class RnnGradientTests(unittest.TestCase):
+    def test_notebook_what_if_checks_both_feature_signs_without_changing_saved_memory(self):
+        book = json.loads(NOTEBOOK.read_bytes())
+        cells = {cell["id"]: cell for cell in book["cells"]}
+        source = "".join(cells["gradient-meaning-probe"]["source"])
+        for feature in (0, 1):
+            tree = ast.parse(source)
+            setting = next(node for node in tree.body if isinstance(node, ast.Assign)
+                           and any(isinstance(target, ast.Name) and target.id == "nudge_feature"
+                                   for target in node.targets))
+            setting.value = ast.Constant(feature)
+            namespace = {"torch": torch, "F": F}
+            with contextlib.redirect_stdout(StringIO()):
+                exec(compile(ast.fix_missing_locations(tree), "memory_what_if", "exec"), namespace)
+            self.assertAlmostEqual(namespace["nudge_rate"],
+                                   namespace["nudge_exact"][feature].item(), delta=1e-8)
+            torch.testing.assert_close(namespace["nudge_h"].detach(),
+                                       namespace["nudge_trace"].states[-1], rtol=0, atol=0)
+            if feature == 0:
+                self.assertLess(namespace["nudge_rate"], 0)
+            else:
+                self.assertGreater(namespace["nudge_rate"], 0)
+            if feature == 0:
+                reading = "".join(cells["gradient-meaning-reading"]["source"])
+                for memory, loss in namespace["nudge_trials"]:
+                    self.assertIn(f"{memory:.10f}", reading)
+                    self.assertIn(f"{loss:.10f}", reading)
+
+    def test_restored_manual_check_matches_short_and_long_cases_and_local_matrix_detail(self):
+        book = json.loads(NOTEBOOK.read_bytes())
+        cells = {cell["id"]: cell for cell in book["cells"]}
+        namespace = {}
+        with contextlib.redirect_stdout(StringIO()):
+            exec(compile("".join(cells["bptt-manual-check"]["source"]), "manual_bptt", "exec"), namespace)
+        for gain in (0.8, 1.0, 1.2):
+            for repeats in (1, 7):
+                probe = record_probe(gain=gain, repeats=repeats)
+                self.assertAlmostEqual(namespace["manual_recurrent_gradient"](probe),
+                                       probe.weight_gradients.memory, places=12)
+        detail = "".join(cells["bptt-vector-detail"]["source"])
+        for parameter in (r"W_h}", r"W_x}", r"W_{\mathrm{out}}}", r"b}", r"b_{\mathrm{out}}}"):
+            self.assertIn(r"\frac{\partial L}{\partial " + parameter, detail)
+        for expression in (
+            r"\frac{dh_t}{dW_h}=h_{t-1}+W_h\frac{dh_{t-1}}{dW_h}",
+            r"\frac{dh_{t-2}}{dW_h}=h_{t-3}+W_h\frac{dh_{t-3}}{dW_h}",
+            r"+W_h^2\left[",
+            r"+\cdots+W_h^{T-1}h_0",
+        ):
+            self.assertIn(expression, detail)
+        self.assertIn("preview", detail)
+        from gradient_memory import piano_probe
+        for delay, digits in ((5, 8), (20, 10)):
+            self.assertIn(f"{piano_probe(delay).feedback[0]:.{digits}f}", detail)
+        ids = [cell["id"] for cell in book["cells"]]
+        self.assertLess(ids.index("gradient-meaning-probe"), ids.index("gradient-native-intro"))
+        self.assertLess(ids.index("bptt-manual-check"), ids.index("bptt-vector-detail"))
+        self.assertLess(ids.index("bptt-vector-detail"), ids.index("gated-memory-demand"))
+        self.assertNotIn("gradient-technical-appendix", ids)
+
     def test_generic_matrix_recurrence_and_outer_products_match_autograd(self):
         for grade_all in (False, True):
             with self.subTest(grade_all=grade_all):
@@ -133,85 +181,31 @@ class BpttMathTests(unittest.TestCase):
         cells = {cell["id"]: cell for cell in book["cells"]}
         visible = "\n".join(
             re.sub(r"<details>.*?</details>", "", "".join(cells[cell_id]["source"]), flags=re.S)
-            for cell_id in ("gradient-native-intro", "gradient-vanishing-intuition",
+            for cell_id in ("gradient-meaning-reading", "gradient-native-intro",
                             "gradient-exploding-intuition")
         )
-        for term in ("tiny", "multiply", "add", "direct", "earlier", "two handoffs"):
+        for term in ("multiply", "add", "h1", "h2", "h3", "shared"):
             self.assertIn(term, visible.lower())
-        for notation in ("mixgrad", "scoregrad", "\\sum", "W_h", "\\odot"):
+        for notation in ("mixgrad", "scoregrad", "\\sum", "\\odot"):
             self.assertNotIn(notation, visible)
-            self.assertNotIn(notation, str(FORWARD_EQUATIONS + BACKWARD_EQUATIONS))
-        detailed = "".join(cells["gradient-vanishing-intuition"]["source"])
-        self.assertIn("dh3/dm", detailed)
-        self.assertIn("<details>", detailed)
+        self.assertIn("W_x/W_h/W_out", visible)
 
-    def test_notebook_places_generic_then_worked_math_after_the_player(self):
+    def test_shared_weight_check_stays_reproducible_without_a_teaching_appendix(self):
         book = json.loads(NOTEBOOK.read_bytes())
         ids = [cell["id"] for cell in book["cells"]]
-        ordered = (
-            "embedded-01a-error-feedback", "gradient-vanishing-intuition",
-            "gradient-exploding-intuition", "gradient-technical-appendix",
-            "bptt-forward-math", "bptt-backward-math",
-            "bptt-worked-example", "bptt-manual-check", "bptt-learning-bridge",
-        )
+        ordered = ("gradient-native-intro", "embedded-01a-error-feedback",
+                   "gradient-exploding-intuition", "gated-memory-demand")
         self.assertEqual(sorted(ids.index(cell_id) for cell_id in ordered),
                          [ids.index(cell_id) for cell_id in ordered])
-        cells = {cell["id"]: cell for cell in book["cells"]}
-        self.assertIn("### BPTT in RNNs", "".join(cells["bptt-forward-math"]["source"]))
-        self.assertIn("preview", "".join(cells["bptt-backward-math"]["source"]))
-        self.assertIn("0.00082530", "".join(cells["bptt-worked-example"]["source"]))
-        source = "".join(cells["bptt-manual-check"]["source"])
-        ast.parse(source)
-        namespace = {}
-        with contextlib.redirect_stdout(StringIO()):
-            exec(compile(source, "bptt-manual-check", "exec"), namespace)
-            for gain in (0.8, 1.2):
-                probe = record_probe(gain=gain)
-                self.assertAlmostEqual(namespace["manual_memory_gradient"](probe),
-                                       probe.weight_gradients.memory, places=14)
-
-    def test_cards_are_fingerprinted_embedded_and_have_equation_transcripts(self):
-        book = json.loads(NOTEBOOK.read_bytes())
-        for filename in IMAGE_FILES:
-            owner = next(cell for cell in book["cells"]
-                         if f"attachment:{filename}" in "".join(cell["source"]))
-            self.assertEqual(base64.b64decode(owner["attachments"][filename]["image/png"]),
-                             (HERE / "images" / filename).read_bytes())
-            source = "".join(owner["source"])
-            self.assertIn("<details>", source)
-            self.assertIn("$$", source)
-            with Image.open(HERE / "images" / filename) as image:
-                self.assertEqual(image.info["SourceFingerprint"], source_fingerprint())
-                self.assertEqual(image.info["MathFont"], FONT)
-
-    @unittest.skipUnless(any(font.name == FONT for font in font_manager.fontManager.ttflist),
-                         "Regenerating handwritten cards requires Windows Segoe Print.")
-    def test_handwritten_equations_are_readable_unclipped_and_deterministic(self):
-        with plt.rc_context(HANDWRITING_STYLE):
-            for title, equations in boards():
-                figure = math_figure(title, equations)
-                try:
-                    figure.canvas.draw()
-                    renderer = figure.canvas.get_renderer()
-                    for index, text in enumerate(figure.texts):
-                        bounds = text.get_window_extent(renderer)
-                        self.assertTrue(figure.bbox.contains(bounds.x0, bounds.y0), text.get_text())
-                        self.assertTrue(figure.bbox.contains(bounds.x1, bounds.y1), text.get_text())
-                        self.assertLessEqual(bounds.x1, figure.bbox.width * 0.955, text.get_text())
-                        if text.get_text().startswith("$"):
-                            self.assertGreaterEqual(text.get_fontsize(), 24)
-                        for other in figure.texts[index + 1:]:
-                            self.assertFalse(bounds.overlaps(other.get_window_extent(renderer)),
-                                             (text.get_text(), other.get_text()))
-                finally:
-                    plt.close(figure)
-        with TemporaryDirectory() as directory:
-            export(Path(directory))
-            self.assertEqual({path.name for path in Path(directory).iterdir()}, set(IMAGE_FILES))
-            for filename in IMAGE_FILES:
-                self.assertEqual((Path(directory) / filename).read_bytes(),
-                                 (HERE / "images" / filename).read_bytes())
-
+        self.assertNotIn("gradient-technical-appendix", ids)
+        for gain in (0.8, 1.2):
+            probe = record_probe(gain=gain)
+            feedback = probe.steps[-1].feedback
+            total = 0.0
+            for step in reversed(probe.steps):
+                total += feedback * step.slope * step.previous
+                feedback *= step.factor
+            self.assertAlmostEqual(total, probe.weight_gradients.memory, places=14)
 
 if __name__ == "__main__":
     unittest.main()

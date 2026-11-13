@@ -1,8 +1,11 @@
 """Verify that c supplies contents, h supplies control context, and SHOW is not erasure."""
 
 from copy import deepcopy
+from contextlib import redirect_stdout
 import base64
+from io import StringIO
 import json
+import math
 import unittest
 
 import matplotlib.pyplot as plt
@@ -50,6 +53,31 @@ class LSTMStateRoleTests(unittest.TestCase):
         self.assertEqual((first[-1].keep, first[-1].write), (0.0, 1.0))
         with self.assertRaisesRegex(ValueError, "D3 or D4"):
             trace_cell_memory("unknown")
+
+    def test_copy_before_showing_demo_matches_its_visible_calculations(self):
+        book = json.loads(NOTEBOOK.read_text(encoding="utf-8"))
+        cells = {cell["id"]: cell for cell in book["cells"]}
+        namespace = {"torch": torch}
+        with redirect_stdout(StringIO()):
+            exec(compile("".join(cells["lstm-copying-vs-squashing-demo"]["source"]),
+                         "copy_before_showing", "exec"), namespace)
+        rows = namespace["copy_demo_rows"]
+        self.assertEqual([row[0] for row in rows], [1, 5, 20])
+        reference = 0.8
+        checkpoints = {}
+        for step in range(1, 21):
+            reference = math.tanh(reference)
+            checkpoints[step] = reference
+        text = "".join(cells["lstm-copying-vs-squashing-intro"]["source"])
+        for step, squeezed, stored, shown in rows:
+            self.assertAlmostEqual(squeezed, checkpoints[step], places=14)
+            self.assertEqual(stored, 0.8)
+            self.assertAlmostEqual(shown, math.tanh(0.8), places=14)
+            self.assertIn(f"| {step} | {squeezed:.6f} | {stored:.6f} | {shown:.6f} |", text)
+        self.assertLess(rows[-1][1], rows[0][1])
+        self.assertGreater(rows[-1][1], 0)
+        self.assertAlmostEqual(float(namespace["copy_demo_added_c"]), 1.6, places=14)
+        self.assertIn(f"{math.tanh(1.6):.6f}", text)
 
     def test_memory_figure_keeps_numbers_and_note_inputs_in_the_studio_style(self):
         figure, axis = role_figure()
@@ -202,8 +230,9 @@ class LSTMStateRoleTests(unittest.TestCase):
         self.assertLess(order.index("133e7838"), order.index("lstm-cell-memory-demo"))
         self.assertLess(order.index("lstm-cell-memory-demo"), order.index("lstm-readout-after-memory"))
         intro = next(cell for cell in book["cells"] if cell["id"] == "133e7838")
-        self.assertIn("fixed-length row of memory numbers", "".join(intro["source"]))
-        self.assertIn("not another set of trained weights", "".join(intro["source"]))
+        text = " ".join("".join(intro["source"]).split())
+        self.assertIn("fixed-length row of memory numbers", text)
+        self.assertIn("not another set of trained weights", text)
 
 
 if __name__ == "__main__":

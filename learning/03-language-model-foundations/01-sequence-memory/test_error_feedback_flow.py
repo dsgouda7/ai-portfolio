@@ -81,20 +81,19 @@ class ErrorFeedbackFlowTests(unittest.TestCase):
             self.assertEqual([step.graded for step in probe.steps], [False] * (len(probe.steps) - 1) + [True])
             self.assertNotEqual(probe.loss, sum(step.local_loss for step in probe.steps))
 
-    def test_notebook_walks_through_loss_and_feedback_at_both_scales(self):
+    def test_notebook_replaces_the_slider_with_the_three_case_calculation(self):
         book = json.loads(NOTEBOOK.read_bytes())
         cells = {cell["id"]: cell for cell in book["cells"]}
         numeric = "".join(cells["gradient-exploding-intuition"]["source"])
-        for gain in (0.8, 1.2):
-            probe = record_probe(gain=gain)
-            self.assertIn(f"{probe.weight_gradients.memory:.12f}", numeric)
-            self.assertIn(f"{probe.steps[-1].feedback:.9f}", numeric)
+        for gain in (1.0, 1.2, 0.8):
             longer = record_probe(gain=gain, repeats=7)
             ratio = longer.steps[0].feedback / longer.steps[-1].feedback
             self.assertIn(f"{ratio:.6f}", numeric)
         intro = "".join(cells["gradient-native-intro"]["source"])
-        self.assertIn("01a-bptt-memory-weight-explainer.png", intro)
+        self.assertIn("W_x/W_h/W_out", intro)
         self.assertNotIn("Optional static snapshot of the animation", numeric)
+        self.assertEqual(cells["embedded-01a-error-feedback"]["metadata"]["saved_replay"]["file"],
+                         "01a-gradient-three-cases.html")
         for cell in book["cells"]:
             self.assertNotIn("attachment:01a-note-gradient-chain.png", "".join(cell["source"]))
             self.assertNotIn("01a-note-gradient-chain.png", cell.get("attachments", {}))

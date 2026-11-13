@@ -14,11 +14,14 @@ from PIL import Image
 
 
 HERE = Path(__file__).resolve().parent
-ERROR_FEEDBACK_FILE = "01a-error-feedback-tracker.html"
+ERROR_FEEDBACK_FILE = "01a-gradient-three-cases.html"
 LSTM_FORWARD_FILE = "01a-lstm-forward-walkthrough.html"
+SEQUENCE_STORYBOARD_FILES = ("01a-lstm-sequence-storyboard.html", "01a-gru-sequence-storyboard.html")
 NATIVE_PLAYER_MARKERS = {
-    ERROR_FEEDBACK_FILE: "error-feedback-tracker",
+    ERROR_FEEDBACK_FILE: "gradient-three-cases",
     LSTM_FORWARD_FILE: "lstm-forward-walkthrough",
+    SEQUENCE_STORYBOARD_FILES[0]: "lstm-sequence-storyboard",
+    SEQUENCE_STORYBOARD_FILES[1]: "gru-sequence-storyboard",
 }
 REPLAY_FILES = (
     "01a-backprop-saved-cards.html",
@@ -30,6 +33,7 @@ REPLAY_FILES = (
     "01a-musical-gru-memory.html",
     ERROR_FEEDBACK_FILE,
     LSTM_FORWARD_FILE,
+    *SEQUENCE_STORYBOARD_FILES,
 )
 EMBED_VERSION = 1
 NOTEBOOK_SIZE_LIMIT = 65_000_000
@@ -108,9 +112,11 @@ def _packed_html(raw: bytes) -> str:
 
 
 def _player_height(filename: str) -> int:
+    if filename in SEQUENCE_STORYBOARD_FILES:
+        return 900
     if filename == LSTM_FORWARD_FILE:
         return 1200
-    return 1800 if filename == ERROR_FEEDBACK_FILE else 1050 if "musical" in filename else 740
+    return 1400 if filename == ERROR_FEEDBACK_FILE else 1050 if "musical" in filename else 740
 
 
 def saved_replay(filename: str, *, images_directory: Path | None = None) -> HTML:
@@ -143,18 +149,18 @@ def refresh_embedded_replays(notebook: dict, *, images_directory: Path | None = 
         if replay is None:
             continue
         filename = replay["file"]
-        native_markdown = filename in NATIVE_PLAYER_MARKERS and cell["cell_type"] == "markdown"
-        if filename not in REPLAY_FILES or (not native_markdown and cell["cell_type"] != "code"):
+        markdown_replay = cell["cell_type"] == "markdown"
+        if filename not in REPLAY_FILES or cell["cell_type"] not in {"code", "markdown"}:
             raise ValueError("Saved replay metadata must identify a supported display cell.")
         source = "".join(cell["source"]).strip()
         expected_source = "" if filename in NATIVE_PLAYER_MARKERS else f'saved_replay("{filename}")'
-        if native_markdown and source and hashlib.sha256(source.encode()).hexdigest() != replay.get("output_sha256"):
+        if markdown_replay and source and hashlib.sha256(source.encode()).hexdigest() != replay.get("output_sha256"):
             raise ValueError("The saved Markdown player changed; do not overwrite its source.")
-        if not native_markdown and source != expected_source:
+        if not markdown_replay and source != expected_source:
             raise ValueError("The saved replay display cell changed; do not overwrite its output.")
         digest = hashlib.sha256((directory / filename).read_bytes()).hexdigest()
         outputs = cell.get("outputs", [])
-        output_html = source if native_markdown else (
+        output_html = source if markdown_replay else (
             "".join(outputs[0].get("data", {}).get("text/html", "")) if len(outputs) == 1 else ""
         )
         if (replay.get("source_sha256") == digest and replay.get("embed_version") == EMBED_VERSION
@@ -163,7 +169,7 @@ def refresh_embedded_replays(notebook: dict, *, images_directory: Path | None = 
                 and replay.get("output_sha256") == hashlib.sha256(output_html.encode()).hexdigest()):
             continue
         html = saved_replay(filename, images_directory=directory).data
-        if native_markdown:
+        if markdown_replay:
             html = html.replace("\r", "&#13;").replace("\n", "&#10;")
             cell["source"] = [html]
             cell.pop("outputs", None)

@@ -1,6 +1,7 @@
 """Source-aware checks for the paired LSTM/GRU foundation and saved flow evidence."""
 
 import ast
+import base64
 from collections import Counter
 from contextlib import redirect_stdout
 from io import StringIO
@@ -8,6 +9,7 @@ import json
 from pathlib import Path
 import re
 import unittest
+from unittest.mock import patch
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,17 +18,18 @@ from memory_visuals import MOTION_FRAMES
 import torch
 
 from memory_gate_flows import PHASES, draw_gate_flow, fingerprint, recorded_evidence, recorded_steps
+from generate_memory_diagrams import order_story
 
 
 class MemoryGateFlowTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.notebook = json.loads((Path(__file__).parent / "01A-sequence-memory-theory.ipynb").read_text(encoding="utf-8"))
+        cls.notebook = json.loads((Path(__file__).parent / "01A1-sequence-memory-worked-details.ipynb").read_text(encoding="utf-8"))
         cls.cells = {cell["id"]: cell for cell in cls.notebook["cells"]}
         cls.namespace = {}
         with redirect_stdout(StringIO()):
             for cell_id in (
-                "eb7df241", "f6985b8c", "gru-controlled-recording",
+                "eb7df241", "gru-controlled-recording",
                 "gru-control-interventions", "gru-keep-drill", "gru-real-cell-parity",
             ):
                 exec(compile("".join(cls.cells[cell_id]["source"]), cell_id, "exec"), cls.namespace)
@@ -43,20 +46,68 @@ class MemoryGateFlowTests(unittest.TestCase):
         self.assertNotEqual(notes, list(reversed(notes)))
         recurrence = "".join(self.cells["ac9aca71"]["source"])
         self.assertIn("state = torch.tanh(W_x @ x_t + W_h @ state)", recurrence)
-        self.assertIn("Reversed phrase's final card", recurrence)
-        self.assertIn("| Explained or illustrated | Ordered versus pooled inputs",
+        self.assertNotIn("reverse_state", recurrence)
+        self.assertNotIn("x_steps.flip", recurrence)
+        self.assertIn("not recover the order from counts", introduction)
+        self.assertIn("| Explained or illustrated | Ordered inputs",
                       "".join(self.cells["9b40ba08"]["source"]))
 
+    def test_dark_order_illustration_preserves_every_original_label_and_example(self):
+        with patch("generate_memory_diagrams.save") as saved:
+            order_story()
+        figure = saved.call_args.args[0]
+        try:
+            axis = figure.axes[0]
+            self.assertEqual([text.get_text() for text in axis.texts], [
+                "Same notes. Different tune.",
+                "Counting notes throws away a distinction the listener can hear.",
+                "Phrase A", "D3", "A3", "D4", "D3: once   A3: once   D4: once",
+                "Phrase B", "D4", "A3", "D3", "D3: once   A3: once   D4: once",
+                "The count cards match. The ordered rows do not.",
+                "Keep a seat for each step: one phrase, three positions, one note at each position.",
+                "A fixed ordered window can keep order too. Recurrence adds a reusable update, not order by magic.",
+            ])
+            self.assertLess(max(figure.get_facecolor()[:3]), .2)
+            figure.canvas.draw()
+            renderer = figure.canvas.get_renderer()
+            for text in axis.texts:
+                bounds = text.get_window_extent(renderer)
+                self.assertTrue(axis.bbox.contains(bounds.x0, bounds.y0), text.get_text())
+                self.assertTrue(axis.bbox.contains(bounds.x1, bounds.y1), text.get_text())
+        finally:
+            plt.close(figure)
+
     def test_lstm_retained_and_written_parts_reproduce_the_existing_state_trace(self):
-        for index, step in enumerate(self.recordings["lstm"]):
+        expected = [0.72, 0.664, 0.6026, 0.590548, 0.57533156, 0.5523182976]
+        for step, carried in zip(self.recordings["lstm"], expected, strict=True):
             if step.show is None:
                 self.fail("LSTM flow must include its show gate.")
             self.assertAlmostEqual(step.retained + step.written, step.carried)
             self.assertAlmostEqual(step.exposed, step.show * np.tanh(step.carried))
-            self.assertAlmostEqual(step.carried, self.namespace["cell_history"][index])
-            self.assertAlmostEqual(step.exposed, self.namespace["hidden_history"][index])
-        self.assertEqual(self.namespace["hidden_if_show_closed"], 0)
-        self.assertNotEqual(self.namespace["cell_history"][2], 0)
+            self.assertAlmostEqual(step.carried, carried)
+        step = self.recordings["lstm"][2]
+        self.assertEqual(0.0 * np.tanh(step.carried), 0)
+        self.assertNotEqual(step.carried, 0)
+
+    def test_forward_illustration_replaces_code_and_matches_the_recorded_step(self):
+        cell = self.cells["f6985b8c"]
+        name = "01a-lstm-forward-illustrated.png"
+        self.assertEqual(cell["cell_type"], "markdown")
+        self.assertNotIn("outputs", cell)
+        self.assertNotIn("execution_count", cell)
+        self.assertIn(f"attachment:{name}", "".join(cell["source"]))
+        path = Path(__file__).parent / "images" / name
+        self.assertEqual(base64.b64decode(cell["attachments"][name]["image/png"]), path.read_bytes())
+        with Image.open(path) as image:
+            measured = json.loads(image.info["MeasuredValues"])
+            self.assertEqual(image.info["SourceFingerprint"], fingerprint(self.notebook))
+            self.assertGreaterEqual(image.width, 1500)
+        step = self.recordings["lstm"][2]
+        for field in ("old", "keep", "write", "proposal", "retained", "written", "carried", "exposed", "show"):
+            self.assertEqual(measured[field], getattr(step, field))
+        code = "\n".join("".join(item["source"]) for item in self.notebook["cells"]
+                         if item["cell_type"] == "code")
+        self.assertNotIn("cell_history", code)
 
     def test_gru_reset_proposal_and_complementary_write_reproduce_the_recorded_updates(self):
         for index, step in enumerate(self.recordings["gru"]):
@@ -106,7 +157,7 @@ class MemoryGateFlowTests(unittest.TestCase):
         self.assertTrue(torch.equal(torch.random.get_rng_state(), before))
 
     def test_notebook_references_saved_visuals_and_sections_remain_sequential(self):
-        for cell_id in ("ce06d8e3", "955076cb", "lstm-inline-replay", "gru-inline-replay", "musical-echo-replay"):
+        for cell_id in ("955076cb", "lstm-inline-replay", "gru-inline-replay", "musical-echo-replay"):
             self.assertEqual(self.cells[cell_id]["cell_type"], "markdown")
             self.assertRegex("".join(self.cells[cell_id]["source"]), r"!\[[^\]]+\]\(")
         code = "\n".join(
@@ -119,7 +170,7 @@ class MemoryGateFlowTests(unittest.TestCase):
             match[1] for cell in self.notebook["cells"] if cell["cell_type"] == "markdown"
             for match in re.finditer(r"(?m)^## (\d+) - ", "".join(cell["source"]))
         ]
-        self.assertEqual(headings, list("123456"))
+        self.assertEqual(headings, list("123456789"))
         self.assertIn('<a id="gru-hidden-state-mechanics"></a>', "".join(self.cells["gru-mechanics-intro"]["source"]))
         for cell in self.notebook["cells"]:
             if cell["cell_type"] == "code":

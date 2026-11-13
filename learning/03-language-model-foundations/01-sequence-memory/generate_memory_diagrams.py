@@ -56,23 +56,26 @@ def save(fig, name):
 
 
 def order_story():
-    fig, ax = canvas(
-        "Same notes. Different tune.",
-        "Counting notes throws away a distinction the listener can hear.",
-    )
+    from lstm_state_roles import _arrow, _canvas, _figure, _label, _panel
+    from sequence_studio import GOLD, MUTED, VIOLET
+
+    fig, ax = _figure()
+    _canvas(ax)
+    _label(ax, 9, 10.35, "Same notes. Different tune.", 27, weight="bold")
+    _label(ax, 9, 9.55, "Counting notes throws away a distinction the listener can hear.", 18, MUTED)
     for y, title, notes in [
-        (6.1, "Phrase A", ["D3", "A3", "D4"]),
-        (4.0, "Phrase B", ["D4", "A3", "D3"]),
+        (7.1, "Phrase A", ["D3", "A3", "D4"]),
+        (4.9, "Phrase B", ["D4", "A3", "D3"]),
     ]:
-        label(ax, 1.25, y + 0.45, title)
+        _label(ax, 1.3, y + .55, title, 20)
         for index, note in enumerate(notes):
-            card(ax, 2.6 + index * 1.6, y, 1.2, 0.9, note)
-        arrow(ax, (7.5, y + 0.45), (9, y + 0.45))
-        card(ax, 9.2, y - 0.1, 5.4, 1.1, "D3: once   A3: once   D4: once", GRAY, size=16)
-    label(ax, 8, 2.85, "The count cards match. The ordered rows do not.", weight="bold")
-    card(ax, 1.1, 1.1, 13.8, 1.1,
-         "Keep a seat for each step: one phrase, three positions, one note at each position.", PURPLE)
-    label(ax, 8, 0.45, "A fixed ordered window can keep order too. Recurrence adds a reusable update, not order by magic.", size=13)
+            _panel(ax, 3.0 + index * 1.9, y, 1.4, 1.1, note, GOLD, 21)
+        _arrow(ax, (8.65, y + .55), (10.0, y + .55), VIOLET)
+        _panel(ax, 10.3, y - .1, 6.9, 1.3, "D3: once   A3: once   D4: once", VIOLET, 18)
+    _label(ax, 9, 3.6, "The count cards match. The ordered rows do not.", 21, weight="bold")
+    _panel(ax, .7, 1.6, 16.6, 1.1,
+           "Keep a seat for each step: one phrase, three positions, one note at each position.", VIOLET, 18)
+    _label(ax, 9, .55, "A fixed ordered window can keep order too. Recurrence adds a reusable update, not order by magic.", 14, MUTED)
     save(fig, "01a-01-order-is-not-a-bag.png")
 
 
@@ -86,55 +89,6 @@ def notecard_story():
         caption="Every read produces h: carry it onward and expose it to the shared note head.",
     )
     save(fig, "01a-02-one-reader-changing-card.png")
-
-
-def feedback_story():
-    fig, ax = canvas(
-        "Reading goes forward. Teaching comes back.",
-        "Imagine the final prediction is wrong. Which earlier uses of the reader helped cause it?",
-    )
-    for x, text in [(1.0, "Read D3\nupdate card"), (5.7, "Read A3\nupdate card"), (10.4, "Read D4\nupdate card")]:
-        card(ax, x, 4.6, 3.4, 1.3, text, TEAL)
-    arrow(ax, (4.5, 5.25), (5.5, 5.25), "carry")
-    arrow(ax, (9.2, 5.25), (10.2, 5.25), "carry")
-    card(ax, 10.4, 2.0, 3.4, 1.1, "Check final guess", ORANGE)
-    arrow(ax, (12.1, 4.45), (12.1, 3.2))
-    arrow(ax, (13.2, 3.2), (13.2, 4.45), color="#a7501b")
-    arrow(ax, (10.3, 2.55), (7.4, 2.55), "feedback", "#a7501b")
-    arrow(ax, (7.2, 2.55), (2.7, 2.55), "feedback crosses another update", "#a7501b")
-    arrow(ax, (2.7, 2.7), (2.7, 4.45), color="#a7501b")
-    arrow(ax, (7.4, 2.7), (7.4, 4.45), color="#a7501b")
-    label(ax, 8, 6.85, "Forward: what should the next card contain?", size=18)
-    label(ax, 8, 1.1, "A longer gap means more transitions for feedback to cross.", size=20, weight="bold")
-    label(ax, 8, 0.4, "Backpropagation calculates shared-weight gradients. The optimizer changes weights, not the input notes.", size=14)
-    save(fig, "01a-03-forward-memory-backward-feedback.png")
-
-
-def gate_story():
-    fig, ax = canvas(
-        "Keep some. Write some. Show some.",
-        "An LSTM has three controls and a proposed update, not four separate memories.",
-    )
-    card(ax, 0.4, 5.45, 2.4, 1.1, "Old carried\nmemory")
-    card(ax, 3.7, 5.45, 3.1, 1.1, "Forget control\nhow much to KEEP", ORANGE, size=16)
-    arrow(ax, (2.95, 6.0), (3.55, 6.0))
-    card(ax, 0.4, 2.65, 2.4, 1.1, "Proposed\nnew content", PURPLE)
-    card(ax, 3.7, 2.65, 3.1, 1.1, "Input control\nhow much to WRITE", ORANGE, size=16)
-    arrow(ax, (2.95, 3.2), (3.55, 3.2))
-    label(ax, 7.65, 4.6, "+", size=32, weight="bold")
-    arrow(ax, (6.95, 5.8), (7.7, 4.95))
-    arrow(ax, (6.95, 3.4), (7.7, 4.25))
-    card(ax, 8.7, 4.0, 2.4, 1.2, "New carried\nmemory")
-    arrow(ax, (8.0, 4.6), (8.55, 4.6))
-    arrow(ax, (9.9, 5.35), (9.9, 6.7))
-    label(ax, 11.7, 7.0, "Carry onward", size=16)
-    card(ax, 12.0, 3.95, 3.1, 1.3, "Output control\nSHOW after tanh", ORANGE, size=16)
-    arrow(ax, (11.25, 4.6), (11.85, 4.6))
-    arrow(ax, (13.55, 3.8), (13.55, 2.85))
-    card(ax, 12.0, 1.65, 3.1, 1.05, "Exposed hidden\nstate", PURPLE)
-    label(ax, 5.5, 1.75, "Close WRITE: ignore a distraction.\nClose SHOW: hide memory without erasing it.", size=17)
-    label(ax, 8, 0.5, "Real gates are learned from today's input and the previous hidden state. The next code chooses them by hand.", size=14)
-    save(fig, "01a-04-keep-write-show.png")
 
 
 def forecast_story():
@@ -242,7 +196,7 @@ def piano_story():
 
 if __name__ == "__main__":
     for draw in (
-        order_story, notecard_story, feedback_story, gate_story, forecast_story,
+        order_story, notecard_story, forecast_story,
         shift_story, packing_story, causal_story, piano_story,
     ):
         draw()

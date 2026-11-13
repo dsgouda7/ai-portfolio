@@ -20,7 +20,7 @@ from sequence_studio import BACKGROUND, PLAYER_STYLE, draw_studio, studio_figure
 
 
 HERE = Path(__file__).resolve().parent
-NOTEBOOK = HERE / "01A-sequence-memory-theory.ipynb"
+NOTEBOOK = HERE / "01A1-sequence-memory-worked-details.ipynb"
 PREFIX = "01a-backprop-saved-cards"
 NOTES = ("D3", "A3", "D4")
 NOTE_HEAD_WEIGHTS = ((1.0, -0.5), (-0.5, 1.0), (0.25, 0.25))

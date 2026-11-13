@@ -364,23 +364,25 @@ def draw_saturation(axis) -> None:
 def draw_unsquashed_total(axis, *, path: Path = NOTEBOOK) -> None:
     _canvas(axis)
     vector = lambda values: "[" + ", ".join(f"{value:.2f}" for value in values) + "]"
-    _label(axis, 9, 10.35, "Plain addition preserves changes, not order.", 28, weight="bold")
-    _label(axis, 9, 9.55, "Same input weights -> decimal writes. Add each feature; no recurrent remix or squash.", 17, MUTED)
-    for opening, y in (("D3", 6.1), ("D4", 2.9)):
-        probe = unsquashed_total(opening, path=path)
-        _label(axis, 1.3, y + 0.55, "start\n[0.00, 0.00]", 19)
-        _arrow(axis, (2.35, y + 0.55), (2.9, y + 0.55), GOLD)
-        for index, (x, note, current, value) in enumerate(zip(
-            (3.0, 6.4, 9.8, 13.2), probe.notes, probe.writes, probe.stored, strict=True,
-        )):
-            _label(axis, x + 1.3, y + 2.15, note, 18, GOLD)
-            _label(axis, x + 1.3, y + 1.55, "add " + vector(current), 18, MUTED)
-            _panel(axis, x, y, 2.6, 1.1, "total\n" + vector(value), GOLD, 20)
-            if index < 3:
-                _arrow(axis, (x + 2.7, y + 0.55), (x + 3.3, y + 0.55), GOLD)
-    _label(axis, 9, 2.1, "Different orders. Same final A3. Same total: " + vector(probe.stored[-1]) + ".", 20)
-    _label(axis, 9, 1.3, "A +0.01 first-write nudge gives +0.01 in that final feature: 100% carry-through.", 17)
-    _label(axis, 9, 0.55, "A pair of totals is still not an ordered history.", 16, MUTED)
+    _label(axis, 9, 10.35, "Addition keeps changes. It also writes every distraction.", 26, weight="bold")
+    _label(axis, 9, 9.55, "Same input weights, one familiar phrase. There is no control for refusing a later write.", 17, MUTED)
+    probe = unsquashed_total("D3", path=path)
+    y = 5.7
+    _label(axis, 1.3, y + .55, "start\n[0.00, 0.00]", 19)
+    _arrow(axis, (2.35, y + .55), (2.9, y + .55), GOLD)
+    for index, (x, note, current, value) in enumerate(zip(
+        (3.0, 6.4, 9.8, 13.2), probe.notes, probe.writes, probe.stored, strict=True,
+    )):
+        _label(axis, x + 1.3, y + 2.15, note, 18, GOLD)
+        _label(axis, x + 1.3, y + 1.55, "add " + vector(current), 18, MUTED)
+        _panel(axis, x, y, 2.6, 1.1, "total\n" + vector(value), GOLD, 20)
+        if index < 3:
+            _arrow(axis, (x + 2.7, y + .55), (x + 3.3, y + .55), GOLD)
+    _panel(axis, 2, 3.0, 6, 1.1, "After the opening\n" + vector(probe.stored[0]), CYAN, 21)
+    _panel(axis, 10, 3.0, 6, 1.1, "After all the writes\n" + vector(probe.stored[-1]), GOLD, 21)
+    _label(axis, 9, 2.2, "A +0.01 first-write nudge still gives +0.01 at the end: 100% carry-through.", 17)
+    _label(axis, 9, 1.3, "The feedback route survives, but nothing chooses which later writes belong.", 19)
+    _label(axis, 9, .55, "Next refinement: keep the opening while closing unwanted writes.", 17, MUTED)
 
 
 def draw_cell_feedback(axis) -> None:
