@@ -13,7 +13,7 @@ import torch
 from torch import nn
 
 from language_data import CAT_FAMILY_WORDS, CAT_WORDS
-from encoder_decoder_example import BOS, EOS, VOCABULARY, decode_ids, encode_words, teacher_inputs
+from encoder_decoder_example import BOS, EOS, VOCABULARY, decode_ids, encode_words, generate, teacher_inputs
 
 
 HERE = Path(__file__).parent
@@ -169,13 +169,11 @@ class MainEncoderDecoderTests(unittest.TestCase):
         namespace = {
             "torch": torch, "nn": nn, "BOS": BOS, "EOS": EOS,
             "V": len(VOCABULARY), "CAT_WORDS": CAT_WORDS,
-            "encode_words": encode_words, "decode_ids": decode_ids,
+            "encode_words": encode_words, "decode_ids": decode_ids, "generate": generate,
         }
         source = (HERE / "03C-recurrent-encoder-decoder-to-attention.py").read_text(encoding="utf-8")
         for node in ast.parse(source).body:
-            if isinstance(node, (ast.ClassDef, ast.FunctionDef)) and node.name in {
-                "EncoderDecoder", "generate",
-            }:
+            if isinstance(node, ast.ClassDef) and node.name == "EncoderDecoder":
                 exec(compile(ast.Module(body=[node], type_ignores=[]), "<main-encoder-decoder>", "exec"),
                      namespace)
         cls.namespace = namespace

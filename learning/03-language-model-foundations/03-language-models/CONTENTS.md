@@ -9,7 +9,7 @@ Follow the failures that lead from counting continuations to a writer that can l
 - [03A - Theory Notes](03A-training-skeleton-and-word-objectives-theory.md) — Keep lookup, word guessing, running notes, and reading/writing jobs straight.
 - [03B - Counts to Recurrent Language Models](03B-counts-to-recurrent-language-models.ipynb) — Follow controlled cat/dog continuations from counts to ordered windows and recurrent memory, then check a word LSTM's training and causality.
 - [03B - Theory Notes](03B-counts-to-recurrent-language-models-theory.md) — Review what order and carried memory fix, what the state intervention demonstrates, and which limits remain.
-- [03C - Recurrent Reader-and-Writer Models to Attention](03C-recurrent-encoder-decoder-to-attention.ipynb) — Keep all explanations and saved evidence; four compact code cells build and train one fixed-summary encoder-decoder, then generate without targets.
+- [03C - Recurrent Reader-and-Writer Models to Attention](03C-recurrent-encoder-decoder-to-attention.ipynb) — Follow the reader/writer handoff, how the answer teaches the encoding and teacher forcing; three compact code cells train the fixed-summary model. End with the need for attention and links to the dedicated Transformer lessons, not an attention implementation.
 - [03C - Theory Notes](03C-recurrent-encoder-decoder-to-attention-theory.md) — Review why looking back at source notes differs from remembering one summary and from receiving correct earlier words during practice.
 
 ## Optional comparison lab
@@ -33,10 +33,10 @@ Follow the failures that lead from counting continuations to a writer that can l
 - [Real-text experiment helper](real_text_embeddings.py) — Cache the checked TinyStories file, build practice questions, and record losses and embedding diagnostics.
 - [Window and objective checks](test_real_text_embeddings.py) — Check document boundaries, short documents, unknown slots, and each objective's question/answer alignment offline.
 - [03B - Python](03B-counts-to-recurrent-language-models.py) — One shared color corpus and window baseline, followed by RNN evidence and inherited LSTM training and generation.
-- [03C - Python](03C-recurrent-encoder-decoder-to-attention.py) — Only the main notebook's four cells: frozen data, small encoder-decoder, training and bounded target-free generation.
-- [Encoder-decoder example data](encoder_decoder_example.py) — Load the checked [frozen source split](data/03c-cat-reversal-corpus.json), convert word IDs, shift previous-answer inputs and replay matched batches; no model or hidden training loop.
-- [Encoder-decoder walkthrough recorder](encoder_decoder_walkthrough.py) — Offline recorder/exporter: run the main four-cell model once and capture its actual states, predictions, probabilities, gradients and updates for the paused, step-through player. Notebook Run All does not export the recording.
-- [Encoder-decoder MAI background prompts](images/03c-encoder-decoder-animation-prompts.json) — Use the existing [illustration generator](generate_illustrations.py) for the MAI background only; measured overlays come from the offline recorder, not image generation.
+- [03C - Python](03C-recurrent-encoder-decoder-to-attention.py) — Only the main notebook's three cells: frozen data, small encoder-decoder and training.
+- [Encoder-decoder example data](encoder_decoder_example.py) — Load the checked [frozen source split](data/03c-cat-reversal-corpus.json), convert word IDs, shift previous-answer inputs, replay matched batches and retain the former main section's bounded generation helper; no model or hidden training loop.
+- [Encoder-decoder walkthrough recorder](encoder_decoder_walkthrough.py) — Offline recorder/exporter: run the main three-cell model once and capture its actual states, predictions, probabilities, gradients and updates for the paused, step-through player. Notebook Run All does not export the recording.
+- [Encoder-decoder background prompts](images/03c-encoder-decoder-animation-prompts.json) — Describe the decorative background; measured overlays come from the offline recorder, not image generation.
 - [Shared cat-example checks](test_shared_cat_examples.py) — Preserve original source-access and gradient behavior; verify the compact model's explicit training shift, separate source reading, carried generation state and EOS/budget stopping.
 
 **Next:** [Stage 04 — Transformers](../../04-transformers/README.md).

@@ -4,13 +4,27 @@
 
 Follow [03C](03C-recurrent-encoder-decoder-to-attention.ipynb) or its
 [Python companion](03C-recurrent-encoder-decoder-to-attention.py).
-The main notebook keeps all explanations and four short implementation cells.
+The main notebook explains the roles and learning process in plain English, with
+three short cells for fixed data, the model and training. Its recorded player
+compares practice with generation; the standalone evaluation stays in worked details.
 [Worked details](03C1-encoder-decoder-worked-details.ipynb) preserve every separate
 diagnostic and the original two-model experiment; the measured comparisons below
 belong to that route, not the compact main demo.
 Keep **the cat sat on the mat**. Our checkable answer is
 **mat the on sat cat the**, then `<eos>`.
 This reversal is a reading/writing drill, not English generation or translation quality.
+
+**Why use this drill?** A useful reversing program needs only one line of Python.
+Here we deliberately ask a neural reader and writer to learn the job so we can
+see whether they learn to pass the needed information between them.
+The first answer must be the last input word, so the writer needs information
+from the end of the source before it starts. To finish, it needs the other words
+and their order too. We can make and check the answer key automatically.
+
+The reversal code makes that answer key; it is not a shortcut inside the model.
+Trying new word lists checks more than memorizing one answer. Adding attention
+asks whether access to the reader's saved notes helps with the very same job.
+None of these checks measures translation or English-writing ability.
 
 ## 1. Two jobs, not necessarily two layer families
 
@@ -81,6 +95,9 @@ The full source may already contain `mat`; source access is not future-answer le
 
 Target length determines the number of practice steps; an answer need not be as
 long as its source. Our GRU still computes successive states sequentially.
+The source/answer boundary stays fixed: only the previous-answer input advances
+from `<bos>` to `mat`, then `the`, and so on. The decoder carries its writing
+state forward; these answer inputs are not sent back through the encoder.
 
 At generation time there is no teacher: each own guess becomes the next input.
 Practising with correct history but generating with imperfect history creates
@@ -164,6 +181,8 @@ this direct source-access route. Attention predates Transformers.
 Ten word choices create controlled source orders of lengths two through eight.
 Forty unseen sources per length are held out. Orders need not be grammatical.
 The comparison tests familiar lengths, not longer-length extrapolation.
+The practical question is: can the writer return a new input list in reverse
+without being given the answer words? A low practice loss alone does not answer it.
 
 The original [worked-details comparison](03C1-encoder-decoder-worked-details.ipynb#evaluation)
 records complete free-running scores averaging 76.43% for one card and 97.50%
@@ -191,6 +210,9 @@ current guess; forward values versus backward routes; source access versus reten
 
 [Stage 04](../../04-transformers/README.md) changes the internal reading machinery,
 not the need for clear source/answer roles and correct supervised alignment.
+For translation, the answer key would contain translations; for summarization,
+it would contain summaries. The reading/writing setup carries over, not a language
+skill learned by reversing these lists.
 
 **Durable summary:** the reader learns what to preserve because the writer's errors
 reach it; the writer learns what to say from source context and previous-answer inputs.

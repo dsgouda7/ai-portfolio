@@ -234,12 +234,26 @@ evaluation implementation on its independent split.
 | [03C. Recurrent reader/writer to attention](03C-recurrent-encoder-decoder-to-attention.ipynb) | The writer needs access beyond one final summary | [Theory](03C-recurrent-encoder-decoder-to-attention-theory.md) | [Python](03C-recurrent-encoder-decoder-to-attention.py) |
 | [03C1. Encoder-decoder worked details](03C1-encoder-decoder-worked-details.ipynb) | Optional runnable diagnostics and the original summary/attention comparison | Same 03C theory | [Python](03C1-encoder-decoder-worked-details.py) |
 
-03C first opens the two learned jobs: source reading, the state handoff, previous-answer
-inputs and word scoring. **All conceptual explanations and saved figures stay in 03C.**
-Its four code cells show only setup/frozen data, a small `EncoderDecoder`, its optimizer
-loop, and bounded target-free generation. The encoder reads the source once; the separate
-decoder carries its own state and receives explicitly shifted previous-answer inputs
-during training. The familiar sentence is one probe, not the entire training set.
+03C follows the two learned jobs in plain English: source reading, the state handoff,
+previous-answer inputs and word scoring. Its three code cells show only setup/frozen
+data, a small `EncoderDecoder` and its optimizer loop. The encoder reads the source
+once; the separate decoder carries its own state and receives explicitly shifted
+previous-answer inputs during training. The familiar sentence is one probe, not the
+entire training set. Generation remains visible in the recorded player; the standalone
+generation/evaluation section now lives outside the main lesson, keeping its closing brief.
+
+Section 5 stops at the intuition for attention: the writer cannot reopen a source
+detail once everything has passed through the final summary. No attention layer
+is implemented in the main model. The mechanism and diagrams belong to
+[Transformer Part 5A](../../04-transformers/05a-encoder-decoder-and-cross-attention-theory.ipynb);
+the implementation and learned attention maps belong to
+[Part 5B](../../04-transformers/05b-encoder-decoder-and-cross-attention-lab.ipynb).
+The original recurrent attention figures remain in the optional worked-details notebook.
+
+Reversal is an easy-to-check test, not the useful application we are trying to build.
+It asks whether the reader can pass the exact words and their order to the writer.
+We keep that same job when testing new lists and comparing one summary with attention;
+translation or summarization would need their own answer examples.
 
 [03C1](03C1-encoder-decoder-worked-details.ipynb) runs independently from a fresh kernel
 and preserves the full original `ReaderWriter` implementation and experiments:
@@ -257,7 +271,9 @@ Both routes use exactly the same 7,020 training and 280 held-out source orders
 (lengths two through eight), stored in
 [`data/03c-cat-reversal-corpus.json`](data/03c-cat-reversal-corpus.json).
 [`encoder_decoder_example.py`](encoder_decoder_example.py) validates that frozen split,
-converts IDs and replays the original seed-99 batches. 03C1 retains the original seed-31
+converts IDs and replays the original seed-99 batches. Its `generate` helper preserves
+the removed main section's bounded, target-free example without running it during training.
+03C1 retains the original seed-31
 construction and checks exact equality. Its two models and the main demo each use
 1,000 updates, batches of 64, Adam at 0.004 and clipping at 1.0; the main decoder's
 plain GRU interface is intentionally separate from the original diagnostic model.
@@ -265,15 +281,21 @@ plain GRU interface is intentionally separate from the original diagnostic model
 ### The recorded encoder-decoder walkthrough
 
 [`encoder_decoder_walkthrough.py`](encoder_decoder_walkthrough.py) is an **offline
-recorder/exporter**. It runs the main four-cell model once, then records actual source
+recorder/exporter**. It runs the main three-cell model once, then records actual source
 and decoder states, guesses, probabilities, gradients and updates for the saved player.
 Run All in either notebook does not invoke it. Playback starts paused; use Next/Back,
 or optional slow Play. Initialized teacher-forced practice, the same weights using
 their own guesses, and trained generation are separate selectable recordings.
 
+Source tokens become inactive after the encoder finishes. The separate writer-input
+row highlights only the current input: `<bos>`, then the previous correct answer in
+practice or the previous actual guess in generation. At the teacher-supply stage,
+the highlight moves to the next input. The source/answer boundary never moves;
+the decoder carries its state forward without rerunning the encoder.
+The notebook embeds the interactive player without a static snapshot fallback.
+
 [`images/03c-encoder-decoder-animation-prompts.json`](images/03c-encoder-decoder-animation-prompts.json)
-belongs with the existing [`generate_illustrations.py`](generate_illustrations.py)
-workflow **for the MAI background only**. The background does not invent model values;
+describes the decorative background. The background does not invent model values;
 the recorder supplies every measured overlay. The optional
 [03C1 code-details notebook](03C1-encoder-decoder-worked-details.ipynb) remains the
 runnable route for the full diagnostic and source-attention implementations.

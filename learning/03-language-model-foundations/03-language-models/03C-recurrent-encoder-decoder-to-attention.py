@@ -1,6 +1,6 @@
-"""Code companion for 03C-recurrent-encoder-decoder-to-attention.ipynb. Run from this directory."""
+"""Code companion for the three-cell 03C reader/writer lesson."""
 
-# %% 3. Give both models the same controlled reading job
+# %% 3. Use a fixed reading task
 import torch
 from torch import nn
 from language_data import CAT_WORDS
@@ -22,7 +22,7 @@ print("Frozen train / held-out counts:",
       {length: (len(rows), len(corpus["test"][length]))
        for length, rows in corpus["train"].items()})
 
-# %% 4. Open the reader/writer before training it
+# %% 4. Walk through the architecture and training
 class EncoderDecoder(nn.Module):
     def __init__(self, vocabulary_size):
         super().__init__()
@@ -43,7 +43,7 @@ class EncoderDecoder(nn.Module):
         logits, _ = self.decode(previous, self.encode(source))
         return logits
 
-# %% 4.6 That teaches a summary. Can the writer reopen a source detail?
+# %% 4.2 Teach both components with the same answer loss
 torch.manual_seed(31)
 model = EncoderDecoder(V)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.004)
@@ -57,25 +57,3 @@ for update, (source, _, target) in enumerate(training_batches(corpus), 1):
     optimizer.step()
     if update in (1, 1000):
         print(f"Update {update}: current-word loss {loss.item():.4f}")
-
-# %% 5. Can it write without the teacher's history?
-def generate(model, words=CAT_WORDS):
-    source = torch.tensor([encode_words(words)])
-    chosen = []
-    model.eval()
-    with torch.no_grad():
-        state = model.encode(source)
-        previous = source.new_full((1, 1), BOS)
-        for _ in range(len(words) + 1):
-            logits, state = model.decode(previous, state)
-            previous = logits[:, -1].argmax(-1, keepdim=True)
-            chosen.append(previous.item())
-            if chosen[-1] == EOS:
-                break
-    return decode_ids(chosen)
-
-
-source_to_reverse = CAT_WORDS
-print("Source:", " ".join(source_to_reverse))
-print("Generated:", " ".join(generate(model, source_to_reverse)))
-print("Required by the separate task:", " ".join([*reversed(source_to_reverse), "<eos>"]))

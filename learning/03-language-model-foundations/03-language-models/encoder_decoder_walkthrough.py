@@ -1,4 +1,4 @@
-"""Record the small chapter model, then overlay its real steps on MAI artwork."""
+"""Record the small chapter model and replay its actual reading and writing steps."""
 
 import ast
 import base64
@@ -9,9 +9,8 @@ from io import BytesIO
 import json
 from pathlib import Path
 import runpy
-import textwrap
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 import torch
 from torch import nn
 
@@ -24,12 +23,6 @@ IMAGES = HERE / "images"
 BASE = IMAGES / "03c-encoder-decoder-animation-base.png"
 PLAYER = IMAGES / "03c-encoder-decoder-animation.html"
 TRACE = PLAYER.with_suffix(".json")
-STORYBOARD = PLAYER.with_suffix(".png")
-BACKGROUND_MODEL = "MAI-Image-2.6"
-COLORS = {
-    "ink": "#17324d", "reader": "#007f86", "writer": "#ad5b15",
-    "teacher": "#7950a3", "feedback": "#b33c38", "paper": "#fffdf7",
-}
 
 
 def _values(tensor):
@@ -186,7 +179,7 @@ def record_story(model):
         })
     return {
         "version": 1,
-        "background": {"file": BASE.name, "model": BACKGROUND_MODEL, "sha256": sha256(BASE.read_bytes()).hexdigest()},
+        "background": {"file": BASE.name, "sha256": sha256(BASE.read_bytes()).hexdigest()},
         "origin": "The exact small EncoderDecoder class shown in 03C; seed 31; all vectors and guesses recorded.",
         "model_source_sha256": model_source_fingerprint(),
         "runs": {
@@ -202,55 +195,6 @@ def model_source_fingerprint():
     definition = next(node for node in ast.parse(source).body
                       if isinstance(node, ast.ClassDef) and node.name == "EncoderDecoder")
     return sha256(ast.dump(definition).encode("utf-8")).hexdigest()
-
-
-def _sample(values):
-    return "[" + ", ".join(f"{value:+.3f}" for value in values[:3]) + ", ...]"
-
-
-def _font(size):
-    return ImageFont.truetype(
-        str(HERE.parent / "01-sequence-memory" / "images" / "kalam" / "Kalam-Regular.ttf"), size,
-    )
-
-
-def render_frame(frame):
-    """A deterministic static version of the same high-level route."""
-    image = Image.open(BASE).convert("RGB")
-    draw = ImageDraw.Draw(image)
-    ink = COLORS["ink"]
-    draw.rectangle((930, 300, 985, 375), fill=COLORS["paper"])
-    draw.rounded_rectangle((38, 22, 1498, 118), 15, fill=COLORS["paper"])
-    draw.text((64, 34), frame["title"], font=_font(30), fill=ink)
-    draw.text((64, 79), "Same recorded values as the manual player; no generated model numbers.", font=_font(19), fill=ink)
-    for index, word in enumerate(CAT_WORDS):
-        x = 170 + index * 190
-        active = index == frame.get("source_position")
-        draw.rounded_rectangle((x, 150, x + 150, 205), 10,
-                               fill="#ddf4ef" if active else COLORS["paper"], outline=COLORS["reader"], width=3)
-        draw.text((x + 18, 158), word, font=_font(25), fill=ink)
-    panels = ((80, 260, 535, 545, "Encoder / reader", COLORS["reader"]),
-              (595, 325, 925, 485, "Source note", COLORS["reader"]),
-              (985, 260, 1450, 545, "Decoder + word head", COLORS["writer"]))
-    for x0, y0, x1, y1, title, color in panels:
-        draw.rounded_rectangle((x0, y0, x1, y1), 18, fill=COLORS["paper"], outline=color, width=4)
-        draw.text((x0 + 20, y0 + 15), title, font=_font(26), fill=color)
-    draw.text((105, 325), "Read source words in order", font=_font(24), fill=ink)
-    draw.text((105, 380), _sample(frame["encoder"]), font=_font(22), fill=ink)
-    draw.text((620, 386), "64 computed features", font=_font(23), fill=ink)
-    draw.text((1010, 325), "Previous input: " + frame.get("input_word", "not supplied yet"), font=_font(24), fill=ink)
-    visible_guess = frame.get("guess", "not computed yet") if frame["stage"] != "input" else "not shown yet"
-    draw.text((1010, 383), "Actual guess: " + visible_guess, font=_font(24), fill=ink)
-    draw.text((1010, 442), "Check: " + frame.get("expected", "wait for writing"), font=_font(24), fill=ink)
-    draw.line((540, 407, 589, 407), fill=COLORS["reader"], width=5)
-    draw.line((931, 407, 978, 407), fill=COLORS["writer"], width=5)
-    draw.rounded_rectangle((75, 600, 1450, 670), 15, fill=COLORS["paper"], outline=COLORS["teacher"], width=3)
-    draw.text((95, 616), "Teacher supplies NEXT input: " + frame.get("next_input", "only after grading"),
-              font=_font(25), fill=COLORS["teacher"])
-    draw.rounded_rectangle((40, 710, 1496, 844), 15, fill=COLORS["paper"])
-    draw.multiline_text((65, 725), "\n".join(textwrap.wrap(frame["narration"], 111)),
-                        font=_font(23), fill=ink, spacing=7)
-    return image
 
 
 def render_player(story):
@@ -276,7 +220,10 @@ svg{width:100%;height:auto;display:block}.panel{fill:#fffdf7;fill-opacity:.97;st
 text{font-family:system-ui,sans-serif;fill:#17324d}.label{font-size:25px;font-weight:650}.value{font-size:24px}.small{font-size:20px}
 .route{fill:none;stroke-width:5;opacity:.22}.route.active{opacity:1;stroke-width:7;stroke-dasharray:12 8}
 main[data-playing=true] .route.active{animation:flow 1.8s linear infinite}
-.chip{fill:#fffdf7;stroke:#007f86;stroke-width:2}.chip.active{fill:#ddf4ef;stroke-width:4}
+.chip{fill:#fffdf7;stroke:#bac3c7;stroke-width:2}.chip.used{fill:#eef0ef;stroke:#bac3c7}
+.source-chip.active{fill:#ddf4ef;stroke:#007f86;stroke-width:4}
+.decoder-chip.active{fill:#fce8d3;stroke:#ad5b15;stroke-width:4}
+main[data-run=practice] .decoder-chip.active{fill:#eee3f7;stroke:#7950a3}
 #details{padding:10px 18px;background:#fffdf7}.note{font-size:14px;color:#596b72}
 @keyframes flow{to{stroke-dashoffset:-40}}
 @media(prefers-reduced-motion:reduce){main[data-playing=true] .route.active{animation:none}}
@@ -292,12 +239,13 @@ main[data-playing=true] .route.active{animation:flow 1.8s linear infinite}
 </nav>
 <svg viewBox="0 0 1536 720" role="img" aria-labelledby="diagram-title diagram-description">
 <title id="diagram-title">One source read, a learned state handoff, separate writing and teacher inputs</title>
-<desc id="diagram-description">MAI artwork supplies only the background. Every source word, guess, state and teaching signal is overlaid from actual PyTorch records.</desc>
+<desc id="diagram-description">The source stays fixed after encoding. One active decoder input advances through previous answer words. Every state and prediction comes from actual PyTorch records.</desc>
 <image href="__BACKGROUND__" x="0" y="0" width="1536" height="864"/>
 <rect x="930" y="300" width="55" height="75" fill="#fffdf7"/>
 <rect x="38" y="15" width="1460" height="85" rx="14" class="panel" stroke="#d7c6a9"/>
 <text id="stage-title" x="64" y="49" class="label"></text><text x="64" y="83" class="small">Read first. Carry context. Write one answer word. Grade it before choosing the NEXT input.</text>
-<g id="source-chips"></g>
+<text x="40" y="185" class="small">Source</text><g id="source-chips"></g>
+<text x="24" y="243" class="small">Writer input</text><g id="decoder-input-chips"></g>
 <path id="route-read" class="route" stroke="#007f86" d="M470 210 V248 H308 V272"/>
 <path id="route-handoff" class="route" stroke="#007f86" d="M538 407 H980"/>
 <path id="route-input" class="route" stroke="#ad5b15" d="M1448 368 H1405"/>
@@ -320,11 +268,11 @@ main[data-playing=true] .route.active{animation:flow 1.8s linear infinite}
 <text id="decoder-target" x="1010" y="463" class="value"></text><text id="decoder-probability" x="1010" y="507" class="small"></text>
 <rect x="75" y="600" width="1375" height="77" rx="15" class="panel" stroke="#7950a3"/>
 <text id="teacher-line" x="97" y="632" class="value"></text>
-<text x="97" y="663" class="small">A correct next input does not replace the guess or reset the writing state.</text>
+<text x="97" y="663" class="small">The source boundary stays fixed. Only the writer's previous-answer input advances.</text>
 </svg>
 <p id="caption" aria-live="polite"></p>
 <details id="details"><summary>Recorded states and training values</summary><pre id="numbers"></pre></details>
-<p class="note">Base artwork: MAI-Image-2.6. Overlay: actual initialized/trained class shown in the notebook. The before-learning update is an isolated copy, not the corpus run.</p>
+<p class="note">Recorded from the actual initialized/trained class shown in the notebook. The before-learning update is an isolated copy, not the corpus run.</p>
 </main>
 <script id="recorded-flow" type="application/json">__DATA__</script>
 <script>
@@ -336,16 +284,38 @@ main[data-playing=true] .route.active{animation:flow 1.8s linear infinite}
  const frames=()=>story.runs[runs.value].frames;
  function stop(){clearTimeout(timer);timer=null;root.dataset.playing="false";play.textContent="Play slowly";play.setAttribute("aria-pressed","false");}
  function text(id,value){document.getElementById(id).textContent=value;}
+ function chip(group,word,position,x,y,kind,active,used){
+  const rect=document.createElementNS("http://www.w3.org/2000/svg","rect");
+  for(const [name,value] of Object.entries({x,y,width:150,height:kind==="source"?55:42,rx:10,
+   class:"chip "+kind+"-chip"+(active?" active":used?" used":""),"data-position":position,"data-word":word}))rect.setAttribute(name,String(value));
+  const label=document.createElementNS("http://www.w3.org/2000/svg","text");
+  label.setAttribute("x",String(x+18));label.setAttribute("y",String(y+(kind==="source"?37:29)));
+  label.setAttribute("class",kind==="source"?"value":"small");label.textContent=word;
+  group.append(rect,label);
+ }
  function show(){
-  const frame=frames()[index],source=story.runs[runs.value].source_words;
+  const recording=story.runs[runs.value],frame=frames()[index],source=recording.source_words;
+  const reading=frame.stage==="read",supplying=["teacher","own"].includes(frame.stage);
+  const writing=["input","grade"].includes(frame.stage)||supplying;
+  const inputStep=writing?frame.writer_step+(supplying?1:0):null;
   root.dataset.index=String(index);root.dataset.stage=frame.stage;root.dataset.run=runs.value;
   text("status","Stage "+(index+1)+" / "+frames().length+" | "+runs.options[runs.selectedIndex].text);
   text("stage-title",frame.title);text("caption",frame.narration);
-  text("encoder-read","Read "+(frame.source_position+1)+" / "+source.length+": "+source[frame.source_position]);
+  text("encoder-read",reading?"Read "+(frame.source_position+1)+" / "+source.length+": "+source[frame.source_position]:
+    "Source fixed: "+source.length+" / "+source.length+" read");
   text("encoder-state","["+frame.encoder.slice(0,3).map(value=>value.toFixed(3)).join(", ")+", ...]");
-  document.getElementById("route-read").setAttribute("d","M"+(245+190*frame.source_position)+" 210 V248 H308 V272");
+  document.getElementById("route-read").setAttribute("d","M"+(245+190*frame.source_position)+" 205 V210 H150 V265 H308 V275");
+  if(writing){
+   const x=245+170*inputStep;
+   document.getElementById("route-input").setAttribute("d","M"+x+" 256 V265 H1212 V275");
+   for(const name of ["teacher","own"]){
+    document.getElementById("route-"+name).setAttribute("d",
+     (name==="teacher"?"M765 600":"M1225 542")+" V566 H1480 V263 H"+x+" V256");
+   }
+  }
   text("handoff-label",frame.stage==="read"?"Still reading source":"Initial writing context");
-  text("decoder-input","Previous input: "+(frame.input_word||"not supplied yet"));
+  text("decoder-input",(supplying?"Next input: ":"Previous input: ")+
+    (supplying?frame.next_input:frame.input_word||"not supplied yet"));
   const showGuess=!["read","handoff","input"].includes(frame.stage);
   text("decoder-guess","Actual guess: "+(showGuess?frame.guess:"not computed yet"));
   text("decoder-target","Check against: "+(showGuess?frame.expected:"not graded yet"));
@@ -358,11 +328,15 @@ main[data-playing=true] .route.active{animation:flow 1.8s linear infinite}
   document.querySelectorAll(".route").forEach(route=>route.classList.toggle("active",route.id==="route-"+frame.route));
   const group=document.getElementById("source-chips");group.replaceChildren();
   source.forEach((word,position)=>{
-   const x=170+position*190,rect=document.createElementNS("http://www.w3.org/2000/svg","rect");
-   for(const [name,value] of Object.entries({x,y:150,width:150,height:55,rx:10,class:"chip"+(position===frame.source_position?" active":"")}))rect.setAttribute(name,String(value));
-   const label=document.createElementNS("http://www.w3.org/2000/svg","text");
-   label.setAttribute("x",String(x+18));label.setAttribute("y","187");label.setAttribute("class","value");label.textContent=word;
-   group.append(rect,label);
+   chip(group,word,position,170+position*190,150,"source",
+    reading&&position===frame.source_position,!reading||position<frame.source_position);
+  });
+  const inputs=document.getElementById("decoder-input-chips");inputs.replaceChildren();
+  const recordedInputs=frames().filter(item=>item.stage==="input");
+  recordedInputs.forEach((item,position)=>{
+   const visible=recording.teacher||position===0||inputStep!==null&&position<=inputStep||["backward","update"].includes(frame.stage);
+   chip(inputs,visible?item.input_word:"?",position,170+position*170,214,"decoder",
+    position===inputStep,writing?position<inputStep:["backward","update"].includes(frame.stage));
   });
   back.disabled=index===0;next.disabled=index===frames().length-1;
  }
@@ -400,21 +374,7 @@ def notebook_embed():
 def save_story(story):
     TRACE.write_text(json.dumps(story, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     PLAYER.write_text(render_player(story), encoding="utf-8", newline="\n")
-    frames = story["runs"]["practice"]["frames"]
-    selected = [
-        frames[0], next(frame for frame in frames if frame["stage"] == "handoff"),
-        next(frame for frame in frames if frame["stage"] == "grade"),
-        next(frame for frame in frames if frame["stage"] == "teacher"),
-        next(frame for frame in frames if frame["stage"] == "backward"), frames[-1],
-    ]
-    board = Image.new("RGB", (2304, 1944), "#fff9ed")
-    for index, frame in enumerate(selected):
-        snapshot = render_frame(frame)
-        snapshot.thumbnail((1152, 648))
-        board.paste(snapshot, ((index % 2) * 1152, (index // 2) * 648))
-    board.save(STORYBOARD, ExampleSentence=" ".join(CAT_WORDS), BackgroundModel=BACKGROUND_MODEL,
-               BackgroundSHA256=story["background"]["sha256"])
-    print("Saved recorded MAI-backed walkthrough, trace and static storyboard.", flush=True)
+    print("Saved recorded encoder-decoder walkthrough and trace.", flush=True)
 
 
 def export():

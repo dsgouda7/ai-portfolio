@@ -2,7 +2,6 @@
   "version": 1,
   "background": {
     "file": "03c-encoder-decoder-animation-base.png",
-    "model": "MAI-Image-2.6",
     "sha256": "277c4705f7413717abdfcd5a216d6aac80dc0e4469ee5cd0ccbf4136fe379313"
   },
   "origin": "The exact small EncoderDecoder class shown in 03C; seed 31; all vectors and guesses recorded.",

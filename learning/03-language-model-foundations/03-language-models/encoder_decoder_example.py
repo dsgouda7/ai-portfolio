@@ -1,4 +1,4 @@
-"""Frozen cat-family source orders and aligned encoder-decoder practice batches."""
+"""Frozen cat-family sources, aligned practice batches and bounded generation."""
 
 import hashlib
 import json
@@ -7,7 +7,7 @@ import random
 
 import torch
 
-from language_data import CAT_FAMILY_WORDS
+from language_data import CAT_FAMILY_WORDS, CAT_WORDS
 
 
 VOCABULARY = ("<pad>", *CAT_FAMILY_WORDS, "<bos>", "<eos>")
@@ -33,6 +33,23 @@ def teacher_inputs(target_ids: torch.Tensor) -> torch.Tensor:
     return torch.cat(
         [target_ids.new_full((len(target_ids), 1), BOS), target_ids[:, :-1]], dim=1,
     )
+
+
+def generate(model, words=CAT_WORDS):
+    """Keep the former main-notebook generation example available without target inputs."""
+    source = torch.tensor([encode_words(words)])
+    chosen = []
+    model.eval()
+    with torch.no_grad():
+        state = model.encode(source)
+        previous = source.new_full((1, 1), BOS)
+        for _ in range(len(words) + 1):
+            logits, state = model.decode(previous, state)
+            previous = logits[:, -1].argmax(-1, keepdim=True)
+            chosen.append(previous.item())
+            if chosen[-1] == EOS:
+                break
+    return decode_ids(chosen)
 
 
 def load_cat_corpus() -> dict[str, dict[int, torch.Tensor]]:
