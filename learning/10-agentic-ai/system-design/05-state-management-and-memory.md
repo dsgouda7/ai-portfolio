@@ -56,22 +56,7 @@ Every agent turn moves through the same shape, whether the underlying framework 
 "graph," a "loop," or a "chain." Drawing this DAG is the fastest way to show an interviewer you
 understand where durability boundaries belong.
 
-```mermaid
-flowchart TD
-    Input[Input] --> Plan[Plan]
-    Plan --> PlanCheckpoint[Checkpoint: plan]
-    PlanCheckpoint --> ToolCall[Tool Call]
-    ToolCall --> Observation[Observation]
-    Observation --> Checkpoint[Checkpoint: observation]
-    Checkpoint --> Decision{Decision}
-    Decision -->|continue| Plan
-    Decision -->|finish| FinalOutput[Final Output]
-    Decision -->|approval required| HumanReview[Human Review]
-    HumanReview --> Checkpoint
-
-    classDef terminal fill:#efe,stroke:#494,stroke-width:1px;
-    class FinalOutput terminal
-```
+![Persist the plan before the tool call and the observation afterward; decisions continue, finish or request human review without losing durable progress.](img/ch05-execution-state-infographic.png)
 
 Three properties of this DAG matter more than the boxes themselves:
 
@@ -152,17 +137,7 @@ Event sourcing is generic background (append-only log of immutable facts, curren
 by folding events). What's agent-specific is *what the events are* and *what has to travel with
 them* for replay to mean anything.
 
-```mermaid
-flowchart LR
-    InputEvent[Input Event] --> EventLog[(Append-only Event Log)]
-    EventLog --> Projection[State Projection]
-    EventLog --> AuditView[Audit View]
-    EventLog --> Replay[Replay Engine]
-    Projection --> Checkpoint[Checkpoint]
-
-    classDef store fill:#eef,stroke:#446,stroke-width:1px;
-    class EventLog store
-```
+![An append-only event log feeds state projection, audit and replay; the projected state produces checkpoints.](img/ch05-event-sourcing-infographic.png)
 
 For a generic CRUD system, an event is "OrderPlaced" or "InventoryReserved" — a fact about
 business state. For an agent, the events also have to capture facts about *the reasoning
@@ -180,18 +155,7 @@ and re-examining what happened*, not regenerating an identical output. Without t
 attached, replay degrades into "some model produced some plan, we don't know which one, running
 it again today will produce a different answer." This is expanded in [Section 6, failure #4](#6--failure-modes).
 
-```mermaid
-sequenceDiagram
-    participant Op as Operator
-    participant Re as Replay Engine
-    participant EL as Event Log
-    participant Ver as Version Registry
-    Op->>Re: replay execution <id>
-    Re->>EL: read events for execution
-    Re->>Ver: fetch prompt/model/tool/policy versions active at each step
-    Re->>Re: reconstruct trajectory (inputs, plans, tool calls, observations)
-    Re-->>Op: reconstructed trajectory + divergence report
-```
+![The replay engine reads execution events and the prompt, model, tool and policy versions active at each step to reconstruct a trajectory and divergence report.](img/ch05-trajectory-replay-infographic.png)
 
 The **Replay Engine** doesn't re-execute the agent against live tools — it reconstructs the
 recorded trajectory for inspection, and optionally re-runs it in a sandboxed shadow mode against
@@ -235,33 +199,7 @@ can always be rebuilt from.
 "the last few turns of context" to "a vector database." A strong answer names six distinct
 layers and is explicit about what each one is (and is not) for.
 
-```mermaid
-flowchart TD
-    subgraph Fast["Immediate / ephemeral"]
-        CW[Context Window]
-    end
-    subgraph Mid["Execution-scoped, durable"]
-        TC[Thread Checkpoint]
-        SD[Session DAG]
-    end
-    subgraph Slow["Cross-session, durable"]
-        LT[Long-term Store]
-        VM[Vector Memory]
-        EL[(Immutable Event Log)]
-    end
-    CW --> TC
-    TC --> SD
-    SD --> LT
-    SD --> VM
-    SD --> EL
-
-    classDef fast fill:#fee,stroke:#944,stroke-width:1px;
-    classDef mid fill:#eef,stroke:#446,stroke-width:1px;
-    classDef slow fill:#efe,stroke:#494,stroke-width:1px;
-    class CW fast
-    class TC,SD mid
-    class LT,VM,EL slow
-```
+![Ephemeral context connects to durable thread checkpoints and session state; cross-session stores, vector memory and immutable logs serve different retrieval and evidence needs.](img/ch05-memory-hierarchy-infographic.png)
 
 | Layer | Purpose | Scope / lifetime | Backing store (typical) |
 |---|---|---|---|
@@ -339,30 +277,7 @@ whichever neighbor is closest to the query vector, and drop down a layer once no
 current layer beats the current best. By the time the search reaches the bottom layer, it has
 narrowed to a small local neighborhood instead of having scanned everything.
 
-```mermaid
-flowchart TD
-    subgraph L2["Layer 2 — sparse, long-range"]
-        A2((A)) --- B2((B))
-    end
-    subgraph L1["Layer 1 — medium density"]
-        A1((A)) --- C1((C)) --- B1((B))
-        C1 --- D1((D))
-    end
-    subgraph L0["Layer 0 — dense, all vectors"]
-        A0((A)) --- C0((C)) --- D0((D)) --- E0((E)) --- B0((B))
-        D0 --- F0((F))
-    end
-    Query((Query)) -.entry.-> A2
-    A2 -.descend.-> A1
-    A1 -.greedy step.-> C1
-    C1 -.descend.-> C0
-    C0 -.greedy step.-> D0
-    D0 -.greedy step.-> F0
-    F0 -.result.-> Result[Nearest Neighbors]
-
-    classDef result fill:#efe,stroke:#494,stroke-width:1px;
-    class Result result
-```
+![HNSW starts in a sparse upper layer, follows greedy neighbors and descends toward the dense all-vector layer before returning neighbors.](img/ch05-hnsw-search-infographic.png)
 
 Two parameters dominate the recall/latency/memory trade-off:
 

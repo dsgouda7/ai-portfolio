@@ -52,22 +52,7 @@ This document is about how that deciding system is built.
 
 Every proposed tool/MCP call crosses one enforcement point before it can touch a real system.
 
-```mermaid
-flowchart TD
-    Intent["Model Intent / Tool Call"] --> Classifier[Intent Classifier]
-    Classifier --> RiskScore[Risk Scoring]
-    RiskScore --> RuleEval["Rule Evaluation (allow/deny, tenant policy)"]
-    RuleEval --> Decision{Decision}
-    Decision -->|allow| Tool[Tool Gateway → Tool / MCP Call]
-    Decision -->|deny| Audit[(Immutable Audit Store)]
-    Decision -->|approval required| HITL[Human-in-the-Loop Review]
-    HITL -->|approved / edited| Tool
-    HITL -->|rejected| Audit
-    Tool --> Audit
-
-    classDef risky fill:#fdd,stroke:#a33,stroke-width:1px;
-    class HITL risky
-```
+![Classify intent, score risk and evaluate policy before allowing, denying or requesting human review; tool outcomes and denials flow to immutable audit.](img/ch11-policy-authority-infographic.png)
 
 Key design properties, each of which is a distinct interview point:
 
@@ -167,20 +152,7 @@ authorization. The mechanics:
 
 Risky actions pause for a human decision. The state machine:
 
-```mermaid
-stateDiagram-v2
-    [*] --> Running
-    Running --> Paused: risky tool call proposed
-    Paused --> Approved: reviewer approves as-is
-    Paused --> Edited: reviewer edits arguments
-    Paused --> Rejected: reviewer rejects
-    Paused --> Responded: reviewer supplies missing input
-    Approved --> Running
-    Edited --> Running
-    Rejected --> Terminated
-    Responded --> Running
-    Terminated --> [*]
-```
+![Risky intent pauses execution; approval, edits or supplied input resume it, while rejection terminates the run.](img/ch11-human-approval-infographic.png)
 
 ### The critical invariant
 
@@ -376,18 +348,7 @@ a fetched webpage completely differently from the identical text appearing in th
 **The dual-LLM pattern** goes one step further by splitting *the model itself* along this same
 boundary:
 
-```mermaid
-flowchart TD
-    User[User Request] --> Planner["Privileged Planner LLM (tool authority)"]
-    Planner -->|delegates: process untrusted content| Quarantine["Quarantined LLM (no tool calls)"]
-    Untrusted["Untrusted Content (doc / tool result)"] --> Quarantine
-    Quarantine -->|schema-constrained output only| Planner
-    Planner --> ToolGateway[Tool Gateway] --> PolicyCheck{Policy Engine}
-    PolicyCheck -->|allow| Tools[Real Tools / Systems]
-
-    classDef untrusted fill:#fdd,stroke:#a33,stroke-width:1px;
-    class Untrusted,Quarantine untrusted
-```
+![A quarantined model reads untrusted content without tool calls and returns schema-constrained data; privileged planning still passes the tool gateway and policy engine.](img/ch11-quarantined-content-infographic.png)
 
 - The **planner LLM** is privileged — it can call tools — but it never reads raw untrusted
   content directly. It only ever sees the quarantined LLM's structured output.

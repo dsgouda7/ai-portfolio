@@ -48,21 +48,7 @@ Everything below is about that shift.
 
 ## 2 · Scheduling and admission control
 
-```mermaid
-flowchart TD
-    Request[Incoming Execution Request] --> Admission[Admission Control]
-    Admission --> Quota[Tenant Quota Check]
-    Quota --> PQ[Priority Queue]
-    PQ --> Scheduler[Scheduler]
-    Scheduler --> Lease[Lease Manager]
-    Lease --> Pool[Runtime Pool]
-
-    Admission -.->|reject: over quota / budget| Reject[(429 / Deferred)]
-    Scheduler -.->|no capacity| PQ
-
-    classDef gate fill:#eef,stroke:#556,stroke-width:1px;
-    class Admission,Quota gate
-```
+![Admission and tenant quotas precede the priority queue, scheduler, lease manager and runtime pool; over-budget work is rejected or deferred and capacity shortages requeue work.](img/ch12-admission-scheduling-infographic.png)
 
 Each stage answers a distinct question:
 
@@ -99,38 +85,13 @@ number of requests proportional to its weight before moving to the next — so a
 weight 3 gets roughly three times the scheduling turns of a tenant with weight 1, and no single
 tenant can flood the scheduler and starve the others out, even without a hard concurrency cap.
 
-```mermaid
-flowchart TD
-    T1["Tenant A Queue (w=3)"] --> Scheduler{Weighted Fair Queuing}
-    T2["Tenant B Queue (w=1)"] --> Scheduler
-    T3["Tenant C Queue (w=1)"] --> Scheduler
-    Scheduler -->|~3 of every 5 turns| PoolA[Runtime Pool]
-    Scheduler -->|~1 of every 5 turns| PoolA
-    Scheduler -->|~1 of every 5 turns| PoolA
-
-    classDef gate fill:#eef,stroke:#556,stroke-width:1px;
-    class Scheduler gate
-```
+![Tenant queues weighted 3:1:1 receive approximately three, one and one of every five scheduling turns when all are backlogged.](img/ch12-weighted-fair-queuing-infographic.png)
 
 ---
 
 ## 3 · Capacity planning: leading indicators, not lagging ones
 
-```mermaid
-flowchart LR
-    Concurrency[Concurrent Executions] --> TPS[Tokens / sec]
-    Concurrency --> QD[Queue Depth]
-    Concurrency --> TL[Tool Latency]
-    Concurrency --> CW[Checkpoint Writes / sec]
-    Concurrency --> TV[Trace Volume]
-
-    TPS --> ModelCap[Model Capacity Planning]
-    TL --> WorkerCount[Runtime Worker Count]
-    CW --> StateCap[State Store Capacity]
-
-    classDef leading fill:#efe,stroke:#373,stroke-width:1px;
-    class TPS,QD,TL,CW,TV leading
-```
+![Concurrent runs drive token rate, queue depth, tool latency, checkpoint writes and trace volume; these signals guide model, worker and state-store capacity.](img/ch12-capacity-signals-infographic.png)
 
 **These five signals are leading indicators of a scale bottleneck, not lagging ones.** The
 distinction matters because agent executions degrade gradually before they fail visibly — an

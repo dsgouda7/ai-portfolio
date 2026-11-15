@@ -74,17 +74,7 @@ A single supervisor agent receives the task, delegates sub-tasks to specialist a
 specialist reports its result back to the supervisor — never to each other directly. The
 supervisor synthesizes the final answer.
 
-```mermaid
-flowchart TD
-    User[User] --> Supervisor[Supervisor Agent]
-    Supervisor --> ResearchAgent[Research Agent]
-    Supervisor --> PlannerAgent[Planner Agent]
-    Supervisor --> ToolAgent[Tool Agent]
-    ResearchAgent --> Supervisor
-    PlannerAgent --> Supervisor
-    ToolAgent --> Supervisor
-    Supervisor --> Final[Final Response]
-```
+![A supervisor delegates to research, planning and tool agents, collects their results, and returns the final response.](img/ch09-supervisor-infographic.png)
 
 This is the closest multi-agent analog to a single agent's own reasoning loop — the supervisor
 *is* the control point, so nearly all of the single-agent governance you already have (budgets,
@@ -126,14 +116,7 @@ The supervisor pattern generalizes to more than one level: an executive agent de
 domain-level agents, each of which may delegate further to worker agents. Authority and context
 shrink as you go down the tree; synthesis happens as results bubble back up.
 
-```mermaid
-flowchart TD
-    Root[Executive Agent] --> DomainA[Domain Agent A]
-    Root --> DomainB[Domain Agent B]
-    DomainA --> WorkerA1[Worker Agent A1]
-    DomainA --> WorkerA2[Worker Agent A2]
-    DomainB --> WorkerB1[Worker Agent B1]
-```
+![An executive agent delegates to domain agents, which assign work to their own worker agents.](img/ch09-hierarchical-delegation-infographic.png)
 
 Hierarchical delegation is what lets a platform scale specialization without every specialist
 reporting to one overloaded supervisor. The risk it introduces (Section 4) is that each level can
@@ -161,18 +144,7 @@ allocation" shape:
   capability/cost/confidence), a contract is awarded to the best bid, and the awarded agent
   executes.
 
-```mermaid
-flowchart LR
-    Task[Task Posted] --> Blackboard[(Blackboard)]
-    Blackboard --> BidderA[Bidder Agent A]
-    Blackboard --> BidderB[Bidder Agent B]
-    Blackboard --> BidderC[Bidder Agent C]
-    BidderA --> Bids[Bids Collected]
-    BidderB --> Bids
-    BidderC --> Bids
-    Bids --> Award[Contract Award]
-    Award --> Executor[Executor Agent]
-```
+![A shared blackboard advertises a task to bidders; collected bids lead to a contract award and executor.](img/ch09-blackboard-contracts-infographic.png)
 
 Contract-net is attractive when the set of capable agents is dynamic (you don't know in advance
 which specialist is best-suited, or capacity varies), but it adds real protocol overhead: you
@@ -215,23 +187,7 @@ originally formalized by Reid G. Smith and later standardized by FIPA:
 4. **Report.** The awarded agent executes the task and reports the result back to the manager
    once it completes.
 
-```mermaid
-sequenceDiagram
-    participant M as Manager
-    participant A as Agent A
-    participant B as Agent B
-    participant C as Agent C
-
-    M->>A: task-announcement (requirements, deadline)
-    M->>B: task-announcement (requirements, deadline)
-    M->>C: task-announcement (requirements, deadline)
-    A-->>M: bid (est. cost, confidence)
-    B-->>M: bid (est. cost, confidence)
-    C--xM: no bid (not eligible / at capacity)
-    M->>M: evaluate bids, award to best
-    M->>B: award contract
-    B->>M: report completion
-```
+![A manager announces requirements and a deadline; eligible agents bid, unavailable agents do not, and the winner reports completion.](img/ch09-contract-net-infographic.png)
 
 > **Trade-off — Contract Net Protocol**
 > - **Strength:** decentralized load balancing — the manager doesn't need to track every agent's

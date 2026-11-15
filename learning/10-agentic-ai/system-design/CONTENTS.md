@@ -2,6 +2,9 @@
 
 Read the whole-platform reference first, then deepen the component you need.
 
+Diagrams use AI-generated component illustrations with text-first layouts, descriptive alt text,
+and checked labels and connections. They explain architecture, not measured deployment results.
+
 ## Required route
 
 This branch adds no required lessons to the main route.

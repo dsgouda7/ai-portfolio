@@ -208,46 +208,9 @@ be advertised and mutually agreed rather than assumed. A client that skips strai
 instead of a clear "unsupported version" rejection at the one point in the session where that
 mismatch is unambiguous to diagnose.
 
-```mermaid
-sequenceDiagram
-    participant C as MCP Client
-    participant S as MCP Server
+![MCP initialization negotiates protocol and capabilities; after compatibility checking and the initialized notification, tools and schemas can be listed.](img/ch03-mcp-handshake-infographic.png)
 
-    C->>S: initialize (protocol version, client capabilities)
-    S-->>C: result: server protocol version, server capabilities
-    Note over C,S: Client checks version compatibility before proceeding
-    C->>S: initialized (notification — no id, no response expected)
-    Note over C,S: Session is live; server may now send server-initiated messages
-    C->>S: tools/list (request)
-    S-->>C: result: available tools + schemas
-```
-
-```mermaid
-flowchart TB
-    subgraph AgentRuntime ["Agent Runtime"]
-        LLM["LLM reasoning loop"]
-        MCPClient["MCP Client (1 session per server)"]
-        LLM <--> MCPClient
-    end
-
-    MCPClient --> Gateway["Platform MCP Gateway (auth · policy · rate-limit · circuit-breaker)"]
-
-    Gateway -->|"stdio (local subprocess)"| SrvA["MCP Server: Filesystem"]
-    Gateway -->|"HTTP + SSE / streamable-HTTP"| SrvB["MCP Server: GitHub"]
-    Gateway -->|"HTTP + SSE / streamable-HTTP"| SrvC["MCP Server: Internal CRM"]
-
-    SrvA --> ToolsA["Tools"]
-    SrvA --> ResA["Resources"]
-    SrvA --> PromptsA["Prompts"]
-
-    SrvB --> ToolsB["Tools"]
-    SrvB --> ResB["Resources"]
-    SrvB --> PromptsB["Prompts"]
-
-    SrvC --> ToolsC["Tools"]
-    SrvC --> ResC["Resources"]
-    SrvC --> PromptsC["Prompts"]
-```
+![A runtime MCP client uses one session per server and a governed gateway to reach local or remote servers exposing tools, resources and prompts.](img/ch03-mcp-topology-infographic.png)
 
 **Why the platform needs its own MCP Gateway in front of raw servers:** MCP defines the protocol
 between client and server, but says nothing about *multi-tenant auth, org-wide rate limiting, or
@@ -313,31 +276,7 @@ The core design principle: **never expose every registered tool to every agent.*
 least-privilege in identity systems — call it **least-capability**. The registry's job during a
 live execution is to narrow, not to broadcast.
 
-```mermaid
-sequenceDiagram
-    participant Rt as Agent Runtime
-    participant Reg as Tool / MCP / Skill Registry
-    participant Pol as Policy Engine
-    participant M as Model (via Model Gateway)
-
-    Rt->>Reg: query capabilities (agent identity, declared tool list, tenant, task type)
-    Reg->>Reg: filter by agent's declared allow-list + tenant scope + health status
-    Reg-->>Rt: candidate tools/skills + schemas + risk classification
-    Rt->>Pol: pre-filter by policy (deny irreversible-by-default, check tenant entitlements)
-    Pol-->>Rt: allow-listed subset
-    Rt->>M: inject only the allow-listed schemas into the context window
-    M-->>Rt: proposes tool_call(name, arguments)
-    Rt->>Rt: validate arguments against JSON schema (reject unknown/malformed fields)
-    Rt->>Pol: authorize invocation (risk class, scopes, budget, loop/rate check)
-    alt authorized
-        Rt->>Reg: resolve concrete endpoint (MCP server session or tool implementation)
-        Rt-->>Rt: execute in sandbox; capture result + provenance
-    else needs approval
-        Rt-->>M: return structured approval-pending as the tool result
-    else denied
-        Rt-->>M: return structured denial as the tool result
-    end
-```
+![Filter registered capabilities by identity, tenant, health and policy; only exposed schemas reach the model, and every proposed invocation is validated and authorized again.](img/ch03-capability-discovery-infographic.png)
 
 Two details interviewers probe on:
 
@@ -437,21 +376,7 @@ Two more boundary details worth stating explicitly:
   network namespace through an egress proxy the tool process cannot see or reconfigure, not a
   firewall rule sitting beside a process that could in principle tamper with it.
 
-```mermaid
-sequenceDiagram
-    participant TG as Tool Gateway
-    participant Pol as Policy Engine
-    participant Sbx as Sandbox (warm pool, fresh identity per call)
-    participant Ext as External Tool / MCP Server
-
-    TG->>Pol: authorized invocation (scopes, risk tier)
-    Pol-->>TG: scoped, short-lived credential
-    TG->>Sbx: claim a pre-warmed worker; attach egress allow-list + credential
-    Sbx->>Ext: execute call inside boundary
-    Ext-->>Sbx: result
-    Sbx-->>TG: result + provenance (tier used, duration, egress attempts)
-    TG->>Sbx: rotate credential + wipe state; return worker to the warm pool
-```
+![Authorize scoped credentials, attach egress limits to a clean worker, execute and capture provenance, then rotate credentials and wipe state before pool reuse.](img/ch03-sandbox-lifecycle-infographic.png)
 
 The sandbox boundary is the platform's **last line of defense, not its first** — schema
 validation and the policy engine's authorization decision are what should stop a bad call before

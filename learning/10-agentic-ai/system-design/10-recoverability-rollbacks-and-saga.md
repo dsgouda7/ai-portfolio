@@ -94,25 +94,7 @@ does for typical microservice sagas:
   records the compensation for each completed step as it commits, and — on failure — invokes
   compensations in reverse order, under its own control.
 
-```mermaid
-flowchart LR
-    subgraph Choreography
-        direction TB
-        C1[Step 1 Service] -- event --> C2[Step 2 Service]
-        C2 -- event --> C3[Step 3 Service]
-        C3 -- failure event --> C2
-        C2 -- compensates itself --> C2
-        C2 -- failure event --> C1
-        C1 -- compensates itself --> C1
-    end
-    subgraph Orchestration
-        direction TB
-        O[Saga Orchestrator] --> O1[Step 1]
-        O --> O2[Step 2]
-        O --> O3[Step 3]
-        O -. on failure .-> Comp[Invoke Compensations in Reverse]
-    end
-```
+![Choreography passes events and local compensations between services; orchestration centrally directs steps and reverse-order compensation.](img/ch10-saga-coordination-infographic.png)
 
 **Recommendation for agent platforms: orchestrated sagas as the default.** The reasoning is
 specific to this domain, not a generic microservices preference:
@@ -155,17 +137,7 @@ staff-level interview will push on next:
 
 ### 2.3 Saga orchestration flow
 
-```mermaid
-flowchart TD
-    Intent[Agent Intent / Plan] --> Validate[Validate Plan + Policy Check]
-    Validate --> Step1[Local Transaction 1]
-    Step1 --> Record1[Record Compensation 1]
-    Record1 --> Step2[Local Transaction 2]
-    Step2 --> Decision{Failure?}
-    Decision -- No --> Complete[Saga Complete]
-    Decision -- Yes --> Compensate[Run Compensations in Reverse Order]
-    Compensate --> Escalate[Escalate if Compensation Fails]
-```
+![Validate the plan, commit local transactions and record compensation; failures trigger reverse-order compensation and escalation if recovery fails.](img/ch10-saga-orchestration-infographic.png)
 
 Read this diagram as the generalization of the request lifecycle sequence diagram in the
 [uber doc](system-design.md#4--end-to-end-request-lifecycle) specifically for the "proposed tool
@@ -178,22 +150,7 @@ is allowed to proceed to the next step.
 
 ### 2.4 Compensation workflow (sequence view)
 
-```mermaid
-sequenceDiagram
-    participant Saga as Saga / Compensation Engine
-    participant T as Tool
-    participant S as State
-    participant H as Human
-
-    Saga->>T: execute action(idempotency_key)
-    T-->>Saga: success
-    Saga->>S: record compensation
-    Saga->>T: execute next action
-    T-->>Saga: failure
-    Saga->>T: run compensation
-    T-->>Saga: ambiguous outcome
-    Saga->>H: escalate with evidence
-```
+![Record compensation after a successful idempotent action; if a later action fails and compensation is ambiguous, escalate with evidence.](img/ch10-compensation-sequence-infographic.png)
 
 Notice the last two exchanges: a compensation call can *itself* return an ambiguous outcome. This
 is not a hypothetical edge case; it's the same fundamental problem (Section 2.7) recurring one
@@ -330,22 +287,7 @@ managing risk around it:
 5. **Only if the read itself is inconclusive or unavailable** does this fall through to human
    escalation with evidence (preference 2 above).
 
-```mermaid
-sequenceDiagram
-    participant Saga as Saga / Compensation Engine
-    participant T as Target System
-
-    Saga->>T: execute action (idempotency_key=K)
-    T--xSaga: timeout — no response
-    Saga->>T: query — does a record with key K exist?
-    alt Record exists
-        T-->>Saga: yes, found (result R)
-        Saga->>Saga: treat step as succeeded, record compensation
-    else Record absent
-        T-->>Saga: no record found
-        Saga->>T: retry original action (same key K)
-    end
-```
+![Query the target system using the original idempotency key; a found record means success, while an absent record permits retry with the same key.](img/ch10-ambiguous-outcome-infographic.png)
 
 **The real-world constraint this depends on:** step 2 only works if the target system exposes a
 way to query by your idempotency key or request ID in the first place. Plenty of third-party APIs

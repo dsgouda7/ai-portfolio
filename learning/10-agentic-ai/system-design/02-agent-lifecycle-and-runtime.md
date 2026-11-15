@@ -45,20 +45,7 @@ design decision in this section: it means every run of an agent can point at an 
 immutable, auditable configuration, and "what changed between the version that worked and the
 version that broke" is a diff, not an investigation.
 
-```mermaid
-flowchart LR
-    Author["Author agent definition (prompt + model + tools + policy)"]
-    Validate["Validate: schema check + tool allow-list + policy bindings"]
-    Stage["Stage: run evaluation gates (golden set + trajectory)"]
-    Canary["Canary: shadow or low-% traffic"]
-    Production["Production: full traffic, version pointer updated"]
-    Rollback["Rollback: pointer swap to prior agent_version_id"]
-
-    Author --> Validate --> Stage --> Canary --> Production
-    Canary -- fails gates --> Rollback
-    Production -- regression detected --> Rollback
-    Rollback --> Stage
-```
+![Author, validate, stage and canary an agent definition before production; failed gates or regressions restore a prior version pointer and return to staging.](img/ch02-agent-release-lifecycle-infographic.png)
 
 Treat this exactly like a deployment pipeline for a versioned config artifact, because that's
 what it is. The single most important consequence of this framing: **rolling back a bad agent
@@ -132,43 +119,13 @@ happens to its output:
 > | Feedback speed | Fast — real user outcomes on live traffic | Fast — but only after full cutover | Slow — only offline comparison, no live user signal |
 > | Rollback speed | Fast — reduce % back to zero | Instant — flip the router back | N/A — candidate was never serving traffic |
 
-```mermaid
-flowchart TD
-    subgraph Canary["Canary"]
-        C1[Incoming traffic] -->|majority %| C2[Production version]
-        C1 -->|small %| C3[Candidate version]
-        C3 --> C4["Compare health-score metrics before ramping"]
-    end
-
-    subgraph BlueGreen["Blue-Green"]
-        B1[Incoming traffic] --> B2{Router}
-        B2 -->|pre-cutover| B3["Blue: current version (live)"]
-        B2 -.->|instant flip| B4["Green: new version (live, 2x capacity)"]
-    end
-
-    subgraph Shadow["Shadow"]
-        S1[Incoming traffic] --> S2["Production version (response returned to user)"]
-        S1 -.->|mirrored copy| S3["Candidate version (output discarded/logged)"]
-        S3 --> S4["Compared offline (no live feedback loop)"]
-    end
-```
+![Canary splits traffic, blue-green flips the router, and shadow mirrors traffic without serving candidate output to the user.](img/ch02-rollout-strategies-infographic.png)
 
 ## 4 · Push vs. pull execution
 
 How work reaches a runtime instance shapes latency and overload behavior differently:
 
-```mermaid
-flowchart TD
-    subgraph Push["Push model"]
-        Webhook[Webhook / API call] --> Gateway[Gateway]
-        Gateway --> RuntimeP[Runtime instance]
-    end
-
-    subgraph Pull["Pull model"]
-        EventP[Event] --> Queue[Queue]
-        Queue -.->|worker claims job| WorkerP[Worker pool]
-    end
-```
+![Push dispatches requests through a gateway; pull places events in a queue until a worker claims a job.](img/ch02-push-pull-execution-infographic.png)
 
 - **Push (Webhook → Gateway → Runtime):** minimizes routing delay — the gateway hands work
   straight to a runtime instance. The cost is that a traffic burst can overload runtimes directly;
@@ -220,29 +177,7 @@ Leasing with fencing tokens is the standard mechanism (this is not agent-specifi
 systems theory, but the consequences of getting it wrong *are* agent-specific: a duplicate
 runtime can mean a tool call — e.g., "send the refund" — executes twice).
 
-```mermaid
-sequenceDiagram
-    participant Sch as Scheduler
-    participant LM as Lease Manager
-    participant Rt as Runtime
-    participant SS as State Store
-
-    Sch->>LM: request lease(execution_id)
-    LM->>LM: create lease with fencing token N
-    LM-->>Sch: lease granted, token=N
-    Sch->>Rt: assign execution (token=N)
-    loop while executing
-        Rt->>LM: heartbeat(execution_id, token=N)
-        Rt->>SS: checkpoint(execution_id, token=N)
-        SS->>SS: accept only if token >= last-seen token
-    end
-    alt heartbeat missed
-        LM->>LM: expire lease, mint new token N+1
-        LM->>Sch: lease expired, reassign
-        Sch->>Rt: assign to new runtime (token=N+1)
-        Note over Rt,SS: Original runtime writes with token N are now rejected as stale
-    end
-```
+![After lease expiry, a new runtime receives token N+1; the state store rejects stale token-N writes after observing the newer token.](img/ch02-leases-fencing-infographic.png)
 
 The properties this buys you, stated explicitly because interviewers want to hear the reasoning,
 not just the diagram:

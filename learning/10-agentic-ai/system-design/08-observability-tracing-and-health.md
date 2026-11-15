@@ -52,18 +52,7 @@ invariant of this document.
 
 ## 2 · Span hierarchy
 
-```mermaid
-flowchart TD
-    Root["Root span: agent.execution"] --> Plan["agent.plan"]
-    Root --> LLM["llm.call"]
-    Root --> Tool["tool.call"]
-    Root --> State["state.checkpoint"]
-    Root --> Policy["policy.eval"]
-    Root --> Eval["evaluation.judge"]
-
-    classDef root fill:#eef,stroke:#556,stroke-width:1px;
-    class Root root
-```
+![The agent.execution root span parents planning, model, tool, checkpoint, policy and evaluation spans.](img/ch08-span-hierarchy-infographic.png)
 
 `agent.execution` is the **root span** — one per agent run, created the moment the run is
 admitted (see the uber doc's Section 4 lifecycle sequence). Every other span in that run —
@@ -124,19 +113,7 @@ hop fails to carry `traceparent` forward: the next span has no incoming `trace_i
 so it either starts a brand-new trace or gets dropped by the exporter, and the correlation is
 permanently lost across that boundary.
 
-```mermaid
-sequenceDiagram
-    participant A as Service A (agent.execution)
-    participant Q as Queue / Async Boundary
-    participant B as Service B (tool.call worker)
-
-    A->>A: Create root span, trace_id=T, span_id=S1
-    A->>Q: traceparent: 00-T-S1-01
-    Note over Q: Carries traceparent + baggage headers
-    Q->>B: traceparent: 00-T-S1-01
-    B->>B: Create child span (trace_id=T, span_id=S2, parent=S1)
-    B->>A: traceparent: 00-T-S2-01 (for further downstream calls)
-```
+![Propagate traceparent and baggage through a queue; the worker creates a new span with the same trace ID and the sender span as parent.](img/ch08-trace-propagation-infographic.png)
 
 **`baggage`:** alongside `traceparent`, W3C also defines a
 [`baggage`](https://www.w3.org/TR/baggage/) header for propagating arbitrary key-value
@@ -242,17 +219,7 @@ being inferred from generic uptime/error-rate metrics.
 
 ### Health dashboard data flow
 
-```mermaid
-flowchart LR
-    Collector[OTel Collector] --> Traces[Traces]
-    Collector --> Logs[Logs]
-    Collector --> Metrics[Metrics]
-    Traces --> Agg[Health Aggregator]
-    Logs --> Agg
-    Metrics --> Agg
-    Agg --> Score["Per-agent / Per-tenant Health Score"]
-    Score --> Alert[Alerting Rules]
-```
+![The OTel collector supplies traces, logs and metrics to a health aggregator; per-agent and per-tenant scores feed alerting rules.](img/ch08-health-pipeline-infographic.png)
 
 The OTel Collector receives all three signal types — traces, logs, metrics — from every agent
 execution. A **Health Aggregator** consumes all three (traces for trajectory-level signals like

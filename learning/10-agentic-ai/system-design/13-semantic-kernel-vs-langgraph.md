@@ -228,19 +228,7 @@ Distilling Sections 2.1/2.2 into the single trade-off an interviewer actually wa
 
 ### 3.1 Semantic Kernel-style orchestration (pattern selection, no explicit cycle)
 
-```mermaid
-flowchart TD
-    User[User request] --> Kernel[Kernel]
-    Kernel --> Orchestration["Orchestration pattern (sequential / concurrent / handoff / Magentic)"]
-    Orchestration --> PluginA["Plugin A (e.g. SearchPlugin.search)"]
-    Orchestration --> PluginB["Plugin B (e.g. BillingPlugin.lookup_invoice)"]
-    PluginA --> Kernel
-    PluginB --> Kernel
-    Kernel --> Response[Response to user]
-
-    classDef sk fill:#eef,stroke:#556,stroke-width:1px;
-    class Kernel,Orchestration sk
-```
+![Semantic Kernel chooses an orchestration pattern, invokes plugins and gathers results through the kernel before responding.](img/ch13-semantic-kernel-infographic.png)
 
 Notice what's *not* on this diagram: there's no arrow labeled "loop back." The orchestration
 pattern is responsible for internally deciding how many turns/hand-offs happen before control
@@ -250,26 +238,7 @@ you picked.
 
 ### 3.2 LangGraph-style explicit state graph (with a real cycle)
 
-```mermaid
-stateDiagram-v2
-    [*] --> agent_node
-    agent_node --> route: state updated
-
-    state route <<choice>>
-    route --> tool_node: needs_tool == true
-    route --> [*]: needs_tool == false
-
-    tool_node --> agent_node: tool result appended to state
-
-    note right of tool_node
-      Cycle: tool_node always
-      returns to agent_node.
-      Termination depends on a
-      condition YOU write into
-      the conditional edge —
-      see Section 7 gotchas.
-    end note
-```
+![An agent node updates state and conditionally routes to a tool or the end; tool results return to the agent, so an explicit condition must terminate the cycle.](img/ch13-langgraph-cycle-infographic.png)
 
 This is the structural difference made visible: `tool_node --> agent_node` is a real edge in a
 graph you wrote. Nothing stops it from firing again next iteration except a condition you put

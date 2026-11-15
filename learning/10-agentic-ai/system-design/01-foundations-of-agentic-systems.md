@@ -134,17 +134,7 @@ mechanism is doing the narrowing (or widening) of what the system can produce ne
 Every agent — regardless of framework — traces some version of this loop. Memorize this shape;
 it's the skeleton every other diagram in this track builds on.
 
-```mermaid
-flowchart TD
-    Input[Input / Goal] --> Plan[Plan next step]
-    Plan --> Act[Act: call model or tool]
-    Act --> Observe[Observe result]
-    Observe --> Checkpoint[Checkpoint durable state]
-    Checkpoint --> Evaluate{Evaluate: done / continue / escalate?}
-    Evaluate -->|continue| Plan
-    Evaluate -->|done| Finish[Finish: return result]
-    Evaluate -->|unsafe or blocked| Escalate[Escalate: HITL / deny / abort]
-```
+![Checkpoint the observed result before deciding whether to continue planning, finish, or escalate unsafe or blocked work.](img/ch01-agent-lifecycle-infographic.png)
 
 Three details in this diagram are easy to skip past and are exactly what interviewers probe on:
 
@@ -169,22 +159,7 @@ parser then has to extract a tool name and arguments from). The tool executes, a
 appended back into the transcript as `Observation`, which becomes part of the input for iteration
 *k+1*.
 
-```mermaid
-sequenceDiagram
-    participant M as Model
-    participant Ctx as Context window (scratchpad)
-    participant T as Tool
-
-    Note over Ctx: Turn 1 input = system prompt + goal
-    M->>Ctx: append Thought 1 + Action 1
-    Ctx->>T: execute Action 1
-    T-->>Ctx: append Observation 1
-    Note over Ctx: Turn 2 input = everything above (growing)
-    M->>Ctx: append Thought 2 + Action 2
-    Ctx->>T: execute Action 2
-    T-->>Ctx: append Observation 2
-    Note over Ctx: Turn 3 input = everything above (still growing)
-```
+![Model thoughts and actions accumulate in context alongside tool observations; the next turn receives the full growing prefix.](img/ch01-growing-context-infographic.png)
 
 The direct consequence: **every iteration re-sends the entire prior transcript as input tokens**,
 so per-step latency and cost grow with the number of steps already taken, not just with the size
@@ -218,32 +193,7 @@ The uber doc's master architecture diagram spells out every plane; this is the c
 two-bucket view that matters specifically for *this* doc's argument — deterministic
 infrastructure (control) governs non-deterministic execution (data).
 
-```mermaid
-flowchart LR
-    subgraph CP [Control Plane — deterministic]
-        Scheduler[Scheduler]
-        LeaseManager[Lease Manager]
-        PolicyEngine[Policy Engine]
-        BudgetManager[Budget Manager]
-    end
-
-    subgraph DP [Data Plane — executes agent behavior]
-        Runtime[Runtime]
-        ModelGateway[Model Gateway]
-        ToolGateway[Tool Gateway]
-        StateWriter[State Writer]
-    end
-
-    Scheduler -->|assigns execution + lease| Runtime
-    LeaseManager -->|fencing token| Runtime
-    Runtime -->|reasoning / planning call| ModelGateway
-    Runtime -->|proposed tool call| ToolGateway
-    ToolGateway -->|policy check request| PolicyEngine
-    PolicyEngine -->|allow / deny / require-approval| ToolGateway
-    Runtime -->|budget check| BudgetManager
-    BudgetManager -->|remaining budget or halt| Runtime
-    Runtime -->|append event / checkpoint| StateWriter
-```
+![Schedulers, fenced leases, policy and budget managers govern a runtime that calls model and tool gateways and writes durable state.](img/ch01-control-data-planes-infographic.png)
 
 Read the arrows as a rule, not just a picture: **the data plane never grants itself authority.**
 `Runtime` cannot decide a tool call is allowed — it must ask `ToolGateway`, which asks

@@ -53,30 +53,7 @@ a governed, observable, swappable runtime decision.
 
 ## 2 · Model Gateway responsibilities
 
-```mermaid
-flowchart LR
-    Runtime["Agent Runtime"] --> MG["Model Gateway"]
-
-    subgraph MG_internals ["Model Gateway"]
-        MG --> Resolve["Alias Resolver (logical alias → provider+model+version)"]
-        Resolve --> Routing["Routing Policy (task type · cost · latency SLA · A/B %)"]
-        Routing --> RateLimit["Rate Limit + Quota Enforcement (per tenant/agent)"]
-        RateLimit --> Retry["Retry w/ Backoff (transient provider errors)"]
-        Retry --> Cost["Cost Metering (token → $ → tenant/agent attribution)"]
-    end
-
-    Cost --> Fallback{"Provider healthy?"}
-    Fallback -->|"yes"| AdapterA["Provider Adapter: OpenAI-compatible"]
-    Fallback -->|"yes"| AdapterB["Provider Adapter: Azure OpenAI"]
-    Fallback -->|"yes"| AdapterC["Provider Adapter: Anthropic"]
-    Fallback -->|"yes"| AdapterD["Provider Adapter: Self-hosted / vLLM"]
-    Fallback -->|"no — fall back"| Fallback
-
-    AdapterA --> ProviderA[("OpenAI")]
-    AdapterB --> ProviderB[("Azure OpenAI")]
-    AdapterC --> ProviderC[("Anthropic")]
-    AdapterD --> ProviderD[("Self-hosted GPU pool")]
-```
+![The model gateway resolves aliases, routes, limits quotas, retries and meters cost before normalized provider adapters; unhealthy routes trigger fallback.](img/ch04-model-gateway-infographic.png)
 
 Responsibilities, mapped to the diagram:
 
@@ -146,16 +123,7 @@ recovering provider isn't immediately slammed again. Wrap the retry loop in a ci
 "Bounded and circuit-broken, not infinite" refers to a state machine wrapped around the retry
 logic — without it, retries alone can keep hammering an already-failing provider indefinitely:
 
-```mermaid
-stateDiagram-v2
-    [*] --> Closed
-    Closed --> Closed: request succeeds (reset failure count)
-    Closed --> Open: failure count exceeds threshold within window
-    Open --> Open: request fails fast (no call reaches the provider)
-    Open --> HalfOpen: cooldown window elapses
-    HalfOpen --> Closed: trial request(s) succeed
-    HalfOpen --> Open: trial request fails
-```
+![Closed admits requests, Open fails fast, and HalfOpen probes after cooldown; successful trials close the breaker and failed trials reopen it.](img/ch04-circuit-breaker-infographic.png)
 
 - **Closed** — requests flow normally to the provider; failures are counted against a
   time-windowed threshold, and a success resets the count.
@@ -299,26 +267,7 @@ guardrail on top, and canary routing used specifically during model-version roll
 
 ## 5 · Fallback in action
 
-```mermaid
-sequenceDiagram
-    participant Rt as Agent Runtime
-    participant MG as Model Gateway
-    participant P1 as Primary Provider
-    participant P2 as Fallback Provider
-    participant Ct as Cost Meter
-
-    Rt->>MG: generate(alias="high-quality-reasoning", messages, tools)
-    MG->>MG: resolve alias -> Provider P1 / model vX
-    MG->>P1: request (streaming)
-    P1-->>MG: partial tokens...
-    P1--xMG: 429 rate-limited mid-stream
-    MG->>MG: fallback policy: restart on P2 (cannot resume another provider's stream)
-    MG->>Rt: notify step must redo bookkeeping (partial output discarded)
-    MG->>P2: request (streaming), same normalized message/tool format
-    P2-->>MG: full response
-    MG->>Ct: record tokens x2 providers, attribute cost to tenant/execution
-    MG-->>Rt: normalized response (provider-agnostic shape)
-```
+![A primary provider fails mid-stream; discard partial output, restart on the fallback provider, and attribute the cost of both attempts.](img/ch04-provider-fallback-infographic.png)
 
 The detail that trips people up in interviews: **a fallback triggered mid-stream is (almost
 always) a restart, not a resume** — there is no standard cross-provider mechanism to hand a

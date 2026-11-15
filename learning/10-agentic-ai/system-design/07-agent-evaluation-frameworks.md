@@ -61,15 +61,7 @@ it as required reading before designing a judge pipeline, not optional backgroun
 
 ## 2 · The evaluation pipeline
 
-```mermaid
-flowchart LR
-    Golden[Golden Dataset] --> Sandbox[Sandbox Run]
-    Sandbox --> Trace[Trace Capture]
-    Trace --> Judge[LLM Judge]
-    Judge --> Gate{Regression Gate}
-    Gate -->|pass| Deploy[Deploy]
-    Gate -->|fail| Block[Block]
-```
+![Run a golden dataset in a sandbox, capture trajectories, judge them and let a regression gate deploy or block the candidate.](img/ch07-evaluation-pipeline-infographic.png)
 
 Read this left to right as the thing that runs on every prompt, model, or tool change before it
 reaches production:
@@ -114,15 +106,7 @@ fast and produces numbers nobody trusts.
 
 ## 3 · Golden dataset generation
 
-```mermaid
-flowchart TD
-    Prod[Production Traces] --> Triage[Human Triage]
-    Synthetic[Synthetic Edge Cases] --> Triage
-    Incidents[Incident Logs] --> Triage
-    Triage --> Labels[Human Labels]
-    Labels --> Bench[Versioned Benchmark]
-    Bench --> CI[Prompt / Model CI]
-```
+![Production traces, synthetic edge cases and incidents pass human triage and labeling before becoming a versioned benchmark for prompt and model CI.](img/ch07-golden-dataset-infographic.png)
 
 | Stage | What feeds it | Why it's a separate source |
 |---|---|---|
@@ -143,15 +127,7 @@ silently thrown away half the value described in Section 1.
 
 ## 4 · LLM-as-a-Judge — mechanics and reliability controls
 
-```mermaid
-flowchart LR
-    Candidate[Candidate Output / Trajectory] --> JudgeModel[Judge Model]
-    Rubric[Rubric] --> JudgeModel
-    Evidence[Evidence / Trace] --> JudgeModel
-    JudgeModel --> Score[Score + Rationale]
-    Score --> Drift[Drift Monitor]
-    HumanLabels[Human Labels] --> Drift
-```
+![Candidate trajectories, a rubric and trace evidence produce a judge score and rationale; human labels calibrate the drift monitor.](img/ch07-judge-calibration-infographic.png)
 
 The judge call takes three inputs — the **candidate** output/trajectory, a **rubric** describing
 what "good" means for this task, and the **evidence** (the trace: tool calls, arguments,
@@ -227,17 +203,7 @@ The standard, concrete mitigation is **order-swapped double-judging**:
    shown second). If the two runs disagree, treat the comparison as a **tie / inconclusive**
    rather than arbitrarily picking one of the two contradictory verdicts.
 
-```mermaid
-flowchart TD
-    Compare["Pairwise comparison: A vs B"] --> Run1["Run 1: present as (A, B)"]
-    Compare --> Run2["Run 2: present as (B, A)"]
-    Run1 --> V1["Verdict 1"]
-    Run2 --> V2["Verdict 2"]
-    V1 --> Check{"Same winner after swap?"}
-    V2 --> Check
-    Check -->|Yes| Trust["Trust the verdict"]
-    Check -->|No| Tie["Treat as tie / inconclusive"]
-```
+![Judge both A-B and B-A orderings; trust only a consistent underlying winner and treat disagreement as a tie or inconclusive result.](img/ch07-position-bias-infographic.png)
 
 > **Trade-off:** order-swapped double-judging doubles the judge calls per pairwise comparison
 > (2× cost/latency) in exchange for a mechanical check that filters out position-biased

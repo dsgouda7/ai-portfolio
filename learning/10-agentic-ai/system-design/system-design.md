@@ -65,42 +65,7 @@ Supporting depth, each with its own document because the content warrants it:
 
 ## 2 · Architecture
 
-```mermaid
-flowchart TD
-    Client[Users / Apps / Webhooks / Schedulers] --> Ingress[API Gateway + Event Router]
-    Ingress --> Admission[Admission Control + Tenant Quotas + Risk Pre-check]
-    Admission --> Control[Agent Control Plane]
-
-    subgraph ControlPlane [Control Plane]
-        Control --> Registry[Agent / Tool / MCP / Skill Registry]
-        Control --> Scheduler[Scheduler + Lease Manager]
-        Control --> PolicyEngine[Policy Engine + Budget Manager]
-    end
-
-    Scheduler --> Runtime[Runtime Plane: Execution Frames]
-    Runtime --> ModelGW[Model Gateway]
-    ModelGW --> Providers[(LLM Providers)]
-
-    Runtime --> ToolGW[Tool Gateway]
-    ToolGW --> PolicyEngine
-    ToolGW --> MCP[MCP Servers / Tools / Skills]
-    ToolGW --> Enterprise[(Enterprise Systems)]
-
-    Runtime --> StatePlane[State Plane: Event Log + Checkpoints + DAG]
-    StatePlane --> MemoryPlane[Memory Plane: Session / Long-term / Vector]
-
-    Runtime --> OTel[OpenTelemetry Collector]
-    OTel --> Observability[Traces / Logs / Metrics / Health Dashboard]
-
-    StatePlane --> EvalPlane[Evaluation Plane]
-    EvalPlane --> ReleaseGate[Prompt / Model / Tool Release Gates]
-
-    PolicyEngine --> AuditStore[(Immutable Audit Store)]
-    Runtime --> SagaEngine[Saga / Compensation Engine]
-    SagaEngine --> AuditStore
-
-    style ControlPlane fill:#eef,stroke:#556,stroke-width:1px
-```
+![Policy authorizes tool side effects; control, runtime, state, memory, observability, evaluation and recovery retain separate responsibilities.](img/ch00-platform-architecture-infographic.png)
 
 **The one boundary that matters most:** everything to the *left* of the Tool Gateway is the
 model proposing intent. Everything crossing the Tool Gateway into `Enterprise` / `MCP` is a
@@ -171,53 +136,7 @@ story. It deliberately still omits the failure/compensation path — that's Sect
 below, because it deserves its own diagram rather than a cluttered `alt` branch buried in this
 one.
 
-```mermaid
-sequenceDiagram
-    participant U as Caller
-    participant Adm as Admission
-    participant Ctl as Control Plane
-    participant Rt as Runtime
-    participant MG as Model Gateway
-    participant TG as Tool Gateway
-    participant St as State Plane
-    participant Obs as Observability
-    participant Ev as Evaluation
-    participant Au as Audit Store
-
-    U->>Adm: Create/invoke agent run
-    Adm->>Adm: check tenant quota, risk, budget
-    Adm->>Ctl: admitted
-    Ctl->>Ctl: resolve agent_version_id → definition (prompt/model/tools/policies)
-    Ctl->>Ctl: create execution id + fenced lease
-    Ctl->>Rt: schedule execution onto a worker
-    Rt->>Rt: allocate execution frame + load resolved definition
-    Rt->>Obs: open root span (agent.execution)
-    loop Agent step
-        Rt->>MG: LLM call (reasoning/plan)
-        MG-->>Rt: proposed action / next step
-        Rt->>St: checkpoint (plan)
-        Rt->>TG: proposed tool/MCP call
-        TG->>TG: policy check + budget check + loop check
-        alt allowed
-            TG->>Au: log decision (allow) + idempotency key
-            TG->>Rt: execute inside a fresh per-call sandbox (see 03 §6)
-            Rt-->>Rt: sandbox result + provenance (sandbox torn down)
-            TG-->>Rt: tool result
-        else needs approval
-            TG->>U: HITL request
-            U-->>TG: approve/deny/edit
-        else denied
-            TG->>Au: log decision (deny)
-        end
-        Rt->>St: checkpoint (observation)
-        Rt->>Obs: emit child spans (llm.call, tool.call, policy.eval)
-    end
-    Note over Rt: Failure/compensation path omitted here -- see Section 4.1
-    Rt->>Ev: lightweight online guardrail check (fast, blocking)
-    Rt->>St: final checkpoint
-    Rt->>Obs: close root span
-    St->>Au: immutable record complete
-```
+![Admission resolves a versioned definition and fenced lease; model proposals pass policy, approval and sandbox boundaries before checkpoints, inline guardrails and final audit.](img/ch00-request-lifecycle-infographic.png)
 
 Every arrow that crosses into `Tool Gateway` or writes to `Audit Store` is a place a security
 review will ask "what stops this from being abused?" Have an answer ready for each.
@@ -241,33 +160,7 @@ the request lifecycle sequence diagram in the uber doc, specifically for the 'pr
 call' branch." This is that extension, made concrete: what actually happens when step *N*'s tool
 call fails **after** an earlier step (*N-1*) already committed a real side effect.
 
-```mermaid
-sequenceDiagram
-    participant Rt as Runtime
-    participant TG as Tool Gateway
-    participant Saga as Saga / Compensation Engine
-    participant Ext as External System (system of record)
-    participant Au as Audit Store
-    participant U as Human (HITL)
-
-    Note over Rt,TG: Step N-1 already committed (e.g. ticket created) + checkpointed with compensation recorded
-    Rt->>TG: step N proposed call
-    TG-->>Rt: timeout / error / ambiguous result
-    Rt->>Saga: step N failed -- evaluate already-committed steps for compensation
-    Saga->>Ext: check-before-compensate: query system of record for step N-1's actual outcome
-    Ext-->>Saga: confirmed committed / confirmed not committed / still ambiguous
-    alt confirmed committed
-        Saga->>TG: invoke compensation for step N-1
-        TG->>Au: log compensation result
-    else confirmed not committed
-        Saga->>Au: log no-op -- nothing to compensate
-    else still ambiguous
-        Saga->>U: escalate -- present full saga state (committed steps, pending compensations)
-        U-->>Saga: manual resolution
-        Saga->>Au: log manual resolution
-    end
-    Saga->>Au: record final saga outcome
-```
+![After a later failure, query the system of record before compensating earlier actions: compensate confirmed commits, record noncommits as no-ops, and escalate ambiguity.](img/ch00-failure-compensation-infographic.png)
 
 The two diagrams answer two deliberately separate questions with two separate mechanisms: the
 `alt allowed / needs approval / denied` branch in Section 4 governs whether a **single proposed

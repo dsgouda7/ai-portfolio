@@ -46,24 +46,7 @@ proposes intent and deterministic infrastructure governs what actually happens
 
 ## 2 · Loop detection architecture
 
-```mermaid
-flowchart TD
-    Step[Agent Step] --> Struct[Structural Fingerprint]
-    Step --> Sem[Semantic Similarity]
-    Step --> Budget[Budget Counters]
-    Step --> Policy[Policy Rules]
-
-    Struct --> Gate{Gate: Loop Risk?}
-    Sem --> Gate
-    Budget --> Gate
-    Policy --> Gate
-
-    Gate -->|No| Continue[Continue]
-    Gate -->|Yes| StopPath[Stop / Summarize / Escalate]
-
-    classDef risk fill:#fee,stroke:#944,stroke-width:1px;
-    class StopPath risk
-```
+![Structural fingerprints, semantic similarity, budget counters and policy rules feed a loop-risk gate that continues or stops, summarizes and escalates.](img/ch06-loop-detection-infographic.png)
 
 Each of the four checks catches a different failure shape; a production system runs all four in
 parallel on every step rather than picking one.
@@ -96,16 +79,7 @@ The mechanism behind "hash the normalized tuple" is a three-step pipeline:
    configured repeat threshold (e.g., "same fingerprint 3+ times in the last 10 steps") — if so,
    flag or terminate.
 
-```mermaid
-flowchart LR
-    Call[Tool Call] --> Canon["Canonicalize (tool, sorted args)"]
-    Canon --> Hash["Hash (SHA-256)"]
-    Hash --> Window["Sliding Window (last N)"]
-    Window --> Check{Repeat >= threshold?}
-    Check -->|No| Append[Append fingerprint, continue]
-    Check -->|Yes| Flag[Flag / Terminate]
-    Append --> Window
-```
+![Canonicalize tool names and sorted arguments, hash with SHA-256, and compare fingerprints in a sliding window before continuing or terminating.](img/ch06-structural-fingerprint-infographic.png)
 
 **Canonicalization is the step that makes or breaks this check.** Two calls to the same tool with
 identical semantics but differently-ordered keyword arguments (`{a: 1, b: 2}` vs. `{b: 2, a: 1}`),
@@ -173,17 +147,7 @@ designed to catch different failure shapes rather than confirm each other.
 Detecting loop risk is only half the design — the other half is what states an execution can be
 in and which transitions are allowed.
 
-```mermaid
-stateDiagram-v2
-    [*] --> Running
-    Running --> Running: valid step
-    Running --> Paused: approval required
-    Running --> Terminated: success criteria met
-    Running --> Failed: max budget exceeded
-    Running --> Escalated: loop risk high
-    Paused --> Running: approved
-    Paused --> Terminated: rejected
-```
+![A run can remain active, pause for approval, terminate on success or rejection, fail on budget exhaustion, or escalate on high loop risk.](img/ch06-termination-states-infographic.png)
 
 Notes on transitions that are easy to get wrong:
 
