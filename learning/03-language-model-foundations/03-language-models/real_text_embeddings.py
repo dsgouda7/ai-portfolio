@@ -17,7 +17,7 @@ from matplotlib.patches import FancyBboxPatch
 from torch import nn
 from numpy.lib.stride_tricks import sliding_window_view
 
-from language_data import CBOWDataLoader, SkipGramDataLoader, WindowDataLoader
+from language_data import CAT_WORDS, CBOWDataLoader, SkipGramDataLoader, WindowDataLoader
 from language_validation import ModelValidator
 
 DATASET = "roneneldan/TinyStories"
@@ -122,18 +122,23 @@ def load_real_text(stories=STORY_BUDGET, train_windows=40_000, valid_windows=4_0
     valid_sentences = list(itertools.chain.from_iterable(map(sentences_of, texts[split:])))
     counts = Counter(itertools.chain.from_iterable(train_sentences))
     words = ["<unk>"] + [word for word, _ in counts.most_common(1799)]
+    # Reserve probe addresses without adding synthetic training examples.
+    words += [word for word in dict.fromkeys(CAT_WORDS) if word not in words]
     word_ids = {word: index for index, word in enumerate(words)}
     generator = torch.Generator().manual_seed(71)
 
-    def windows_for(sentences, limit):
+    def windows_for(sentences, limit, width=5, *, rng=generator):
         id_documents = [[word_ids.get(word, 0) for word in sentence] for sentence in sentences]
-        windows = torch.tensor(make_document_windows(id_documents, 5), dtype=torch.long)
-        # [all sentence-local windows, 5] -> [at most limit, 5]: sample whole rows,
+        windows = torch.tensor(make_document_windows(id_documents, width), dtype=torch.long)
+        # Sample whole rows independently for each window width,
         # never concatenate sentence ends with the next sentence's beginning.
-        return windows[torch.randperm(len(windows), generator=generator)[:limit]]
+        return windows[torch.randperm(len(windows), generator=rng)[:limit]]
 
     train = windows_for(train_sentences, train_windows)
     valid = windows_for(valid_sentences, valid_windows)
+    encoder_generator = torch.Generator().manual_seed(71)
+    encoder_train = windows_for(train_sentences, train_windows, 6, rng=encoder_generator)
+    encoder_valid = windows_for(valid_sentences, valid_windows, 6, rng=encoder_generator)
     probes = list(itertools.chain.from_iterable(WORD_GROUPS.values()))
     missing = [word for word in probes if word not in word_ids]
     if missing:
@@ -143,11 +148,14 @@ def load_real_text(stories=STORY_BUDGET, train_windows=40_000, valid_windows=4_0
     print(f"Training text: {sum(map(len, train_sentences)):,} tokens; "
           f"held-out text: {sum(map(len, valid_sentences)):,} tokens")
     print(f"Vocabulary: {len(words):,}; windows: {len(train):,} train / {len(valid):,} held out")
+    print(f"Encoder six-word windows: {len(encoder_train):,} train / "
+          f"{len(encoder_valid):,} held out; source 3, continuation 3, no EOS")
     print(f"Unknown slots: train {train.eq(0).float().mean():.1%}, "
           f"held out {valid.eq(0).float().mean():.1%}")
     print("Probe counts (chosen before training):",
           {word: counts[word] for word in probes})
-    return {"train": train, "valid": valid, "words": words, "word_ids": word_ids}
+    return {"train": train, "valid": valid, "encoder_train": encoder_train,
+            "encoder_valid": encoder_valid, "words": words, "word_ids": word_ids}
 
 
 def objective_pairs(windows, objective, bos_id):
@@ -157,9 +165,11 @@ def objective_pairs(windows, objective, bos_id):
     if objective == "Skip-gram":
         return SkipGramDataLoader(windows).prepare_data()
     if objective == "Encoder-decoder":
-        # A fixed two-word continuation: no padding or easy EOS target in this comparison.
-        bos = torch.full((len(windows), 1), bos_id, dtype=torch.long)
-        # [N, 5] -> [N, 3] source; join [N, 1] start + [N, 2] continuation -> [N, 3].
+        # Legacy five-word callers still work; the lab supplies separate six-word windows.
+        if windows.ndim != 2 or windows.shape[1] not in (5, 6) or len(windows) == 0:
+            raise ValueError("Encoder comparison needs nonempty five- or six-word windows.")
+        bos = torch.full((len(windows), 1), bos_id, dtype=torch.long, device=windows.device)
+        # First three source words, then all continuation words; no easy EOS target.
         return windows[:, :3], torch.cat([bos, windows[:, 3:]], dim=1)
     raise ValueError(f"Unknown objective: {objective}")
 
@@ -209,8 +219,10 @@ def train_comparison(corpus, cbow_class, skipgram_class, sequence_class, epochs=
                 model.embedding.weight[:vocabulary].copy_(initial_rows)
             optimizer = torch.optim.Adam(model.parameters(), lr=0.008)
             loss_function = nn.CrossEntropyLoss()
-            train_x, train_y = objective_pairs(corpus["train"], objective, vocabulary)
-            valid_x, valid_y = objective_pairs(corpus["valid"], objective, vocabulary)
+            train_windows = corpus.get("encoder_train", corpus["train"]) if objective == "Encoder-decoder" else corpus["train"]
+            valid_windows = corpus.get("encoder_valid", corpus["valid"]) if objective == "Encoder-decoder" else corpus["valid"]
+            train_x, train_y = objective_pairs(train_windows, objective, vocabulary)
+            valid_x, valid_y = objective_pairs(valid_windows, objective, vocabulary)
             loader = WindowDataLoader.batch_tensors(train_x, train_y, batch_size=256, seed=seed)
             if verbose:
                 print(f"\n{objective} data: {len(train_x):,} training pairs; "
@@ -228,6 +240,7 @@ def train_comparison(corpus, cbow_class, skipgram_class, sequence_class, epochs=
                 "within": [], "across": [], "purity": [], "epoch_fit_loss": [],
                 "parameters": sum(parameter.numel() for parameter in model.parameters()),
                 "targets_per_epoch": model.targets_for_loss(train_y).numel(),
+                "window_width": train_windows.shape[1],
             }
             started = time.perf_counter()
             for epoch in range(epochs + 1):
@@ -262,6 +275,21 @@ def train_comparison(corpus, cbow_class, skipgram_class, sequence_class, epochs=
         if verbose:
             print(f"{name}: {record['seconds']:.1f}s; {record['parameters']:,} parameters; "
                   f"{record['targets_per_epoch']:,} target tokens/epoch")
+    if all(word in corpus["word_ids"] for word in CAT_WORDS):
+        source = torch.tensor([[corpus["word_ids"][word] for word in CAT_WORDS[:3]]])
+        expected = list(CAT_WORDS[3:])
+        writer = results["Encoder-decoder"]["best_model"]
+        with torch.inference_mode():
+            hidden = writer.encode(source)
+            current = torch.tensor([[vocabulary]])
+            guesses = []
+            for _ in expected:
+                logits, hidden = writer.decode(current, hidden)
+                current = logits[:, -1].argmax(-1, keepdim=True)
+                guesses.append(corpus["words"][int(current)] if int(current) < vocabulary else "<bos>")
+        results["Encoder-decoder"]["cat_continuation"] = guesses
+        print("Best held-out writer: source", " ".join(CAT_WORDS[:3]),
+              "| reference", " ".join(expected), "| own guesses", guesses, "(no EOS)")
     return results
 
 

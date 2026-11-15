@@ -17,7 +17,7 @@ import numpy as np
 from PIL import Image
 
 from notebook_replays import (
-    ERROR_FEEDBACK_FILE, NATIVE_PLAYER_MARKERS, NOTEBOOK_SIZE_LIMIT, REPLAY_FILES,
+    ERROR_FEEDBACK_FILE, FORWARD_STEP_FILES, NATIVE_PLAYER_MARKERS, NOTEBOOK_SIZE_LIMIT, REPLAY_FILES,
     _packed_html, embed_notebook_images,
     refresh_embedded_replays, saved_replay,
 )
@@ -153,6 +153,22 @@ class NotebookReplayTests(unittest.TestCase):
         old_html = re.sub(r"height:\d+px", "height:600px", display["outputs"][0]["data"]["text/html"])
         self.assertNotEqual(old_html, snapshot["cells"][0]["outputs"][0]["data"]["text/html"])
         display["outputs"][0]["data"]["text/html"] = old_html
+        display["metadata"]["saved_replay"]["output_sha256"] = hashlib.sha256(old_html.encode()).hexdigest()
+        refresh_embedded_replays(book)
+        self.assertEqual(book, snapshot)
+
+    def test_lstm_cached_fixed_height_is_replaced_by_a_viewport_sized_embed(self):
+        display = {
+            "cell_type": "markdown", "source": [],
+            "metadata": {"saved_replay": {"file": FORWARD_STEP_FILES[0]}},
+        }
+        book = {"cells": [display]}
+        refresh_embedded_replays(book)
+        snapshot = deepcopy(book)
+        source = "".join(display["source"])
+        old_html = re.sub(r"height:clamp\([^)]+\)", "height:1600px", source)
+        self.assertNotEqual(source, old_html)
+        display["source"] = [old_html]
         display["metadata"]["saved_replay"]["output_sha256"] = hashlib.sha256(old_html.encode()).hexdigest()
         refresh_embedded_replays(book)
         self.assertEqual(book, snapshot)

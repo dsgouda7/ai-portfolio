@@ -1,0 +1,319 @@
+{
+  "fixed_summary_mean_free_sequence_accuracy": 0.764286,
+  "attention_mean_free_sequence_accuracy": 0.975,
+  "held_out_sequences_per_length": 40,
+  "source_lengths": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "word_vocabulary_size": 10,
+  "total_vocabulary_with_controls": 13,
+  "parameters": {
+    "false": 35717,
+    "true": 52933
+  },
+  "aggregate_scores": {
+    "false": {
+      "practice_sequence": 0.764285724077906,
+      "free_sequence": 0.764285724077906,
+      "practice_token_pooled": 0.9458333324818384,
+      "free_token_pooled": 0.8952380943866003
+    },
+    "true": {
+      "practice_sequence": 0.9749999982970101,
+      "free_sequence": 0.9749999982970101,
+      "practice_token_pooled": 0.9958333188579196,
+      "free_token_pooled": 0.9839285711447397
+    }
+  },
+  "per_length_scores": [
+    [
+      false,
+      2,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    [
+      false,
+      3,
+      0.9750000238418579,
+      0.9750000238418579,
+      0.9937499761581421,
+      0.987500011920929
+    ],
+    [
+      false,
+      4,
+      0.9750000238418579,
+      0.9750000238418579,
+      0.9950000047683716,
+      0.9950000047683716
+    ],
+    [
+      false,
+      5,
+      0.9750000238418579,
+      0.9750000238418579,
+      0.9958333373069763,
+      0.9916666746139526
+    ],
+    [
+      false,
+      6,
+      0.7250000238418579,
+      0.7250000238418579,
+      0.9571428298950195,
+      0.925000011920929
+    ],
+    [
+      false,
+      7,
+      0.5249999761581421,
+      0.5249999761581421,
+      0.9281250238418579,
+      0.8531249761581421
+    ],
+    [
+      false,
+      8,
+      0.17499999701976776,
+      0.17499999701976776,
+      0.8527777791023254,
+      0.7138888835906982
+    ],
+    [
+      true,
+      2,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    [
+      true,
+      3,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    [
+      true,
+      4,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    [
+      true,
+      5,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    [
+      true,
+      6,
+      0.9750000238418579,
+      0.9750000238418579,
+      0.9964285492897034,
+      0.9857142567634583
+    ],
+    [
+      true,
+      7,
+      0.949999988079071,
+      0.949999988079071,
+      0.9937499761581421,
+      0.987500011920929
+    ],
+    [
+      true,
+      8,
+      0.8999999761581421,
+      0.8999999761581421,
+      0.9888888597488403,
+      0.9472222328186035
+    ]
+  ],
+  "probe_generated_words": {
+    "false": [
+      "mat",
+      "the",
+      "on",
+      "sat",
+      "cat",
+      "the",
+      "<eos>"
+    ],
+    "true": [
+      "mat",
+      "the",
+      "on",
+      "sat",
+      "cat",
+      "the",
+      "<eos>"
+    ]
+  },
+  "source_words": [
+    "the",
+    "cat",
+    "sat",
+    "on",
+    "the",
+    "mat"
+  ],
+  "source_addresses": [
+    "the @ 0",
+    "cat @ 1",
+    "sat @ 2",
+    "on @ 3",
+    "the @ 4",
+    "mat @ 5"
+  ],
+  "required_words": [
+    "mat",
+    "the",
+    "on",
+    "sat",
+    "cat",
+    "the",
+    "<eos>"
+  ],
+  "most_read_addresses": [
+    5,
+    5,
+    4,
+    3,
+    2,
+    1,
+    0
+  ],
+  "required_addresses": [
+    5,
+    4,
+    3,
+    2,
+    1,
+    0
+  ],
+  "training_walkthrough": {
+    "source_words": [
+      "the",
+      "cat",
+      "sat",
+      "on",
+      "the",
+      "mat"
+    ],
+    "required_words": [
+      "mat",
+      "the",
+      "on",
+      "sat",
+      "cat",
+      "the",
+      "<eos>"
+    ],
+    "teacher_inputs": [
+      "<bos>",
+      "mat",
+      "the",
+      "on",
+      "sat",
+      "cat",
+      "the"
+    ],
+    "role_parameters": {
+      "word rows": 312,
+      "encoder": 17280,
+      "decoder": 17280,
+      "head": 845
+    },
+    "source_rows_shape": [
+      1,
+      6,
+      24
+    ],
+    "reader_notes_shape": [
+      1,
+      6,
+      64
+    ],
+    "writer_initial_shape": [
+      1,
+      64
+    ],
+    "next_input_score_gap": 0.24317313730716705,
+    "gradient_norms": {
+      "false": {
+        "word rows": 0.039115208589260854,
+        "encoder": 0.15653710679301008,
+        "decoder": 0.6016775035230326,
+        "head": 0.5817132183347825
+      },
+      "true": {
+        "word rows": 0.03900700740204935,
+        "encoder": 0.0,
+        "decoder": 0.6016775035230326,
+        "head": 0.5817132183347825
+      }
+    },
+    "reader_lookup_feedback_norm": 0.008426832966506481,
+    "before_update_loss": 2.599606990814209,
+    "after_update_loss": 2.417802095413208,
+    "weight_changes": {
+      "embedding": 0.0040000081062316895,
+      "reader": 0.0040000006556510925,
+      "writer": 0.0040000006556510925,
+      "head": 0.0040000006556510925
+    },
+    "encoder_only": {
+      "source_words": [
+        [
+          "the",
+          "cat",
+          "sat",
+          "on",
+          "the",
+          "mat"
+        ],
+        [
+          "the",
+          "cat",
+          "sat",
+          "on",
+          "the",
+          "rug"
+        ]
+      ],
+      "first_answers": [
+        "mat",
+        "rug"
+      ],
+      "before_probabilities": [
+        0.0758923813700676,
+        0.07117161899805069
+      ],
+      "after_probabilities": [
+        0.07835955917835236,
+        0.0741661936044693
+      ],
+      "before_loss": 2.6105499267578125,
+      "after_loss": 2.573946952819824,
+      "message_change_norm": 0.20424644649028778,
+      "decoder_and_head_unchanged": true,
+      "identical_message_score_gap": 0.0
+    }
+  }
+}

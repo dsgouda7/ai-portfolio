@@ -1,11 +1,13 @@
 """Rebuild the registry, sensor-profile and observatory diagrams locally."""
 
 from pathlib import Path
+import argparse
 
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.patches import Circle, Ellipse, FancyBboxPatch
 import numpy as np
+from language_data import CAT_WORDS
 
 
 HERE = Path(__file__).resolve().parent
@@ -191,12 +193,12 @@ def observatory():
          "Decoder's likely report\nAbout a newly observed object\nOne word, then the next", ORANGE)
     arrow(axis, (0.32, 0.64), (0.37, 0.64))
     arrow(axis, (0.63, 0.64), (0.68, 0.64))
-    axis.text(0.16, 0.34, "Actual source:\nthe -> sleepy -> cat",
+    axis.text(0.16, 0.34, "Actual source:\n" + " -> ".join(CAT_WORDS[:3]),
               ha="center", color=TEAL, fontsize=13)
     axis.text(0.50, 0.34, "Actual handoff:\nfinal encoder state",
               ha="center", color=PURPLE, fontsize=13)
-    axis.text(0.84, 0.34, "Training answer:\nsat -> on -> <eos>",
-              ha="center", color=ORANGE, fontsize=13)
+    axis.text(0.84, 0.34, "Training answer:\n" + " -> ".join((*CAT_WORDS[3:], "<eos>")),
+              ha="center", color=ORANGE, fontsize=12)
     axis.text(0.5, 0.16, "The galaxy is the analogy. This model predicts vocabulary tokens, not physical properties.",
               ha="center", color=NAVY, fontsize=12)
     axis.text(0.5, 0.06, "Only the final briefing reaches the writer here. Attention will later let it revisit the log.",
@@ -304,12 +306,81 @@ def toy_parameter_registration():
     save(figure, HERE / "images" / "03a-toy-parameter-registration.png")
 
 
+def sentence_illustrations():
+    figure, axis = canvas("Different clues can help with the same answer")
+    card(axis, 0.05, 0.57, 0.39, 0.18, "cat sat ___ the mat\ncat is a fetched clue", TEAL)
+    card(axis, 0.05, 0.29, 0.39, 0.18, "dog sat ___ the mat\ndog is a fetched clue", TEAL)
+    card(axis, 0.64, 0.43, 0.30, 0.20, "Check against on\nSeparate output-score weights", ORANGE)
+    arrow(axis, (0.46, 0.66), (0.62, 0.55))
+    arrow(axis, (0.46, 0.38), (0.62, 0.51))
+    axis.text(0.5, 0.14, "Matched illustrative contexts, not quoted corpus examples or measured neighbours.",
+              ha="center", color=NAVY, fontsize=12)
+    axis.text(0.5, 0.06, "Shared prediction jobs can encourage reusable features. IDs and meanings stay separate.",
+              ha="center", color=ORANGE, fontsize=12)
+    save(figure, HERE / "images" / "03a-01-shared-word-features.png")
+
+    figure, axis = canvas("The text already supplies the answer")
+    axis.text(0.5, 0.83, "Running sentence: " + " ".join(CAT_WORDS), ha="center", color=NAVY, fontsize=17)
+    for y, row in ((0.60, CAT_WORDS[1:]), (0.32, ("cat", "sat", "___", "the", "mat"))):
+        for index, word in enumerate(row):
+            card(axis, 0.07 + index * 0.18, y, 0.14, 0.14, word, ORANGE if word == "___" else TEAL)
+    axis.text(0.5, 0.19, "Four visible clues are inputs. Check separately against on.", ha="center", color=ORANGE, fontsize=16)
+    axis.text(0.5, 0.07, "Two complete five-word windows: centers sat and on. No mask token is supplied.",
+              ha="center", color=NAVY, fontsize=13)
+    save(figure, HERE / "images" / "03a-02-text-makes-practice.png")
+
+    figure, axis = canvas("Lookup fetches. Prediction feedback teaches.")
+    card(axis, 0.03, 0.60, 0.28, 0.19, "cat / sat / the / mat\nFetch and average four rows")
+    card(axis, 0.39, 0.60, 0.22, 0.19, "Separate predictor\nVocabulary scores", PURPLE)
+    card(axis, 0.69, 0.60, 0.28, 0.19, "Check against on\nCalculate loss", ORANGE)
+    arrow(axis, (0.33, 0.70), (0.37, 0.70))
+    arrow(axis, (0.63, 0.70), (0.67, 0.70))
+    card(axis, 0.08, 0.23, 0.36, 0.19, "Update fetched input rows\nKeep their integer IDs fixed")
+    card(axis, 0.59, 0.23, 0.36, 0.19, "Update predictor weights\nIncluding on's output weights", PURPLE)
+    arrow(axis, (0.80, 0.58), (0.28, 0.44), ORANGE)
+    arrow(axis, (0.85, 0.58), (0.76, 0.44), ORANGE)
+    axis.text(0.5, 0.08, "Schematic, not neural values. on is checked but its input row is unread in this question.",
+              ha="center", color=NAVY, fontsize=12)
+    for name in ("03a-03-feedback-teaches-rows.png", "03a-cbow-profile-training.png"):
+        figure.savefig(HERE / "images" / name, dpi=140, facecolor=figure.get_facecolor())
+    plt.close(figure)
+
+    for filename, title, detail in (
+        ("03a-embedding-lookup-connection.png", "Saved addresses keep the return route",
+         "cat sat ___ the mat -> on\nIDs fetch cat / sat / the / mat\nBackward returns to those same addresses"),
+        ("03a-lookup-tensor-structure.png", "A lookup expands IDs, not the vocabulary table",
+         "Stored table [V, 32]\nOne question [1, 4] -> fetched rows [1, 4, 32]\nMean [1, 32] -> scores [1, V]"),
+    ):
+        figure, axis = canvas(title)
+        card(axis, 0.07, 0.41, 0.86, 0.35, detail)
+        axis.text(0.5, 0.25, "Same running sentence: " + " ".join(CAT_WORDS), ha="center", color=NAVY, fontsize=15)
+        axis.text(0.5, 0.10, "Shapes and symbolic routes only. No fabricated trained values.",
+                  ha="center", color=ORANGE, fontsize=13)
+        save(figure, HERE / "images" / filename)
+
+    figure, axis = canvas("A catalogue ID selects a profile; context supports prediction")
+    card(axis, 0.04, 0.51, 0.27, 0.26, "Earth / Object-417\nCatalogue identity\nSize / temperature / atmosphere")
+    card(axis, 0.37, 0.51, 0.26, 0.26, "Word IDs select rows\ncat / sat / the / mat\nLearned channels, not sensors", PURPLE)
+    card(axis, 0.70, 0.51, 0.26, 0.26, "cat sat ___ the mat\nPredict vocabulary scores\nCheck separately: on", ORANGE)
+    arrow(axis, (0.33, 0.64), (0.35, 0.64))
+    arrow(axis, (0.65, 0.64), (0.68, 0.64))
+    axis.text(0.5, 0.32, "Compare aligned, scaled object profiles; train word profiles from varied text.",
+              ha="center", color=NAVY, fontsize=14)
+    axis.text(0.5, 0.20, "Representation analogy only. No physical measurements or neural values are invented.",
+              ha="center", color=ORANGE, fontsize=13)
+    save(figure, HERE / "images" / "03a-celestial-neighborhood-principle.png")
+
+
 if __name__ == "__main__":
-    registry()
-    numeric_trace()
-    learning()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--chapter02", action="store_true", help="Explicitly rebuild sibling Chapter 02 assets.")
+    args = parser.parse_args()
+    if args.chapter02:
+        registry()
+        numeric_trace()
+        learning()
     object_signatures()
-    cbow_profile_training()
+    sentence_illustrations()
     toy_embedding_lookup()
     toy_model_ownership()
     toy_parameter_registration()

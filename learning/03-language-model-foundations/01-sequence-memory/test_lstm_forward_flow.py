@@ -24,7 +24,7 @@ from lstm_forward_flow import (
     ART, ART_MANIFEST, GIF, NOTEBOOK, PHASES, PLAYER, STORYBOARD, ForwardFrame,
     export_player, export_storyboard, load_cell_and_inputs, note_readout,
     flow_signals, gif_figure, gif_frames, gif_scene, read_recording, record_reads, render_player, role_images, scene,
-    vector,
+    vector, write_forward_steps,
 )
 from lstm_layer_flow import record_lstm_layer_step
 from lstm_state_roles import load_state_roles
@@ -32,6 +32,142 @@ from notebook_replays import LSTM_FORWARD_FILE, refresh_embedded_replays, saved_
 
 
 class LSTMForwardFlowTests(unittest.TestCase):
+    def test_manual_steps_copy_completed_frames_without_replaying_the_next_read(self):
+        for gif_path in (GIF, GIF.with_name("01a-gru-forward-walkthrough.gif")):
+            with self.subTest(gif=gif_path.name), TemporaryDirectory() as directory:
+                path = Path(directory) / "steps.html"
+                write_forward_steps(path, gif_path)
+                html = path.read_text(encoding="utf-8")
+                stages = json.loads(re.search(
+                    r'<script id="step-data" type="application/json">(.*?)</script>', html, re.S,
+                )[1])
+                with Image.open(gif_path) as image:
+                    frames = json.loads(image.info["comment"])["frames"]
+                    expected = [index for index, frame in enumerate(frames)
+                                if frame["read_index"] == 2 and frame["progress"] == 1]
+                    self.assertEqual(len(stages), len(expected))
+                    for stage, index in zip(stages, expected, strict=True):
+                        image.seek(index)
+                        raw = base64.b64decode(stage["image"].split(",", 1)[1], validate=True)
+                        with Image.open(BytesIO(raw)) as snapshot:
+                            expected_frame = image.convert("RGB")
+                            if "crop" in stage:
+                                expected_frame = expected_frame.crop(stage["crop"])
+                            self.assertIsNone(ImageChops.difference(
+                                expected_frame, snapshot.convert("RGB"),
+                            ).getbbox())
+                self.assertIn("SHOW = 0" if gif_path == GIF else "RESET = 0",
+                              " ".join(stage["label"] for stage in stages))
+
+    def test_gru_manual_steps_wait_for_navigation_and_stop_at_each_boundary(self):
+        node = shutil.which("node")
+        if node is None:
+            self.skipTest("Node is not installed")
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "steps.html"
+            write_forward_steps(path, GIF.with_name("01a-gru-forward-walkthrough.gif"))
+            html = path.read_text(encoding="utf-8")
+        stages = json.loads(re.search(
+            r'<script id="step-data" type="application/json">(.*?)</script>', html, re.S,
+        )[1])
+        script = re.findall(r"<script>\s*(.*?)</script>", html, re.S)[0]
+        harness = r"""
+const input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+const assert=require('assert/strict'),vm=require('vm');
+const elements={};
+for(const id of ['step-data','snapshot','status','back','next','reset']){
+ elements[id]={listeners:{},disabled:false,textContent:'',src:'',alt:'',
+  addEventListener:function(event,fn){this.listeners[event]=fn;},
+  click:function(){if(!this.disabled)this.listeners.click();}};
+}
+elements['step-data'].textContent=JSON.stringify(input.stages);
+let keydown;
+vm.runInNewContext(input.script,{
+ document:{getElementById:id=>elements[id],addEventListener:(event,fn)=>{keydown=fn;}},
+ setTimeout:()=>assert.fail('Manual walkthrough scheduled a timeout'),
+ setInterval:()=>assert.fail('Manual walkthrough scheduled an interval')
+});
+assert.equal(elements.snapshot.src,input.stages[0].image);
+assert.equal(elements.back.disabled,true);
+assert.match(elements.status.textContent,/Step 1 \//);
+elements.next.click();
+assert.equal(elements.snapshot.src,input.stages[1].image);
+elements.back.click();
+assert.equal(elements.snapshot.src,input.stages[0].image);
+keydown({key:'ArrowRight',preventDefault:()=>{}});
+assert.equal(elements.snapshot.src,input.stages[1].image);
+keydown({key:'ArrowLeft',preventDefault:()=>{}});
+assert.equal(elements.snapshot.src,input.stages[0].image);
+for(let i=1;i<input.stages.length;i++)elements.next.click();
+assert.equal(elements.next.disabled,true);
+const last=elements.snapshot.src;
+elements.next.click();
+assert.equal(elements.snapshot.src,last);
+elements.reset.click();
+assert.equal(elements.snapshot.src,input.stages[0].image);
+assert.equal(elements.back.disabled,true);
+assert.equal(elements.next.disabled,false);
+console.log('manual forward/back, keyboard, reset and no autoplay verified');
+"""
+        result = subprocess.run([node, "-e", harness], input=json.dumps({
+            "script": script, "stages": stages,
+        }), text=True, capture_output=True, check=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_lstm_playback_waits_for_play_and_supports_pause_timeline_and_replay(self):
+        node = shutil.which("node")
+        if node is None:
+            self.skipTest("Node is not installed")
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "steps.html"
+            write_forward_steps(path, GIF)
+            html = path.read_text(encoding="utf-8")
+        stages = json.loads(re.search(
+            r'<script id="step-data" type="application/json">(.*?)</script>', html, re.S,
+        )[1])
+        script = re.findall(r"<script>\s*(.*?)</script>", html, re.S)[0]
+        self.assertNotIn('id="next"', html)
+        harness = r"""
+const input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+const assert=require('assert/strict'),vm=require('vm'),elements={};
+for(const id of ['step-data','snapshot','status','caption','back','play','pause','reset','stage','pace','zoom']){
+ elements[id]={listeners:{},disabled:false,textContent:'',src:'',alt:'',value:'',
+  addEventListener:function(event,fn){this.listeners[event]=fn;},
+  setAttribute:function(name,value){this[name]=value;},
+  click:function(){if(!this.disabled)this.listeners.click();}};
+}
+elements['step-data'].textContent=JSON.stringify(input.stages);elements.pace.value='4000';
+const root={dataset:{fit:'page',playing:'false'}},listeners={};
+let timer=null,scheduled=0,hidden=false;
+vm.runInNewContext(input.script,{
+ document:{getElementById:id=>elements[id],querySelector:()=>root,
+  addEventListener:(event,fn)=>{listeners[event]=fn;},get hidden(){return hidden;}},
+ window:{addEventListener:()=>{}},
+ setTimeout:(fn,delay)=>{assert.equal(delay,4000);scheduled++;timer=fn;return scheduled;},
+ clearTimeout:()=>{timer=null;}
+});
+assert.equal(scheduled,0);assert.equal(root.dataset.index,'0');
+elements.play.click();assert.equal(root.dataset.playing,'true');assert.equal(elements.play.disabled,true);
+assert.equal(root.dataset.index,'0');timer();assert.equal(root.dataset.index,'1');
+elements.pause.click();assert.equal(timer,null);assert.equal(root.dataset.playing,'false');
+elements.stage.value='4';elements.stage.listeners.input();
+assert.equal(elements.snapshot.src,input.stages[4].image);assert.equal(timer,null);
+elements.back.click();assert.equal(root.dataset.index,'3');
+elements.zoom.click();assert.equal(root.dataset.fit,'width');assert.equal(elements.zoom.textContent,'Fit page');
+elements.zoom.click();assert.equal(root.dataset.fit,'page');
+elements.play.click();hidden=true;listeners.visibilitychange();assert.equal(timer,null);
+elements.reset.click();assert.equal(root.dataset.index,'0');assert.equal(root.dataset.playing,'false');
+elements.play.click();for(let i=1;i<input.stages.length;i++)timer();
+assert.equal(root.dataset.index,String(input.stages.length-1));assert.equal(timer,null);
+assert.equal(elements.play.textContent,'Replay');assert.equal(elements.pause.disabled,true);
+elements.play.click();assert.equal(root.dataset.index,'0');
+console.log('LSTM play/pause, timeline, fit toggle, background pause and replay verified');
+"""
+        result = subprocess.run([node, "-e", harness], input=json.dumps({
+            "script": script, "stages": stages,
+        }), text=True, capture_output=True, check=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_native_values_and_both_carried_states_match_each_read(self):
         cell, inputs = load_cell_and_inputs()
         original_inputs, _, _ = _inputs_and_weights(NOTEBOOK)

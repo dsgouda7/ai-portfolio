@@ -11,7 +11,7 @@ from torch.nn import functional as F
 from gated_sequence_storyboards import NOTES, record_story
 from lstm_forward_flow import (
     Box, COLORS, Label, Readout, Wire, draw_forward_header, draw_forward_scene,
-    prediction_head, vector, write_forward_gif,
+    prediction_head, vector, write_forward_gif, write_forward_steps,
 )
 
 
@@ -242,8 +242,9 @@ def export_gif(path: Path = GIF, poster: Path = STORYBOARD) -> None:
                for frame in specifications),
         [frame.duration_ms for frame in specifications], metadata,
     )
+    write_forward_steps(path.with_name(path.stem + "-steps.html"), path)
 
 
 if __name__ == "__main__":
     export_gif()
-    print("Exported the native one-state GRU GIF and static fallback.")
+    print("Exported the native one-state GRU manual stages, GIF and static fallback.")

@@ -6,18 +6,36 @@ from io import StringIO
 import json
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 import torch
 from torch import nn
 
 from language_model import CBOW, EncoderDecoderLM, SkipGram, TrainableLanguageModel, WordEmbeddingLanguageModel
-from real_text_embeddings import WORD_GROUPS, train_comparison
+from real_text_embeddings import WORD_GROUPS, load_real_text, make_document_windows, train_comparison
 
 
 HERE = Path(__file__).parent
 
 
 class ComparisonLabTests(unittest.TestCase):
+    def test_encoder_samples_six_word_windows_from_the_same_sentence_local_split(self):
+        groups = " ".join(word for group in WORD_GROUPS.values() for word in group)
+        stories = [f"the cat sat on the mat. {groups}."] * 10
+        with patch("real_text_embeddings.read_stories", return_value=stories), redirect_stdout(StringIO()):
+            corpus = load_real_text(stories=10, train_windows=12, valid_windows=6)
+        ids = corpus["word_ids"]
+        self.assertTrue(all(word in ids for word in ("the", "cat", "sat", "on", "mat")))
+        allowed = make_document_windows([
+            [ids[word] for word in "the cat sat on the mat".split()],
+            [ids[word] for word in groups.split()],
+        ], 6).tolist()
+        for split in ("encoder_train", "encoder_valid"):
+            self.assertEqual(corpus[split].shape[1], 6)
+            self.assertTrue(all(row in allowed for row in corpus[split].tolist()))
+        self.assertEqual(corpus["train"].shape[1], 5)
+        self.assertEqual(corpus["valid"].shape[1], 5)
+
     @classmethod
     def setUpClass(cls):
         cls.lab = json.loads((HERE / "03A-word-objective-comparison-lab.ipynb").read_text(encoding="utf-8"))

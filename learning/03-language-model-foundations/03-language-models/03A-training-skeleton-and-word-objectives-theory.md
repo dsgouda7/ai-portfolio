@@ -5,7 +5,7 @@
 [shared trainer](language_model.py).
 
 **Guiding question:** if the input IDs never change, what exactly does training change?
-Use **the sleepy ___ sat on**, answer **cat**, as a familiar question inside
+Use **cat sat ___ the mat**, answer **on**, from **the cat sat on the mat**, inside
 one model trained on ordinary text. The subject is the learned representation,
 not the internals of parameter registration or autograd.
 
@@ -90,6 +90,9 @@ Each five-word window provides four clues and the original center word as an
 answer. The model creates **32-number** rows and learns them from these questions.
 No person has to label a coordinate "animal" or provide a hand-written word profile.
 Repeated usage supplies the training evidence instead.
+The refreshed run counts **149,571 tokens**, **13,765 sentence documents** including
+the appended probe, **1,201 vocabulary rows**, and **94,511 five-word windows**.
+The probe is part of training, not held-out evidence; mat occurs only once here.
 
 The CBOW and Skip-gram data classes own different pairing rules, while their
 loader base owns validation and batching. Each returns input IDs and answer IDs
@@ -99,6 +102,10 @@ Reserve the next **200 stories**, absent from training. Keep the training vocabu
 fixed and evaluate at most **2,048** sentence-local windows before and after the
 same fit. Evaluation reads parameters without updating them. The actual held-out
 loss distinguishes transfer from merely fitting practice questions.
+After ten CBOW epochs, practice loss changes **5.1224 to 3.4266** and reserved
+loss **7.1424 to 3.9669**, with **28.0%** reserved answer accuracy. The familiar
+on share changes **0.105% to 70.796%**, rank **155 to 1**. The other canonical
+center, sat, still ranks **90**. A successful familiar gap is not universal success.
 
 The core loader and model helpers are defined in the notebook, not hidden behind
 imports. Validation is a separate module: record a baseline before training and
@@ -149,7 +156,7 @@ calls display the evidence. The per-epoch callback remains beside the training r
 
 This learning already happens in notebook **3.3**, not only in the final comparison.
 Its epoch table starts at untrained epoch zero and follows the same CBOW for ten
-epochs. Practice loss, reserved loss, cat probability/rank and cat-row movement
+epochs. Practice loss, reserved loss, on probability/rank and cat input-row movement
 answer different questions. One unchanged optimizer carries its state throughout;
 checking progress does not restart training or create a new model.
 The validation report after each training block compares the model with its
@@ -199,7 +206,7 @@ mean CBOW learns no useful word relationships; it cannot represent differences
 that depend only on the order of those clues. Training cannot restore positions
 discarded before prediction.
 
-That is the next question for [03B](03B-counts-and-fixed-window-language-models.ipynb):
+That is the next question for [03B](03B-counts-to-recurrent-language-models.ipynb):
 would giving words separate seats preserve the distinction?
 
 This complaint now closes notebook section 3, rather than opening another core
@@ -217,7 +224,7 @@ reuses learned weights without drawing new random rows or running optimizer step
 
 ## 7. A reader and writer teach one shared embedding table
 
-Read **the sleepy cat** and practise writing **sat on stop**. The notebook uses
+Read **the cat sat** and practise writing **on the mat stop**. The notebook uses
 `<bos>` to start and `<eos>` to stop. This is a fresh model, not CBOW continued.
 Reuse [the familiar GRU](../01-sequence-memory/01A-sequence-memory-theory.ipynb#gru-hidden-state-mechanics);
 replace supplied piano profiles with trainable word rows. Sharing one input table
@@ -234,16 +241,16 @@ Keep three objects separate:
 The reader's final hidden initializes the writer. For one GRU layer, output and
 carried hidden have identical values; the separate head makes word scores.
 
-**Why does cat learn when sat is the answer?** Loss feedback passes through the
+**Why does sat learn when on is the answer?** Loss feedback passes through the
 head, writer and reader, then through their input lookups into the shared table.
-The checked answer's output weights are not its input row. In this question cat
+The checked answer's output weights are not its input row. In this question sat
 is only read by the encoder, yet its row can receive feedback. A copy-only check
-cuts the backward handoff: forward scores stay identical, but cat's input gradient
+cuts the backward handoff: forward scores stay identical, but sat's input gradient
 and copied update become zero. The real model is untouched.
 
-Practice supplies correct previous words: start predicts sat, sat predicts on,
-on predicts stop. This is **teacher forcing**, the same clean-history rule used
-in the musical echo exercise. A wrong and guess stays wrong; giving sat next
+Practice supplies correct previous words: start predicts on, on predicts the,
+the predicts mat, mat predicts stop. This is **teacher forcing**, the same clean-history rule used
+in the musical echo exercise. A wrong and guess stays wrong; giving on next
 neither fixes that guess nor resets hidden state. The current answer is never
 its own input. Cross-entropy checks the scores; backward calculates feedback;
 one optimizer step updates the batch's parameters.
@@ -254,7 +261,17 @@ related cat/dog rows with story-context cat/mat rows; neither pair was a trainin
 similarity target. Two pair scores do not establish general meaning. The unread
 EOS input row remains unchanged while its separate output-score weights learn.
 Reserved-story loss tests new next-word questions with correct previous words;
-it is not a free-writing score. Content accuracy excludes the easy stop answer.
+it is not a free-writing score. Content accuracy excludes the easy fourth, stop answer. The reader/writer uses
+separate six-word sentence-local windows with an explicit three-word source;
+CBOW and Skip-gram retain their odd, centered five-word windows.
+The reader/writer has **80,746 windows**, hence **322,984 next-token checks per
+epoch** including EOS. Its six-epoch practice loss changes **3.8768 to 2.4793**;
+reserved loss **7.1030 to 2.8035** on **8,192** answers, with **46.4%** accuracy.
+Training accuracy is **50.7%**, or **34.3%** without stop. On's probe share rises
+to **33.662%**, rank **2**, but down wins. Its actual free continuation is
+**down and unknown stop**, not the reference **on the mat stop**.
+The stored cat/dog similarity changes **+0.055 to +0.249**, while cat/mat changes
+**-0.436 to -0.569**. Keep both outcomes; neither pair was a similarity target.
 
 **The remaining complaint:** order survives, but access is limited.
 Reverse the same input rows: their mean agrees up to rounding, while recurrent
@@ -264,12 +281,18 @@ read. That establishes order sensitivity, not correct understanding.
 The writer currently receives only the final summary. Attention would retain all
 source-position states and let each writer step select useful ones to look back
 at. Order comes from recurrence here, not from attention. Transformer attention
-needs separate positional information. [03D](03D-recurrent-encoder-decoder-to-attention.ipynb)
+needs separate positional information. [03C](03C-recurrent-encoder-decoder-to-attention.ipynb)
 implements look-back access; this preview does not.
 
 The [optional comparison lab](03A-word-objective-comparison-lab.ipynb) preserves
 the larger three-model experiment, independent data split and full diagnostic
 reference without lengthening the main embedding-learning path.
+It samples 40,000 five-word training windows for CBOW and Skip-gram, and
+40,000 separate six-word windows for the writer from the same 6,400 training
+stories and vocabulary. Each uses 4,000 held-out windows from 1,600 stories.
+The per-epoch answer budgets are 40,000, 160,000 and 120,000 respectively;
+the comparison writer predicts three content words and excludes EOS.
+Different objectives and window budgets preclude an architecture ranking.
 
 **Failure checks:** do not confuse IDs, parameters, activations, gradients, or
 scores. Do not mistake lookup for learning, nearby words for the best gap answer,

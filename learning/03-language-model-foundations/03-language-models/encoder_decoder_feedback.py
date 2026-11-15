@@ -306,8 +306,8 @@ def record_state_playback(
     if "<bos>" not in words or "<eos>" not in words:
         raise ValueError("State playback needs start and stop markers in the vocabulary.")
     feedback = compare_feedback_routes(model, source_ids, target_ids, words)
-    if source_ids.shape[1] != 3 or target_ids.shape[1] != 4:
-        raise ValueError("State playback follows the three-word cat probe and three writer steps.")
+    if source_ids.shape[1] != 3 or target_ids.shape[1] != 5:
+        raise ValueError("State playback follows three source words and four writer steps.")
     if int(target_ids[0, 0]) != words.index("<bos>") or int(target_ids[0, -1]) != words.index("<eos>"):
         raise ValueError("The playback answer must start with <bos> and end with <eos>.")
     candidate = deepcopy(model).cpu().eval()
@@ -353,26 +353,28 @@ def record_state_playback(
 
 
 def playback_stages(playback: StatePlayback, *, mechanics: bool = True) -> list[tuple[str, int]]:
+    readers = len(playback.feedback.connected.encoder_states)
+    writers = len(playback.feedback.connected.decoder_states)
     if not mechanics:
         return (
-            [("overview", 0)] + [("encoder", index) for index in range(3)] + [("handoff", 0)]
-            + [("teacher", index) for index in range(3)]
-            + [("writer-backward", index) for index in range(2, -1, -1)]
+            [("overview", 0)] + [("encoder", index) for index in range(readers)] + [("handoff", 0)]
+            + [("teacher", index) for index in range(writers)]
+            + [("writer-backward", index) for index in range(writers - 1, -1, -1)]
             + [("handoff-backward", 0)]
-            + [("reader-backward", index) for index in range(2, -1, -1)]
+            + [("reader-backward", index) for index in range(readers - 1, -1, -1)]
             + [("update", 0), ("detach", 0), ("zero", 0)]
             + [("generation", index) for index in range(len(playback.generation))]
             + [("finish", 0)]
         )
     return (
         [("overview", 0)]
-        + [(phase, index) for index in range(3) for phase in ("encoder", "encoder-proposal", "encoder-blend")]
+        + [(phase, index) for index in range(readers) for phase in ("encoder", "encoder-proposal", "encoder-blend")]
         + [("handoff", 0)]
-        + [(phase, index) for index in range(3) for phase in ("teacher", "teacher-proposal", "teacher-blend")]
-        + [("teacher-chain", 2)]
-        + [("writer-backward", index) for index in range(2, -1, -1)]
+        + [(phase, index) for index in range(writers) for phase in ("teacher", "teacher-proposal", "teacher-blend")]
+        + [("teacher-chain", writers - 1)]
+        + [("writer-backward", index) for index in range(writers - 1, -1, -1)]
         + [("handoff-backward", 0)]
-        + [("reader-backward", index) for index in range(2, -1, -1)]
+        + [("reader-backward", index) for index in range(readers - 1, -1, -1)]
         + [("update", 0), ("detach", 0), ("zero", 0)]
         + [("generation", index) for index in range(len(playback.generation))]
         + [("generation-chain", len(playback.generation) - 1)]
@@ -518,7 +520,7 @@ def draw_hidden_mechanics(
         else:
             expected = words[int(playback.feedback.target_ids[0, index + 1])]
             detail = (f"Check {expected!r}; keep {current}. Next practice input is the correct {expected!r}, not the guess."
-                      if index < 2 else f"Check {expected!r}; this is the last teacher-forced step.")
+                      if index < len(trace.decoder_states) - 1 else f"Check {expected!r}; this is the last teacher-forced step.")
     axis.text(0.035, 0.130, next_use, color=color, fontsize=11, weight="bold")
     axis.text(0.035, 0.088, detail, color=TEXT, fontsize=10.5)
     axis.text(0.035, 0.038,
@@ -560,7 +562,8 @@ def draw_state_playback(
               "green: one copied SGD step  purple: generation", ha="center", fontsize=11, color=TEXT)
     axis.text(0.5, 0.89, "Solid arrows carry state vectors. Dashed arrows select the next word input.",
               ha="center", fontsize=10, color=TEXT)
-    xs = (0.25, 0.51, 0.77)
+    encoder_xs = (0.25, 0.51, 0.77)
+    xs = (0.24, 0.46, 0.68, 0.90)
     active_encoder = index if phase in {"encoder", "reader-backward"} else None
     active_decoder = index if phase in {
         "teacher", "teacher-chain", "writer-backward", "generation", "generation-chain",
@@ -574,7 +577,7 @@ def draw_state_playback(
 
     def box(x, y, label, active):
         axis.add_patch(FancyBboxPatch(
-            (x - 0.1, y - 0.047), 0.20, 0.094, boxstyle="round,pad=0.01",
+            (x - 0.08, y - 0.047), 0.16, 0.094, boxstyle="round,pad=0.01",
             edgecolor=color if active else "#65758e",
             facecolor="#25364b" if active else BACKGROUND, linewidth=3 if active else 1.2,
         ))
@@ -585,15 +588,21 @@ def draw_state_playback(
     axis.text(0.14, 0.70, "E0 = zeros", color=TEXT, fontsize=10)
     axis.text(0.14, 0.45, "D0 = zeros" if phase == "zero" else "D0 = E3",
               color=color if "handoff" in phase or phase == "zero" else TEXT, fontsize=10)
-    for step, x in enumerate(xs):
+    for step, x in enumerate(encoder_xs):
         box(x, 0.765, f"{words[source[step]]} -> E{step + 1}", active_encoder == step)
+        axis.text(x, 0.84, f"input: row {words[source[step]]!r}", ha="center", color=TEXT, fontsize=10)
+        if step:
+            backwards = "backward" in phase
+            endpoints = ((encoder_xs[step - 1] + 0.095, 0.765), (x - 0.095, 0.765))
+            arrow(*(endpoints[::-1] if backwards else endpoints),
+                  selected=active_encoder == step or (backwards and active_encoder == step - 1))
+    for step, x in enumerate(xs):
         if phase in {"generation", "generation-chain"}:
             label = (f"{words[playback.generation[step].input_id]} -> D{step + 1}"
                      if step < len(playback.generation) else "not reached")
         else:
             label = f"{words[writer[step]]} -> D{step + 1}"
         box(x, 0.515, label, active_decoder == step)
-        axis.text(x, 0.84, f"input: row {words[source[step]]!r}", ha="center", color=TEXT, fontsize=10)
         score_label = f"check: {words[answers[step]]}"
         if phase in {"generation", "generation-chain"}:
             score_label = (f"guess: {words[playback.generation[step].predicted_id]}"
@@ -601,10 +610,7 @@ def draw_state_playback(
         axis.text(x, 0.425, score_label, ha="center", color=color, fontsize=11)
         if step:
             backwards = "backward" in phase
-            endpoints = ((xs[step - 1] + 0.115, 0.765), (x - 0.115, 0.765))
-            arrow(*(endpoints[::-1] if backwards else endpoints),
-                  selected=active_encoder == step or (backwards and active_encoder == step - 1))
-            endpoints = ((xs[step - 1] + 0.115, 0.515), (x - 0.115, 0.515))
+            endpoints = ((xs[step - 1] + 0.095, 0.515), (x - 0.095, 0.515))
             arrow(*(endpoints[::-1] if backwards else endpoints),
                   selected=active_decoder == step or (backwards and active_decoder == step - 1))
             axis.text((xs[step - 1] + x) / 2, 0.548, "state", ha="center",
@@ -657,11 +663,11 @@ def draw_state_playback(
         details = [f"E3 = D0 [1, 1, {state_width}] {_values(trace.encoder_states[-1])}",
                    "The decoder has different recurrent weights, but uses the same embedding table.",
                    "The first decoder word is <bos>; E3 is a second, separate input to that step."]
-        takeaway = "The handoff is a vector of state values, not the predicted word 'cat'."
+        takeaway = "The handoff is a vector of state values, not the source word 'sat'."
     elif phase == "teacher-chain":
         title = "Practice carries TWO things: the new hidden state and the correct previous word"
-        details = ["Solid arrows: the complete D1/D2 state vector goes to the next GRU call.",
-                   "Dashed arrows: sat and on are supplied from the training answer, not the model's guesses."]
+        details = ["Solid arrows: each complete D1/D2/D3 state vector goes to the next GRU call.",
+                   "Dashed arrows: on, the and mat are supplied from the training answer, not the model's guesses."]
         takeaway = "The output head's vocabulary scores are not passed as the next hidden state."
     elif phase == "teacher":
         logits = trace.logits[0, index]
@@ -672,7 +678,7 @@ def draw_state_playback(
                    f"new state D{index + 1}: {_values(trace.decoder_states[index])}",
                    f"head's highest guess {words[predicted]!r}; checked answer {words[answers[index]]!r}"]
         takeaway = (f"Carry D{index + 1}; supply the correct {words[answers[index]]!r} as the next practice input."
-                    if index < 2 else "The checked stop answer ends this practice sequence; it was not an input lookup.")
+                    if index < len(writer) - 1 else "The checked stop answer ends this practice sequence; it was not an input lookup.")
     elif phase in {"writer-backward", "reader-backward"}:
         writer_phase = phase == "writer-backward"
         gradients = trace.decoder_gradients if writer_phase else trace.encoder_gradients
@@ -684,7 +690,7 @@ def draw_state_playback(
         title = f"Backward through {name}: teaching feedback, not another forward state"
         details = [f"gradient at {name}: {_values(gradient)} | norm {gradient.norm().item():.6f}",
                    f"shared input row {words[token]!r} gradient: {_values(trace.embedding_gradient[token])}",
-                   "Recorded gradients combine contributions from all three checking losses."]
+                   "Recorded gradients combine contributions from all four checking losses."]
         takeaway = "Backward fills gradient buffers. The embedding values have not been updated yet."
     elif phase == "handoff-backward":
         final_gradient = trace.encoder_gradients[-1]
@@ -693,19 +699,19 @@ def draw_state_playback(
         title = "The same E3 -> D0 link also carries feedback backward"
         details = [f"feedback into final reader state E3: {_values(final_gradient)}",
                    "Decoder loss reaches reader weights and source-word rows through this connection."]
-        takeaway = "cat is never a decoder input here; its row learns through the reader."
+        takeaway = "sat is never a decoder input here; its row learns through the reader."
     elif phase == "update":
         cat = source[-1]
         title = "Only now: one fresh-SGD step updates the copied model's embedding values"
-        details = [f"cat row before {_values(trace.table_before[cat])}",
-                   f"cat gradient  {_values(trace.embedding_gradient[cat])}",
-                   f"cat row after  {_values(trace.table_after[cat])} | row change {trace.row_changes[cat].item():.6f}"]
+        details = [f"{words[cat]} row before {_values(trace.table_before[cat])}",
+                   f"{words[cat]} gradient  {_values(trace.embedding_gradient[cat])}",
+                   f"{words[cat]} row after  {_values(trace.table_after[cat])} | row change {trace.row_changes[cat].item():.6f}"]
         takeaway = "Weights and rows update; temporary hidden states are rebuilt on the next pass. Main training is untouched."
     elif phase == "detach":
         cat = source[-1]
         title = "Counterexample: pass the same state numbers, but cut the backward handoff"
         details = [f"Forward-score difference: {(trace.logits - playback.feedback.detached.logits).abs().max().item():.1f}",
-                   f"cat gradient: {trace.embedding_gradient[cat].norm().item():.6f} connected / "
+                   f"{words[cat]} gradient: {trace.embedding_gradient[cat].norm().item():.6f} connected / "
                    f"{playback.feedback.detached.embedding_gradient[cat].norm().item():.6f} cut"]
         takeaway = "Detaching removes a learning route; it does not remove the note's forward values."
     elif phase == "zero":
@@ -769,7 +775,7 @@ def draw_token_layers(figure, playback: StatePlayback, words: list[str], stage: 
     decoder_axis = figure.add_axes((0.515, 0.19, 0.47, 0.67))
     draw_layer(
         encoder_axis, pair.encoder, index if phase == "encoder-layer" else None,
-        input_label="'cat' profile", old_label="E2", new_label="E3", output_use="ignored by encode()",
+        input_label="'sat' profile", old_label="E2", new_label="E3", output_use="ignored by encode()",
     )
     draw_layer(
         decoder_axis, pair.decoder, index if phase == "decoder-layer" else None,
@@ -785,7 +791,7 @@ def draw_token_layers(figure, playback: StatePlayback, words: list[str], stage: 
              "The loss teaches both the GRU weights and the shared input profiles")
     figure.text(0.5, 0.94, f"{stage + 1}/{len(token_layer_stages())}  {title}", ha="center",
                 color=UPDATE if phase == "handoff" else FORWARD, fontsize=15)
-    figure.text(0.25, 0.89, "ENCODER: cat + E2 -> E3", ha="center", color=FORWARD, fontsize=15, weight="bold")
+    figure.text(0.25, 0.89, "ENCODER: sat + E2 -> E3", ha="center", color=FORWARD, fontsize=15, weight="bold")
     figure.text(0.75, 0.89, "DECODER: <bos> + D0 -> D1", ha="center", color=GENERATION, fontsize=15, weight="bold")
     figure.text(0.5, 0.864, "E3 = D0: a state-vector handoff, NOT a word passed to the decoder",
                 ha="center", color=UPDATE, fontsize=11)
@@ -803,17 +809,17 @@ def draw_token_layers(figure, playback: StatePlayback, words: list[str], stage: 
               ha="center", color=GENERATION, fontsize=12)
     head.text(0.5, 0.51, f"logits {excerpt(pair.logits)} -> softmax readout",
               ha="center", color=TEXT, fontsize=11)
-    head.text(0.5, 0.28, f"highest guess {words[predicted]!r}: {probability:.2%}; checked answer 'sat'",
+    head.text(0.5, 0.28, f"highest guess {words[predicted]!r}: {probability:.2%}; checked answer 'on'",
               ha="center", color=TEXT, fontsize=11)
     if phase == "next-token":
-        note = ("Next practice input: correct 'sat'.\n"
+        note = ("Next practice input: correct 'on'.\n"
                 f"Next generation input: own guess {words[predicted]!r}.\n"
                 "Both also carry D1; a word is not a hidden state.")
     elif phase == "feedback":
         cat = int(playback.feedback.source_ids[0, -1])
         gradient = playback.feedback.connected.embedding_gradient[cat].norm().item()
-        note = (f"Measured cat input-row gradient: {gradient:.6f}.\n"
-                "Loss -> head -> D1 -> D0/E3 -> reader -> cat row.\n"
+        note = (f"Measured sat input-row gradient: {gradient:.6f}.\n"
+                "Loss -> head -> D1 -> D0/E3 -> reader -> sat row.\n"
                 "States are temporary; the optimizer updates weights.")
     elif phase == "handoff":
         note = (f"Final encoder state: {excerpt(pair.encoder.carried)}\n"
@@ -850,15 +856,15 @@ def draw_token_layer_zoom(figure, playback: StatePlayback, words: list[str], sta
     axis = figure.add_axes((0.015, 0.18, 0.73, 0.69))
     draw_layer(
         axis, step, index if phase.endswith("-layer") else None,
-        input_label="'cat' profile" if encoder else "'<bos>' profile",
+        input_label="'sat' profile" if encoder else "'<bos>' profile",
         old_label="E2" if encoder else "D0 = E3", new_label="E3" if encoder else "D1",
         output_use="not scored here" if encoder else "to Linear head",
     )
-    title = ("ENCODER: one 'cat' input" if encoder else "DECODER: one '<bos>' input")
+    title = ("ENCODER: one 'sat' input" if encoder else "DECODER: one '<bos>' input")
     figure.text(0.5, 0.985, title, ha="center", color=FORWARD if encoder else GENERATION,
                 va="top", fontsize=20, weight="bold")
     message = (LAYER_PHASES[index] if phase.endswith("-layer") else
-               "The last source word; E2 already summarizes 'the sleepy'" if phase == "overview" else
+               "The last source word; E2 already summarizes 'the cat'" if phase == "overview" else
                "Copy the final encoder state E3 into the decoder's initial D0" if phase == "handoff" else
                "The separate Linear head converts GRU output into word scores" if phase == "head" else
                "The next writer step needs both a word input and D1" if phase == "next-token" else
@@ -869,7 +875,7 @@ def draw_token_layer_zoom(figure, playback: StatePlayback, words: list[str], sta
     side.axis("off")
     if encoder:
         sections = [
-            ("Time, not depth", "the -> sleepy -> CAT. These are three uses of ONE encoder GRU layer."),
+            ("Time, not depth", "the -> cat -> SAT. These are three uses of ONE encoder GRU layer."),
             ("Inside this layer", "Two trainable Linear projections, gates, nonlinearities and one state blend."),
             ("Output exists", "encode() discards the output sequence. It keeps final hidden E3 for decoder D0."),
         ]
@@ -877,26 +883,26 @@ def draw_token_layer_zoom(figure, playback: StatePlayback, words: list[str], sta
         sections = [
             ("Same GRU rule", "Different recurrent weights. Same shared embedding table. D0 starts with E3."),
             ("Two outputs?", "output_t and carried h_t have identical values here. They are two uses, not two predictions."),
-            ("Next time step", "Carry D1 plus correct 'sat' during practice, or the model's actual guess during generation."),
+            ("Next time step", "Carry D1 plus correct 'on' during practice, or the model's actual guess during generation."),
         ]
     for row, (heading, text) in enumerate(sections):
         y = 0.97 - row * 0.32
         side.text(0, y, heading, color=UPDATE, fontsize=12, weight="bold", va="top")
         side.text(0, y - 0.06, fill(text, 24), color=TEXT, fontsize=11, va="top", linespacing=1.5)
     if encoder:
-        bottom = ("E3 is a hidden vector, not the word 'cat'.\n"
+        bottom = ("E3 is a hidden vector, not the word 'sat'.\n"
                   f"E3 {excerpt(pair.encoder.carried)} = D0 {excerpt(pair.decoder.old_state)}\n"
                   "The decoder separately looks up <bos> as its current input.")
     else:
         predicted = int(pair.logits.argmax(-1).item())
         vocabulary, hidden = pair.head_weight.shape
         bottom = (f"OUTSIDE GRU: output_t [{hidden}] -> Linear({hidden}, {vocabulary}) -> logits -> softmax readout\n"
-                  f"Actual highest guess: {words[predicted]!r}; checked answer: 'sat'. "
+                  f"Actual highest guess: {words[predicted]!r}; checked answer: 'on'. "
                   "A guessed word is NOT the hidden state.")
         if phase == "feedback":
             cat = int(playback.feedback.source_ids[0, -1])
             gradient = playback.feedback.connected.embedding_gradient[cat].norm().item()
-            bottom += f"\nLoss -> head -> D1 -> D0/E3 -> reader -> cat input row. Measured row-gradient norm {gradient:.6f}."
+            bottom += f"\nLoss -> head -> D1 -> D0/E3 -> reader -> sat input row. Measured row-gradient norm {gradient:.6f}."
     figure.text(0.04, 0.115, bottom, color=GENERATION if not encoder else FORWARD,
                 fontsize=11, va="top", linespacing=1.6)
     figure.text(0.5, 0.018, f"Measured {playback.epochs}-epoch checkpoint | exactly one recurrent layer per block | "
@@ -904,7 +910,7 @@ def draw_token_layer_zoom(figure, playback: StatePlayback, words: list[str], sta
 
 
 def teacher_forcing_stages(playback: StatePlayback) -> list[tuple[str, int]]:
-    return [("practice", index) for index in range(3)] + [
+    return [("practice", index) for index in range(len(playback.feedback.connected.decoder_states))] + [
         ("generation", index) for index in range(len(playback.generation))
     ]
 
@@ -922,7 +928,7 @@ def draw_teacher_forcing(axis, playback: StatePlayback, words: list[str], stage:
     source = " ".join(words[index] for index in playback.feedback.source_ids[0].tolist())
     axis.text(0.5, 0.92, f"Source: {source!r} | same {playback.epochs}-epoch weights in both rows",
               ha="center", color=TEXT, fontsize=12)
-    positions = (0.05, 0.37, 0.69)
+    positions = (0.035, 0.28, 0.525, 0.77)
     for mode, y, color, label in (
         ("practice", 0.59, UPDATE, "PRACTICE: supply the correct previous word (teacher forcing)"),
         ("generation", 0.23, GENERATION, "GENERATE: supply the model's own previous guess"),
@@ -931,46 +937,46 @@ def draw_teacher_forcing(axis, playback: StatePlayback, words: list[str], stage:
         for index, x in enumerate(positions):
             reached = mode == "practice" or index < len(playback.generation)
             axis.add_patch(FancyBboxPatch(
-                (x, y), 0.26, 0.20, boxstyle="round,pad=0.01",
+                (x, y), 0.20, 0.20, boxstyle="round,pad=0.01",
                 edgecolor=color if reached else "#65758e",
                 facecolor="#26364a" if active == (mode, index) else BACKGROUND,
                 linewidth=3 if active == (mode, index) else 1.2,
             ))
             if not reached:
-                axis.text(x + 0.13, y + 0.11, "Not reached:\nmodel already stopped",
+                axis.text(x + 0.10, y + 0.11, "Not reached:\nmodel already stopped",
                           ha="center", va="center", color=TEXT, fontsize=11)
                 continue
             token = inputs[index] if mode == "practice" else playback.generation[index].input_id
             logits = trace.logits[0, index] if mode == "practice" else playback.generation[index].logits[0]
             guess = int(logits.argmax().item())
             expected = answers[index]
-            axis.text(x + 0.13, y + 0.16, f"{index + 1}. Shown now: {words[token]!r}",
-                      ha="center", color=color, fontsize=13, weight="bold")
-            axis.text(x + 0.13, y + 0.115, f"Highest guess: {words[guess]!r}",
-                      ha="center", color=TEXT, fontsize=12)
-            axis.text(x + 0.13, y + 0.07,
+            axis.text(x + 0.10, y + 0.16, f"{index + 1}. Shown now: {words[token]!r}",
+                      ha="center", color=color, fontsize=11, weight="bold")
+            axis.text(x + 0.10, y + 0.115, f"Highest guess: {words[guess]!r}",
+                      ha="center", color=TEXT, fontsize=11)
+            axis.text(x + 0.10, y + 0.07,
                       f"{'Check answer' if mode == 'practice' else 'Reference only'}: {words[expected]!r}",
-                      ha="center", color=UPDATE if mode == "practice" else "#94a3b8", fontsize=12)
+                      ha="center", color=UPDATE if mode == "practice" else "#94a3b8", fontsize=10)
             if mode == "practice":
                 share = logits.softmax(-1)[expected].item()
-                axis.text(x + 0.13, y + 0.025, f"Correct-word share: {share:.2%}",
+                axis.text(x + 0.10, y + 0.025, f"Correct-word share: {share:.2%}",
                           ha="center", color=TEXT, fontsize=10)
             else:
-                axis.text(x + 0.13, y + 0.025, "No reference word is supplied",
-                          ha="center", color=TEXT, fontsize=10)
-            if index < 2 and (mode == "practice" or index + 1 < len(playback.generation)):
+                axis.text(x + 0.10, y + 0.025, "No reference word is supplied",
+                          ha="center", color=TEXT, fontsize=8)
+            if index < len(inputs) - 1 and (mode == "practice" or index + 1 < len(playback.generation)):
                 start_y = y + (0.07 if mode == "practice" else 0.115)
                 next_x = positions[index + 1]
-                axis.plot([x + 0.27, x + 0.29, next_x - 0.02],
+                axis.plot([x + 0.21, x + 0.22, next_x - 0.02],
                           [start_y, start_y, y + 0.16], color=color, lw=2, linestyle="--")
                 axis.annotate("", xy=(next_x - 0.01, y + 0.16), xytext=(next_x - 0.02, y + 0.16),
                               arrowprops=dict(arrowstyle="->", color=color, lw=2))
-                axis.annotate("", xy=(next_x, y + 0.225), xytext=(x + 0.26, y + 0.225),
+                axis.annotate("", xy=(next_x, y + 0.225), xytext=(x + 0.20, y + 0.225),
                               arrowprops=dict(arrowstyle="->", color="#76c6ff", lw=1.5))
         axis.text(0.5, y - 0.045,
                   "Dashed: choose the NEXT word input. Blue: also carry the new hidden state; do not reset it.",
                   ha="center", color=TEXT, fontsize=10)
-    axis.text(0.5, 0.105, "Giving 'sat' next does NOT turn an earlier 'and' guess into a correct answer.",
+    axis.text(0.5, 0.105, "Giving 'on' next does NOT turn an earlier wrong guess into a correct answer.",
               ha="center", color=UPDATE, fontsize=13, weight="bold")
     axis.text(0.5, 0.065, "Top: check each guess, then use the real previous word. "
               "Bottom: a mistaken word becomes the next input.",
@@ -1026,7 +1032,7 @@ def save_hidden_mechanics(playback: StatePlayback, words: list[str]) -> None:
         "ReconstructionError": str((
             step.new_state - playback.feedback.connected.encoder_states[1].reshape(-1)
         ).abs().max().item()),
-        "Capture": "actual GRU gates and old/new state after the live cat probe reads sleepy",
+        "Capture": "actual GRU gates and old/new state after the live cat probe reads cat",
     })
     plt.close(figure)
     print(f"Saved {MECHANICS_IMAGE.name}; hidden slot {q} uses measured gate values.")
@@ -1048,8 +1054,8 @@ def source_fingerprint() -> str:
 
 
 def draw_feedback(comparison: FeedbackComparison, words: list[str], *, epochs: int = 0) -> None:
-    if comparison.source_ids.shape[1] != 3 or comparison.target_ids.shape[1] != 4:
-        raise ValueError("The saved storyboard is for three source and three writer steps.")
+    if comparison.source_ids.shape[1] != 3 or comparison.target_ids.shape[1] != 5:
+        raise ValueError("The saved storyboard is for three source and four writer steps.")
     figure, axes = plt.subplots(2, 1, figsize=(15, 9))
     figure.patch.set_facecolor(BACKGROUND)
     source = [words[index] for index in comparison.source_ids[0].tolist()]
@@ -1075,41 +1081,45 @@ def draw_feedback(comparison: FeedbackComparison, words: list[str], *, epochs: i
     forward = axes[0]
     forward.set_title("Forward: a word profile rewrites the running note", color=TEXT, fontsize=17)
     positions = [0.08, 0.39, 0.70]
+    writer_positions = [0.02, 0.28, 0.54, 0.80]
     for index, x in enumerate(positions):
         box(forward, x, 0.60, f"E{index + 1}: after {source[index]}\n{hidden_width} state values", FORWARD)
         forward.text(x + 0.095, 0.87, f"lookup {source[index]!r}", color=FORWARD, ha="center", fontsize=12)
         arrow(forward, (x + 0.095, 0.84), (x + 0.095, 0.78), FORWARD)
         if index:
             arrow(forward, (positions[index - 1] + 0.21, 0.68), (x - 0.015, 0.68), FORWARD)
+    for index, x in enumerate(writer_positions):
         box(forward, x, 0.10, f"D{index + 1}: input {writer[index]}\ncheck {answers[index]}", FORWARD)
         if index:
-            arrow(forward, (positions[index - 1] + 0.21, 0.18), (x - 0.015, 0.18), FORWARD)
+            arrow(forward, (writer_positions[index - 1] + 0.21, 0.18), (x - 0.015, 0.18), FORWARD)
     arrow(forward, (0.90, 0.68), (1.03, 0.68), FORWARD)
     forward.plot([1.03, 1.03, -0.035, -0.035], [0.68, 0.43, 0.43, 0.18], color=FORWARD, lw=2)
     arrow(forward, (-0.035, 0.18), (0.055, 0.18), FORWARD)
     forward.text(0.48, 0.45, "E3 becomes the decoder's starting note D0; no averaging",
                  color=FORWARD, fontsize=12, ha="center", va="bottom")
-    forward.text(0.48, -0.08, "Same encoder weights reused for E1-E3; separate decoder weights reused for D1-D3.",
+    forward.text(0.48, -0.08, "Same encoder weights reused for E1-E3; separate decoder weights reused for D1-D4.",
                  color=TEXT, fontsize=11, ha="center")
 
     backward = axes[1]
     backward.set_title("Backward: each checked answer teaches earlier steps and input rows", color=TEXT, fontsize=17)
     for index, x in enumerate(positions):
         e_gradient = comparison.connected.encoder_gradient_norms[index]
-        d_gradient = comparison.connected.decoder_gradient_norms[index]
         box(backward, x, 0.60, f"E{index + 1} feedback\nnorm {e_gradient:.4f}", BACKWARD)
-        box(backward, x, 0.10, f"D{index + 1} feedback\nnorm {d_gradient:.4f}", BACKWARD)
         arrow(backward, (x + 0.095, 0.785), (x + 0.095, 0.86), BACKWARD)
         backward.text(x + 0.095, 0.89, f"row gradient: {source[index]!r}",
                       color=BACKWARD, ha="center", fontsize=11)
+        if index:
+            arrow(backward, (x - 0.015, 0.68), (positions[index - 1] + 0.21, 0.68), BACKWARD)
+    for index, x in enumerate(writer_positions):
+        d_gradient = comparison.connected.decoder_gradient_norms[index]
+        box(backward, x, 0.10, f"D{index + 1} feedback\nnorm {d_gradient:.4f}", BACKWARD)
         arrow(backward, (x + 0.095, 0.285), (x + 0.095, 0.34), BACKWARD)
         backward.text(x + 0.095, 0.365, f"row gradient: {writer[index]!r}",
                       color=BACKWARD, ha="center", fontsize=11)
         arrow(backward, (x + 0.095, -0.05), (x + 0.095, 0.075), BACKWARD)
         backward.text(x + 0.095, -0.11, f"loss for {answers[index]}", color=BACKWARD, ha="center", fontsize=12)
         if index:
-            arrow(backward, (x - 0.015, 0.68), (positions[index - 1] + 0.21, 0.68), BACKWARD)
-            arrow(backward, (x - 0.015, 0.18), (positions[index - 1] + 0.21, 0.18), BACKWARD)
+            arrow(backward, (x - 0.015, 0.18), (writer_positions[index - 1] + 0.21, 0.18), BACKWARD)
     backward.plot([0.065, -0.035, -0.035, 1.03, 1.03], [0.18, 0.18, 0.43, 0.43, 0.68],
                   color=BACKWARD, lw=2)
     arrow(backward, (1.03, 0.68), (0.90, 0.68), BACKWARD)
@@ -1198,13 +1208,13 @@ def draw_embedding_learning(axis, comparison: FeedbackComparison, words: list[st
         arrow((0.09, 0.60), (0.30, 0.72), BACKWARD, True)
     cat = int(comparison.source_ids[0, -1])
     if stage == 6:
-        note = (f"cat row before: {excerpt(trace.table_before[cat])}\n"
-                f"cat feedback: {excerpt(trace.embedding_gradient[cat])}\n"
-                f"cat row after copied update: {excerpt(trace.table_after[cat])}")
+        note = (f"{words[cat]} row before: {excerpt(trace.table_before[cat])}\n"
+                f"{words[cat]} feedback: {excerpt(trace.embedding_gradient[cat])}\n"
+                f"{words[cat]} row after copied update: {excerpt(trace.table_after[cat])}")
     elif stage == 7:
         note = (f"Forward-score change after cutting feedback: "
                 f"{(trace.logits - comparison.detached.logits).abs().max().item():.1f}\n"
-                f"cat row movement: {trace.row_changes[cat].item():.6f} connected / "
+                f"{words[cat]} row movement: {trace.row_changes[cat].item():.6f} connected / "
                 f"{comparison.detached.row_changes[cat].item():.6f} cut\n"
                 "The source word does not need to be an answer to receive teaching feedback.")
     else:
@@ -1213,7 +1223,7 @@ def draw_embedding_learning(axis, comparison: FeedbackComparison, words: list[st
                 "No instruction says 'make cat and dog similar'. Useful organization is an empirical outcome.")
     axis.text(0.045, 0.19, note, va="top", color=UPDATE if stage == 6 else TEXT,
               fontsize=12, linespacing=1.5)
-    axis.text(0.5, 0.025, "Fresh pre-training model; one question checks sat / on / stop. "
+    axis.text(0.5, 0.025, "Fresh pre-training model; one question checks on / the / mat / stop. "
               "The diagnostic SGD step uses a COPY; the real model is untouched.",
               ha="center", color=TEXT, fontsize=10)
 
@@ -1226,8 +1236,9 @@ def save_embedding_learning(comparison: FeedbackComparison, words: list[str]) ->
     cat = int(comparison.source_ids[0, -1])
     figure.savefig(EMBEDDING_LEARNING_IMAGE, dpi=120, facecolor=BACKGROUND, metadata={
         "SourceFingerprint": source_fingerprint(), "Checkpoint": "fresh model before training",
-        "ConnectedCatRowChange": str(comparison.connected.row_changes[cat].item()),
-        "DetachedCatRowChange": str(comparison.detached.row_changes[cat].item()),
+        "SourceOnlyWord": words[cat],
+        "ConnectedSourceRowChange": str(comparison.connected.row_changes[cat].item()),
+        "DetachedSourceRowChange": str(comparison.detached.row_changes[cat].item()),
     })
     animation = FuncAnimation(
         figure, lambda stage: draw_embedding_learning(axis, comparison, words, stage),
@@ -1343,8 +1354,8 @@ def main() -> None:
     training_source = "".join(next(cell["source"] for cell in cells if cell["id"] == "ch03a-sequence-training"))
     exec(compile(training_source, "actual-preview-training", "exec"), namespace)
     playback = record_state_playback(
-        namespace["sequence_model"], namespace["source_sequences"][-3:-2],
-        namespace["sequence_targets"][-3:-2], namespace["sequence_itos"],
+        namespace["sequence_model"], namespace["cat_sources"][:1],
+        namespace["cat_answers"][:1], namespace["sequence_itos"],
         epochs=len(namespace["sequence_losses"]),
     )
     words = namespace["sequence_itos"]
@@ -1359,7 +1370,7 @@ def main() -> None:
     draw_token_layers(figure, playback, words, token_layer_stages().index(("head", 0)))
     figure.savefig(TOKEN_LAYERS_IMAGE, dpi=110, facecolor=BACKGROUND, metadata={
         "SourceFingerprint": source_fingerprint(), "TrainingEpochs": str(playback.epochs),
-        "EncoderToken": "cat", "DecoderToken": "<bos>", "RecurrentLayers": "1",
+        "EncoderToken": "sat", "DecoderToken": "<bos>", "RecurrentLayers": "1",
         "OutputEqualsCarried": str(torch.equal(
             playback.token_layers.decoder.output, playback.token_layers.decoder.carried,
         )),
@@ -1378,7 +1389,7 @@ def main() -> None:
         "FocusCoordinate": focus_coordinate(playback),
         "GateMechanics": "PyTorch GRU: reset projected memory; keep z*old; write (1-z)*candidate",
         "PlaybackView": "one-token-through-each-layer",
-        "EncoderToken": "cat", "DecoderToken": "<bos>", "RecurrentLayers": 1,
+        "EncoderToken": "sat", "DecoderToken": "<bos>", "RecurrentLayers": 1,
         "GRUOutputEqualsCarriedState": all(
             torch.equal(step.output, step.carried)
             for step in (playback.token_layers.encoder, playback.token_layers.decoder)

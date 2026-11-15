@@ -70,6 +70,8 @@ plt.close(similarity_figure)
 # %% 6 - Play the recorded snapshots
 real_animation = animate_word_maps(real_probe_words, real_coordinates, real_results)
 real_animation_html = responsive_animation_html(real_animation)
+(chart_directory / "03a-embedding-learning-animation.html").write_text(real_animation_html, encoding="utf-8")
+real_animation.save(chart_directory / "03a-embedding-learning-animation.gif", writer="pillow", fps=2)
 if "get_ipython" in globals():
     from IPython.display import HTML, display
 
@@ -81,7 +83,7 @@ else:
 report_neighbours(real_corpus, real_results)
 
 # %% 7 - Your turn: Inspect another pair
-probe_pair = ("mom", "dad")  # CHANGE THIS: try ("mom", "green"), without retraining
+probe_pair = ("cat", "dog")  # CHANGE THIS: try ("cat", "green"), without retraining
 for objective, record in real_results.items():
     pair_ids = [real_corpus["word_ids"][word] for word in probe_pair]
     pair_scores = []
@@ -94,7 +96,7 @@ for objective, record in real_results.items():
 
 # %% 8 - Check held-out answer shortlists
 cbow_best = real_results["CBOW"]["best_model"]
-for left, right in [("was so", "to have"), ("a little", "named tom"),
+for left, right in [("cat sat", "the mat"), ("was so", "to have"), ("a little", "named tom"),
                     ("played with", "toys and"), ("they went", "the park")]:
     menu = blank_shortlist(cbow_best, real_corpus, left, right)
     print(f"{left} ___ {right} -> " + ", ".join(f"{word} {chance:.0%}" for word, chance in menu))

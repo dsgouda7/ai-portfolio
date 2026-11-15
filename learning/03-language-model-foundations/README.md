@@ -25,7 +25,7 @@ That preview is intentional: you don't need to master tokenization before studyi
 ![Piano notes become token pieces, integer addresses, and learned rows, then shifted next-note targets, padding, and separate input and loss masks. All are first used in the Chapter 01B lab and formally explained in Chapter 02.](images/03-first-use-concept-map.png)
 
 [Embedding history](optional/embedding-history/README.md) is optional background, not a prerequisite.
-The old model-evolution lessons now live in Chapter 03 as 03B–03D; follow the links there.
+The model-evolution lessons now form the consolidated 03B–03C route in Chapter 03; follow the links there.
 
 **Next:** [Stage 04 — Transformers](../04-transformers/README.md) replaces recurrent reading
 with attention and position information.

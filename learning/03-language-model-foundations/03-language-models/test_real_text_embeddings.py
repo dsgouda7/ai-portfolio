@@ -126,6 +126,10 @@ class DocumentWindowTests(unittest.TestCase):
         sources, targets = objective_pairs(windows, "Encoder-decoder", bos_id=9)
         self.assertEqual(sources.tolist(), [[1, 2, 3], [2, 3, 4]])
         self.assertEqual(targets.tolist(), [[9, 4, 5], [9, 5, 6]])
+        six_words = torch.tensor(make_document_windows([[1, 2, 3, 4, 5, 6]], 6))
+        sources, targets = objective_pairs(six_words, "Encoder-decoder", bos_id=9)
+        self.assertEqual(sources.tolist(), [[1, 2, 3]])
+        self.assertEqual(targets.tolist(), [[9, 4, 5, 6]])
 
 
 class CBOWEmbeddingTests(unittest.TestCase):
@@ -421,8 +425,8 @@ class VisibleLearningTests(unittest.TestCase):
         cls.sequence_type = namespace["EncoderDecoderLM"]
 
     def namespace(self):
-        words = ["<unk>", "the", "sleepy", "cat", "sat", "on", "mat"]
-        windows = torch.tensor([[1, 2, 3, 4, 5], [2, 3, 4, 5, 1], [3, 4, 5, 1, 6]])
+        words = ["<unk>", "the", "cat", "sat", "on", "mat", "dog"]
+        windows = torch.tensor([[1, 2, 3, 4, 1], [2, 3, 4, 1, 5]])
         namespace = {
             "torch": torch, "nn": torch.nn, "time": time, "math": math, "SEED": 17,
             "itos": words, "stoi": {word: index for index, word in enumerate(words)},
@@ -458,7 +462,7 @@ class VisibleLearningTests(unittest.TestCase):
             "cbow_validator": CBOWValidator(state["windows"], words=state["itos"], batch_size=3),
         })
         state["cbow_recorder"] = ModelProbeRecorder(
-            model, contexts, words=state["itos"], expected_words=("cat", "sat", "on"), name="CBOW",
+            model, contexts, words=state["itos"], expected_words=("sat", "on"), name="CBOW",
         )
         snapshot = state["cbow_recorder"].record_before()
         state["embedding_before"] = snapshot.embeddings
@@ -488,16 +492,14 @@ class VisibleLearningTests(unittest.TestCase):
     def test_reader_writer_has_its_own_six_epoch_run_and_measured_shared_rows(self):
         state = self.namespace()
         windows = state["windows"]
-        sources = windows[:, :3]
-        targets = torch.cat([
-            torch.full((3, 1), 7), windows[:, 3:], torch.full((3, 1), 8),
-        ], dim=1)
+        sources = torch.tensor([[1, 2, 3]])
+        targets = torch.tensor([[7, 4, 1, 5, 8]])
         state.update({
             "EncoderDecoderLM": self.sequence_type, "TrainableLanguageModel": TrainableLanguageModel,
             "sequence_vocabulary_size": 9, "sequence_itos": state["itos"] + ["<bos>", "<eos>"],
             "source_sequences": sources, "sequence_targets": targets,
             "sequence_dataloader": self.loader(sources, targets), "BOS_ID": 7, "EOS_ID": 8,
-            "validation_windows": windows,
+            "sequence_validation_windows": torch.tensor([[1, 2, 3, 4, 1, 5]]),
         })
         for prerequisite in ("criterion", "cbow_seconds", "skipgram_seconds"):
             self.assertNotIn(prerequisite, state)
@@ -536,7 +538,7 @@ class VisibleLearningTests(unittest.TestCase):
             torch.manual_seed(17)
             model = self.sequence_type(9, 4, 6)
         sources = torch.tensor([[1, 2, 3]])
-        targets = torch.tensor([[7, 4, 5, 8]])
+        targets = torch.tensor([[7, 4, 1, 5, 8]])
         occurrences = []
 
         def remember(module, inputs, output):
@@ -573,7 +575,7 @@ class VisibleLearningTests(unittest.TestCase):
             torch.manual_seed(17)
             model = self.sequence_type(9, 4, 6)
         sources = torch.tensor([[1, 2, 3]])
-        targets = torch.tensor([[7, 4, 5, 8]])
+        targets = torch.tensor([[7, 4, 1, 5, 8]])
         with torch.no_grad():
             model.output.weight.zero_()
             model.output.bias.zero_()
@@ -592,17 +594,17 @@ class VisibleLearningTests(unittest.TestCase):
         self.assertTrue(bool((logits.argmax(-1) == 6).all()))
         torch.testing.assert_close(seen[-1], targets[:, :-1], rtol=0, atol=0)
         self.assertNotIn(6, seen[-1].flatten().tolist())
-        torch.testing.assert_close(model.targets_for_loss(targets), torch.tensor([[4, 5, 8]]))
+        torch.testing.assert_close(model.targets_for_loss(targets), torch.tensor([[4, 1, 5, 8]]))
 
     def test_each_prediction_cannot_see_its_own_answer_or_later_answers(self):
         with torch.random.fork_rng(devices=[]):
             torch.manual_seed(17)
             model = self.sequence_type(9, 4, 6)
         sources = torch.tensor([[1, 2, 3]])
-        targets = torch.tensor([[7, 4, 5, 8]])
+        targets = torch.tensor([[7, 4, 1, 5, 8]])
         with torch.inference_mode():
             baseline = model(sources, targets)
-            for position in range(3):
+            for position in range(4):
                 changed = targets.clone()
                 changed[0, position + 1] = 6
                 torch.testing.assert_close(
@@ -715,7 +717,7 @@ class CoreLessonTests(unittest.TestCase):
         with torch.no_grad():
             model.output.weight.zero_()
             model.output.bias.copy_(torch.arange(7))
-        namespace.update({"torch": torch, "skipgram_model": model, "stoi": {"cat": 2}})
+        namespace.update({"torch": torch, "skipgram_model": model, "stoi": {"on": 2}})
         predictions = [node for node in tree.body if isinstance(node, ast.With)]
         self.assertEqual(len(predictions), 1)
         with patch.object(model, "forward", wraps=model.forward) as forward:
@@ -762,7 +764,7 @@ class CoreLessonTests(unittest.TestCase):
         self.assertIn("learn useful word relationships", explanation)
         self.assertTrue(explanation.startswith("#### "))
         self.assertIn("The core lesson ends here", explanation)
-        self.assertIn("03B-counts-and-fixed-window-language-models.ipynb", explanation)
+        self.assertIn("03B-counts-to-recurrent-language-models.ipynb", explanation)
         self.assertNotIn("ch03a-next", [cell["id"] for cell in self.notebook["cells"]])
         self.assertNotIn("06c-31", self.code)
         self.assertNotIn("permuted_context", self.companion)
@@ -824,8 +826,8 @@ class CoreLessonTests(unittest.TestCase):
                     self.assertGreaterEqual(float(image.info["CosineBefore"]), -1)
                     self.assertLessEqual(float(image.info["CosineAfter"]), 1)
                 else:
-                    self.assertEqual(image.info["WindowCount"], "3")
-                    self.assertEqual(image.info["Answers"], "cat, sat, on")
+                    self.assertEqual(image.info["WindowCount"], "2")
+                    self.assertEqual(image.info["Answers"], "sat, on")
         code = "\n\n".join(self.code.values())
         self.assertNotIn("draw_cbow_window", code)
         self.assertNotIn("EmbeddingBag", code)
@@ -848,7 +850,7 @@ class CoreLessonTests(unittest.TestCase):
         opening = markdown["ch03a-extensions"]
         self.assertLess(
             opening.index("#encoder-decoder-preview"),
-            opening.index("03B-counts-and-fixed-window-language-models.ipynb"),
+            opening.index("03B-counts-to-recurrent-language-models.ipynb"),
         )
         self.assertIn("CBOW training and section 4 are not prerequisites", markdown["06c-s2s-01"])
         self.assertIn("03A-word-objective-comparison-lab.ipynb", markdown["ch03a-extensions"])
@@ -1002,7 +1004,7 @@ class CoreLessonTests(unittest.TestCase):
         intro = markdown["ch03a-sequence-training-intro"]
         for idea in (
             "Teacher forcing", "previous", "not the answer currently being guessed",
-            "<bos>", "<eos>", "sat", "on", "and", "hidden state",
+            "<bos>", "<eos>", "mat", "on", "and", "hidden state",
             "03a-correct-previous-word-vs-own-guess.html",
         ):
             self.assertIn(idea, " ".join(intro.split()))
@@ -1021,7 +1023,7 @@ class CoreLessonTests(unittest.TestCase):
                     if cell["cell_type"] == "markdown")
         self.assertLessEqual(words, 1400)
         code = "\n".join("".join(cell["source"]) for cell in cells[start:end] if cell["cell_type"] == "code")
-        self.assertLessEqual(len([line for line in code.splitlines() if line.strip()]), 170)
+        self.assertLessEqual(len([line for line in code.splitlines() if line.strip()]), 195)
         self.assertNotRegex(code, r"savefig|to_jshtml|FuncAnimation|plt\.")
         self.assertIn("compare_source_order(", code)
         self.assertIn("order_check.hidden_difference", code)
@@ -1106,7 +1108,7 @@ class CoreLessonTests(unittest.TestCase):
                     self.assertNotIn(helper, source)
                 self.assertIsNone(re.search(r"\brouting_\w+", source))
 
-    def test_familiar_baseline_records_three_questions_without_training(self):
+    def test_familiar_baseline_records_two_aligned_questions_without_training(self):
         definitions = [
             node for node in ast.parse(self.code["06c-17"]).body
             if isinstance(node, ast.ClassDef) and node.name == "CBOW"
@@ -1115,11 +1117,11 @@ class CoreLessonTests(unittest.TestCase):
                      "WordEmbeddingLanguageModel": WordEmbeddingLanguageModel,
                      "CBOWDataLoader": CBOWDataLoader}
         exec(compile(ast.Module(body=definitions, type_ignores=[]), "CBOW", "exec"), namespace)
-        expected_contexts = torch.tensor([[1, 2, 4, 5], [2, 3, 5, 1], [3, 4, 1, 6]])
+        expected_contexts = torch.tensor([[1, 2, 4, 1], [2, 3, 1, 5]])
         namespace.update({
             "torch": torch, "SEED": 17, "EMBEDDING_WIDTH": 4,
-            "vocabulary_size": 7, "itos": ["<unk>", "the", "sleepy", "cat", "sat", "on", "mat"],
-            "cat_window_ids": torch.tensor([[1, 2, 3, 4, 5], [2, 3, 4, 5, 1], [3, 4, 5, 1, 6]]),
+            "vocabulary_size": 7, "itos": ["<unk>", "the", "cat", "sat", "on", "mat", "dog"],
+            "cat_window_ids": torch.tensor([[1, 2, 3, 4, 1], [2, 3, 4, 1, 5]]),
             "cbow_batch_contexts": expected_contexts[:2],
         })
         with torch.random.fork_rng(devices=[]), redirect_stdout(StringIO()):
@@ -1133,10 +1135,10 @@ class CoreLessonTests(unittest.TestCase):
             self.assertTrue(torch.equal(torch.random.get_rng_state(), rng_before))
         self.assertTrue(torch.equal(namespace["cat_contexts"], expected_contexts))
         self.assertTrue(torch.equal(namespace["cat_contexts_before"], expected_contexts))
-        self.assertEqual(tuple(namespace["cat_before_logits"].shape), (3, 7))
+        self.assertEqual(tuple(namespace["cat_before_logits"].shape), (2, 7))
         self.assertEqual(tuple(namespace["untrained_logits"].shape), (2, 7))
-        self.assertEqual(list(namespace["cbow_before"]), ["cat", "sat", "on"])
-        for row, word in enumerate(("cat", "sat", "on")):
+        self.assertEqual(list(namespace["cbow_before"]), ["sat", "on"])
+        for row, word in enumerate(("sat", "on")):
             chances = namespace["cat_before_logits"][row].softmax(dim=-1)
             word_id = namespace["itos"].index(word)
             self.assertEqual(namespace["cbow_before"][word]["probability"], chances[word_id].item())

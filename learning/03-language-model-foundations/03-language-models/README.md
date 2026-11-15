@@ -6,6 +6,22 @@ The core question in 03A is **how embedding values learn when their input IDs st
 fixed**. Train one CBOW model on text, then compare its actual embedding rows
 before and after learning.
 
+## One sentence, different questions
+
+The shared instructional probe is **the cat sat on the mat**.
+
+| Question | What the model does with the familiar words |
+|---|---|
+| CBOW | Fill `cat sat ___ the mat`: the answer is `on` |
+| Skip-gram | Use `on` to predict individual neighbours: `cat`, `sat`, `the`, `mat` |
+| Reader/writer preview and comparison lab | Read `the cat sat`, then write `on the mat`; the main preview also learns end |
+| Counts, windows and recurrent memory | Continue the full sentence; a controlled cat/dog pair ends `purring`/`panting` |
+| Source-attention comparison | Read the complete sentence and reverse its words into a separate answer |
+
+These are different learning objectives, not four names for one prediction task.
+Varied TinyStories training, genuine held-out checks and contrast cases remain:
+repeating only the probe would test memorization, not useful learning.
+
 ## Before you start
 
 Use [Stage 02](../../02-pytorch-foundations/README.md) for tensors and optimization,
@@ -21,7 +37,8 @@ Select that kernel, restart, and run notebooks independently.
 
 The TinyStories model needs internet for its first pinned download, then verifies
 a local cache. The conceptual explanation and static illustrations remain readable offline.
-03B-03D use generated local examples and one CPU thread.
+03B uses generated local examples; 03C loads a frozen local source split. Both use
+one CPU thread and need no download.
 
 ## 03A: visible CBOW learning, then the section 5 reader/writer
 
@@ -43,7 +60,7 @@ between learned word profiles and context-based prediction scores.
    Section 3.1 separates model setup/shape checks, diagnostic helper definitions,
    and the three familiar `cat_contexts` questions into distinct code blocks.
    These save a before-training baseline; **3.3 trains that same CBOW now**.
-   Its epoch-0-to-10 table reports practice/held-out loss, cat probability/rank,
+   Its epoch-0-to-10 table reports practice/held-out loss, masked-word probability/rank,
    and actual cat-row movement, followed by before/after feature values.
    One cat-probe animation carries actual values through lookup, mean, Linear,
    ReLU, vocabulary logits, and cross-entropy, then carries gradients back through
@@ -98,8 +115,8 @@ The original rich illustrations remain beside the conceptual explanation.
 
 ## Focused reader/writer preview
 
-The new question is **why `cat`'s input row changes when the answer being graded
-is `sat`**, not how to build a complete text generator.
+The new question is **why `cat`'s input row changes when the first answer being graded
+is `on`**, not how to build a complete text generator.
 
 1. **5.1:** bridge from supplied piano profiles to a trainable word lookup table.
    The [GRU foundation](../01-sequence-memory/01A-sequence-memory-theory.ipynb#gru-hidden-state-mechanics)
@@ -109,7 +126,7 @@ is `sat`**, not how to build a complete text generator.
    cell reads the saved HTML for optional controls without loading data or training.
    JavaScript controls need a trusted renderer; separate-player and static links remain.
    The external replay exporter also refreshes this GIF attachment when rebuilding it.
-2. **5.2:** keep teacher forcing to its input rule and a three-row alignment table.
+2. **5.2:** keep teacher forcing to its input rule and a four-step alignment table.
    The full plain-English reference remains in the lab appendix.
 3. **5.3:** follow prediction feedback into the shared table. A saved animation
    and a checked model-copy intervention show why the reader's `cat` row learns.
@@ -197,10 +214,11 @@ validator.compare_after(model, epochs=len(run.losses))
 ```
 
 The report shows loss, answer accuracy, number of checked answers, and one actual
-input/answer/prediction example before and after. The same 2,048 retained windows
-supply 2,048 CBOW center answers, 8,192 Skip-gram neighbour pairs, or 6,144
-reader/writer next-token answers including stop. Compare improvement within each
-objective, not raw losses across different jobs.
+input/answer/prediction example before and after. CBOW and Skip-gram share 2,048
+five-word checking windows, supplying 2,048 center answers or 8,192 neighbour pairs.
+The reader/writer uses 2,048 six-word windows from the same reserved stories:
+three continuation words plus stop supply 8,192 next-token answers.
+Compare improvement within each objective, not raw losses across different jobs.
 
 Reader/writer validation is teacher-forced: it supplies correct previous words.
 Free-running generation is a small boundary check in 5.5. Evaluation preserves model
@@ -212,12 +230,58 @@ evaluation implementation on its independent split.
 | Notebook | The next complaint | Handwritten notes | Code-only view |
 |---|---|---|---|
 | [03A. Training skeleton and word objectives](03A-training-skeleton-and-word-objectives.ipynb) | How do fixed IDs select rows that learn? | [Theory](03A-training-skeleton-and-word-objectives-theory.md) | [Python](03A-training-skeleton-and-word-objectives.py) |
-| [03B. Counts and fixed windows](03B-counts-and-fixed-window-language-models.ipynb) | Ordered seats preserve order, but a clue outside the window is still invisible | [Theory](03B-counts-and-fixed-window-language-models-theory.md) | [Python](03B-counts-and-fixed-window-language-models.py) |
-| [03C. Fixed windows to recurrent models](03C-fixed-windows-to-recurrent-language-models.ipynb) | A running note can carry the clue, but memory has limits | [Theory](03C-fixed-windows-to-recurrent-language-models-theory.md) | [Python](03C-fixed-windows-to-recurrent-language-models.py) |
-| [03D. Recurrent reader/writer to attention](03D-recurrent-encoder-decoder-to-attention.ipynb) | The writer needs access beyond one final summary | [Theory](03D-recurrent-encoder-decoder-to-attention-theory.md) | [Python](03D-recurrent-encoder-decoder-to-attention.py) |
+| [03B. Counts to recurrent language models](03B-counts-to-recurrent-language-models.ipynb) | Ordered seats expose a missing clue; a running note carries it, but a separate answer needs a writer | [Theory](03B-counts-to-recurrent-language-models-theory.md) | [Python](03B-counts-to-recurrent-language-models.py) |
+| [03C. Recurrent reader/writer to attention](03C-recurrent-encoder-decoder-to-attention.ipynb) | The writer needs access beyond one final summary | [Theory](03C-recurrent-encoder-decoder-to-attention-theory.md) | [Python](03C-recurrent-encoder-decoder-to-attention.py) |
+| [03C1. Encoder-decoder worked details](03C1-encoder-decoder-worked-details.ipynb) | Optional runnable diagnostics and the original summary/attention comparison | Same 03C theory | [Python](03C1-encoder-decoder-worked-details.py) |
 
-03B-03C deliberately switch to short color-clue sentences; 03D uses digit
-reversal. Those controlled tasks expose information access, not competing corpora.
+03C first opens the two learned jobs: source reading, the state handoff, previous-answer
+inputs and word scoring. **All conceptual explanations and saved figures stay in 03C.**
+Its four code cells show only setup/frozen data, a small `EncoderDecoder`, its optimizer
+loop, and bounded target-free generation. The encoder reads the source once; the separate
+decoder carries its own state and receives explicitly shifted previous-answer inputs
+during training. The familiar sentence is one probe, not the entire training set.
+
+[03C1](03C1-encoder-decoder-worked-details.ipynb) runs independently from a fresh kernel
+and preserves the full original `ReaderWriter` implementation and experiments:
+[roles](03C1-encoder-decoder-worked-details.ipynb#roles),
+[teacher forcing](03C1-encoder-decoder-worked-details.ipynb#teacher-forcing),
+[gradient routes](03C1-encoder-decoder-worked-details.ipynb#gradients),
+[encoder-only proof](03C1-encoder-decoder-worked-details.ipynb#encoder-only),
+[attention comparison](03C1-encoder-decoder-worked-details.ipynb#attention),
+[held-out evaluation](03C1-encoder-decoder-worked-details.ipynb#evaluation) and
+[inherited-trainer adapter](03C1-encoder-decoder-worked-details.ipynb#adapter).
+The saved 76.43% versus 97.50% complete-generation scores belong to that original
+comparison, **not** to the compact main demo.
+
+Both routes use exactly the same 7,020 training and 280 held-out source orders
+(lengths two through eight), stored in
+[`data/03c-cat-reversal-corpus.json`](data/03c-cat-reversal-corpus.json).
+[`encoder_decoder_example.py`](encoder_decoder_example.py) validates that frozen split,
+converts IDs and replays the original seed-99 batches. 03C1 retains the original seed-31
+construction and checks exact equality. Its two models and the main demo each use
+1,000 updates, batches of 64, Adam at 0.004 and clipping at 1.0; the main decoder's
+plain GRU interface is intentionally separate from the original diagnostic model.
+
+### The recorded encoder-decoder walkthrough
+
+[`encoder_decoder_walkthrough.py`](encoder_decoder_walkthrough.py) is an **offline
+recorder/exporter**. It runs the main four-cell model once, then records actual source
+and decoder states, guesses, probabilities, gradients and updates for the saved player.
+Run All in either notebook does not invoke it. Playback starts paused; use Next/Back,
+or optional slow Play. Initialized teacher-forced practice, the same weights using
+their own guesses, and trained generation are separate selectable recordings.
+
+[`images/03c-encoder-decoder-animation-prompts.json`](images/03c-encoder-decoder-animation-prompts.json)
+belongs with the existing [`generate_illustrations.py`](generate_illustrations.py)
+workflow **for the MAI background only**. The background does not invent model values;
+the recorder supplies every measured overlay. The optional
+[03C1 code-details notebook](03C1-encoder-decoder-worked-details.ipynb) remains the
+runnable route for the full diagnostic and source-attention implementations.
+
+03B uses controlled cat/dog continuations; 03C reverses word sequences drawn
+from the same cat-story vocabulary. The canonical probe stays familiar while
+the question changes. These are information-access tests, not competing corpora
+or evidence of general language quality.
 
 ## Run and inspect
 

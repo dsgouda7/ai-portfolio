@@ -3,36 +3,36 @@
     "filename": "03a-01-shared-word-features.png",
     "semantic_anchor": "Why not leave the rows random?",
     "aspect_ratio": "16:9",
-    "prompt": "Draw a minimal educational poster, landscape 16:9, navy large sans-serif text. Warm, friendly pets feel: cream background, rounded paper cards, a few tiny simple doodles of a paw print, a ball of yarn, or a small cushion in the margins only. Title 'Different words can help with the same answers'. Exactly THREE horizontal rows, with generous whitespace. Row 1: teal paper card 'cat', a right-pointing arrow, orange paper card 'sat, slept'. Row 2: teal paper card 'dog', a right-pointing arrow, orange paper card 'sat, slept'. Row 3: teal paper card 'bird', a right-pointing arrow, orange paper card 'flew, sang'. Leave a clearly larger vertical gap between the dog row and the bird row. A short purple bracket spans ONLY the cat and dog rows and STOPS above the gap, with the label 'Useful features in common' beside it. The bird row sits on its own below the gap with NO bracket next to it. Footer in two lines: 'Training can make shared clues useful.' and 'Different IDs. Separate rows. Not identical meanings.' The three rows show the practice pairs supplied in Chapter 02B. This is NOT a before-and-after visualization and NOT a measured embedding plot. Flat simple styling, no extra boxes.",
-    "acceptance_criteria": "Exactly three input cards with their correct answer pairs; grouping only cat and dog; explicit separate IDs and rows; no fake measurements or before-after claims.",
-    "prohibited_content": "Numbers, charts, distance claims, named embedding dimensions, merging word IDs, claiming synonyms are identical, photographic animals, realistic animal drawings, illegible tiny text.",
-    "alt_text": "Cat and dog share the practice answers sat and slept, while bird has flew and sang. Their IDs and rows stay separate."
+    "prompt": "Cream background, legible navy text and teal/orange cards. Show the matched illustrative contexts cat sat ___ the mat and dog sat ___ the mat, both checked against on. Cat and dog are input clues with separate IDs and rows. These are not quoted corpus examples or measured neighbours.",
+    "acceptance_criteria": "Two distinct input contexts, one common checking answer on; cat and dog remain distinct. Locally rendered by sentence_illustrations in generate_sensor_analogy_diagrams.py.",
+    "prohibited_content": "Invented neural values, synonyms claimed identical, merged IDs, geometry improvement claimed without measurements.",
+    "alt_text": "Cat and dog can supply useful clues for the same on answer while retaining separate word profiles."
   },
   {
     "filename": "03a-02-text-makes-practice.png",
-    "semantic_anchor": "Where do we get more practice questions?",
+    "semantic_anchor": "Where do we get practice questions?",
     "aspect_ratio": "16:9",
-    "prompt": "Draw a MINIMAL educational poster, landscape 16:9, navy large sans-serif labels. Warm, friendly pets feel: cream background, rounded paper cards, a few tiny simple doodles of a paw print, a ball of yarn, or a small cushion in the margins only. Teal paper cards and one orange answer card. Title 'The text already has the answer'. Upper row heading 'Original text'. Under it EXACTLY five cards in this exact order: 'the', 'sleepy', 'cat', 'sat', 'on'. Lower row heading 'Practice question'. Under it the same five positions: teal card 'the', teal card 'sleepy', white empty card '?', teal card 'sat', teal card 'on'. Beneath this row centered text 'Use the four visible words to guess the gap'. Near the bottom one separate orange card labelled 'Answer for checking: cat'. Footer 'Slide along the text. Make another question.' NO arrows, NO predictor box, NO third row of word cards. No extra words on cards. Make every full word legible, including sleepy. The question-mark card is a visual gap, not a MASK input token.",
-    "acceptance_criteria": "Both rows have exactly five positions; cat alone becomes a gap; all four other words remain fully visible; separate checking answer; no arrows.",
-    "prohibited_content": "MASK token as a model input, treating this as BERT, feeding the answer into the predictor, fabricated scores, equations, tiny labels, extra sentence words.",
-    "alt_text": "Cover cat in the five-word phrase, use the four visible words as context, and keep cat separately as the answer for checking the guess."
+    "prompt": "Cream educational diagram. Title The text already supplies the answer. State running sentence the cat sat on the mat. Show its last complete five-word window cat sat on the mat, then cat sat ___ the mat. Keep on separate as the checking answer. No mask token is supplied to the model.",
+    "acceptance_criteria": "Five positions in each window; only on becomes a gap; four visible clues; separate on answer. State that six words supply two five-word windows with centers sat and on. Locally rendered by sentence_illustrations in generate_sensor_analogy_diagrams.py.",
+    "prohibited_content": "Sleepy, extra tokens, BERT mask input, current answer supplied as its own clue, fabricated probabilities.",
+    "alt_text": "The last five-word window hides on, retaining cat, sat, the and mat as CBOW clues."
   },
   {
     "filename": "03a-03-feedback-teaches-rows.png",
-    "semantic_anchor": "How does a wrong guess teach the word rows?",
+    "semantic_anchor": "How does checking a guess teach rows?",
     "aspect_ratio": "16:9",
-    "prompt": "Draw a minimal educational poster, landscape 16:9, navy large sans-serif labels, Warm, friendly pets feel: cream background, rounded paper cards, a few tiny simple doodles of a paw print, a ball of yarn, or a small cushion in the margins only. Teal and purple paper cards, orange feedback card. Title 'A wrong guess can teach both parts'. TWO completely separate panels divided by whitespace. Top panel heading '1. Make a guess'. Exactly THREE cards linked left to right by navy arrows: teal card 'Fetch and combine input rows', purple card 'Predictor', purple card 'Guess'. A small note under the first card says 'Token IDs stay fixed'. Bottom panel heading '2. Learn from the mistake'. Centered orange card 'Compare guess with cat'. From this orange card exactly TWO orange arrows point downward: one to a teal card 'Update fetched rows', one to a purple card 'Update predictor weights'. The bottom panel is a conceptual training summary, not a second forward pass. Footer 'Lookup fetches. Feedback teaches.' No other arrows, no token examples, no ID numbers, no invented loss numbers, no answer box attached to Guess. This is an intuition sketch of CBOW training, not a literal computational graph.",
-    "acceptance_criteria": "Top panel shows rows to predictor to guess; bottom panel comparison names cat and branches to two parameter updates; IDs fixed; no guess-to-answer arrow or fabricated tokens.",
-    "prohibited_content": "Updating token IDs, updating every row in one step, direct answer-to-input arrow, weight tying, suggesting lookup alone requires prediction, made-up loss values, unreadable labels.",
-    "alt_text": "Input IDs fetch rows which are combined and used to make a guess. Checking against cat sends training feedback to both the predictor weights and the fetched rows, while token IDs stay fixed."
+    "prompt": "Cream educational diagram. Fetch and average cat, sat, the and mat rows, then a separate predictor makes vocabulary scores. Check against on. Feedback branches to fetched input rows and predictor weights. IDs stay fixed. on's input row is unread in this isolated question; its separate output weights can learn.",
+    "acceptance_criteria": "Correct clue/answer separation, two parameter-update routes, no neural values. Locally rendered by sentence_illustrations in generate_sensor_analogy_diagrams.py.",
+    "prohibited_content": "Updating IDs, claiming every input row changes in an isolated lookup step, tying input and output weights, invented loss.",
+    "alt_text": "Checking on teaches both the predictor and the fetched cat, sat, the and mat profiles; integer IDs stay fixed."
   },
   {
     "filename": "03a-encoder-decoder-observatory.png",
-    "semantic_anchor": "12 - Encoder-decoder: an observing log, compact briefing, and likely report",
+    "semantic_anchor": "Encoder-decoder: ordered log, compact briefing, likely report",
     "aspect_ratio": "16:9",
-    "prompt": "Landscape educational diagram. An observatory reads an ordered log of known system objects' abstract sensor profiles. An encoder builds one compact learned briefing h, not a raw-profile average. A decoder writes a likely report about a newly observed object, one word at a time. Beneath the analogy show actual source the->sleepy->cat, final encoder state, and training answer sat->on->eos. State that this notebook predicts vocabulary tokens, not physical properties, and that only the final briefing is available without attention.",
-    "acceptance_criteria": "Keep the observation log ordered; distinguish static input profiles from learned hidden state; output is a predicted report, not a new token ID. Label sat/on/eos as the training answer, not claimed generated output. Rebuild with generate_sensor_analogy_diagrams.py.",
-    "prohibited_content": "Unordered source, claiming accurate astronomical measurements, invented model results, self-attention in the GRU implementation, writer access to all source states.",
-    "alt_text": "An ordered observing log feeds an encoder briefing, then a decoder's likely report. The actual text mapping is the sleepy cat to training answer sat on eos; only the final encoder state is handed over."
+    "prompt": "Cream diagram with an observing log, one compact encoder briefing and a decoder report. Actual source the -> cat -> sat. Actual checking answers on -> the -> mat -> eos. Only final encoder state is handed to writer. Prediction concerns vocabulary tokens, not physical measurements.",
+    "acceptance_criteria": "Three ordered source words, four checking answers including EOS; training reference is not claimed generated output. Locally rendered by observatory in generate_sensor_analogy_diagrams.py.",
+    "prohibited_content": "Sleepy, fabricated observations, invented model success, attention already implemented, writer access to every source state.",
+    "alt_text": "An ordered log becomes a briefing and a likely report; the actual source the cat sat is checked against on the mat eos."
   }
 ]

@@ -8,6 +8,9 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from real_text_embeddings import (
+    animate_embedding_routing, draw_embedding_routing, plot_embedding_routing, record_embedding_routing,
+)
 
 
 HERE = Path(__file__).resolve().parent
@@ -62,7 +65,7 @@ def profile_capture(namespace: dict[str, object], fingerprint: str) -> None:
         raise ValueError("Before and after must describe the same embedding table.")
     if not isinstance(words, list) or not isinstance(losses, list) or not isinstance(seed, int):
         raise TypeError("The lesson must retain its vocabulary, loss history, and seed.")
-    visible_words = ["the", "sleepy", "cat", "sat", "on", "mat", "dog"]
+    visible_words = ["the", "cat", "sat", "on", "mat", "dog"]
     missing = [word for word in visible_words if word not in words]
     if missing:
         raise ValueError(f"Profile capture words are absent from the training vocabulary: {missing}")
@@ -200,6 +203,61 @@ def main() -> None:
         exec(compile(source, f"{NOTEBOOK.name}: code cell {index}", "exec"), namespace)
     profile_capture(namespace, fingerprint)
     window_capture(namespace, fingerprint)
+    routing_capture(namespace, fingerprint)
+
+
+def routing_capture(namespace, fingerprint):
+    with torch.random.fork_rng(devices=[]):
+        torch.manual_seed(namespace["SEED"])
+        untrained = namespace["CBOW"](namespace["vocabulary_size"], namespace["EMBEDDING_WIDTH"])
+    contexts, targets = namespace["CBOWDataLoader"](namespace["cat_window_ids"]).prepare_data()
+    words = namespace["itos"]
+    trace = record_embedding_routing(untrained, contexts[-1:], targets[-1:])
+    image_dir = HERE / "images"
+    metadata = {
+        "SourceFingerprint": fingerprint,
+        "Context": " ".join(words[index] for index in contexts[-1].tolist()),
+        "Answer": words[int(targets[-1])],
+        "Capture": "actual untrained CBOW; fresh SGD on a copy",
+    }
+    figure = plot_embedding_routing(trace, words)
+    save(figure, image_dir / "03a-embedding-forward-backward.png", metadata)
+    animation = animate_embedding_routing(trace, words)
+    animation.save(image_dir / "03a-embedding-forward-backward.gif", writer="pillow", fps=2)
+
+    repeated = record_embedding_routing(untrained, contexts[:1], targets[:1])
+    ids = repeated["contexts"][0].tolist()
+    mean_gradient = repeated["activation_gradients"]["mean"][0, :3]
+    figure, axes = plt.subplots(1, 2, figsize=(15, 6))
+    selected = list(dict.fromkeys(ids))
+    for axis, values, title in (
+        (axes[0], repeated["activation_gradients"]["lookup"][0, :, :3], "Four occurrences receive gradient / 4"),
+        (axes[1], repeated["gradient"][selected, :3], "Repeated the ID adds two contributions into one row"),
+    ):
+        axis.imshow(values.numpy(), cmap="coolwarm", aspect="auto")
+        row_ids = ids if axis is axes[0] else selected
+        axis.set_yticks(range(len(values)), [f"{words[index]} (ID {index})" for index in row_ids])
+        axis.set_xticks(range(3), ["feature 0", "feature 1", "feature 2"])
+        axis.set_title(title)
+        for row in range(values.shape[0]):
+            for column in range(3):
+                axis.text(column, row, f"{values[row, column]:+.6f}", ha="center", va="center", fontsize=10)
+    figure.suptitle("the cat ___ on the -> sat\nSaved IDs route actual gradients; the divisor counts occurrences, not unique words")
+    figure.text(0.5, 0.03, f"Mean gradient first three features: {mean_gradient.tolist()}\n"
+                 "This is a copy-only untrained CBOW pass, not a learned semantic claim.", ha="center")
+    figure.tight_layout(rect=(0, 0.13, 1, 0.90))
+    repeated_metadata = {**metadata, "Context": "the cat on the", "Answer": "sat"}
+    figure.savefig(image_dir / "03a-embedding-gradient-ledger.png", dpi=130, metadata=repeated_metadata)
+    figure.savefig(image_dir / "03a-embedding-gradient-ledger.svg")
+    svg = image_dir / "03a-embedding-gradient-ledger.svg"
+    svg.write_text(
+        "\n".join(line.rstrip() for line in svg.read_text(encoding="utf-8").splitlines()) + "\n",
+        encoding="utf-8",
+    )
+    plt.close(figure)
+    figure = plot_embedding_routing(repeated, words)
+    draw_embedding_routing(figure.axes[0], repeated, words, stage=12)
+    save(figure, image_dir / "03a-embedding-indexed-update.png", repeated_metadata)
 
 
 if __name__ == "__main__":

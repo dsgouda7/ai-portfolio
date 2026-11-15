@@ -241,9 +241,9 @@ class SequenceInspectionTests(unittest.TestCase):
         with torch.random.fork_rng(devices=[]):
             torch.manual_seed(17)
             self.model = EncoderDecoderLM(10, 4, 6)
-        self.words = ["<unk>", "the", "sleepy", "cat", "sat", "on", "mat", "dog", "<bos>", "<eos>"]
-        self.sources = torch.tensor([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
-        self.targets = torch.tensor([[8, 4, 5, 9], [8, 5, 1, 9], [8, 1, 6, 9]])
+        self.words = ["<unk>", "the", "cat", "sat", "on", "mat", "dog", "rug", "<bos>", "<eos>"]
+        self.sources = torch.tensor([[1, 2, 3]])
+        self.targets = torch.tensor([[8, 4, 1, 5, 9]])
 
     def test_order_changes_states_not_stored_profiles_and_keeps_model_read_only(self):
         self.model.train()
@@ -288,7 +288,7 @@ class SequenceInspectionTests(unittest.TestCase):
         output = StringIO()
         with redirect_stdout(output):
             readout = recorder.report_after_training(self.sources, self.targets, [3.0, 2.0], 0.1)
-        self.assertEqual(readout.checked_words, 9)
+        self.assertEqual(readout.checked_words, 4)
         self.assertEqual(set(readout.similarities), {"cat/dog", "cat/mat"})
         for pair, measured in readout.similarities.items():
             left, right = [self.words.index(word) for word in pair.split("/")]

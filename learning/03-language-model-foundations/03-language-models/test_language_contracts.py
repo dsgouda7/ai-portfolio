@@ -1,16 +1,34 @@
 """Offline contracts for shared word-data and training templates."""
 
+import ast
+import json
+from pathlib import Path
 import unittest
 
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 
-from language_data import CBOWDataLoader, SkipGramDataLoader, WindowDataLoader
+from language_data import CAT_WORDS, CBOWDataLoader, SkipGramDataLoader, WindowDataLoader, prepare_sequence_data
 from language_model import TrainableLanguageModel, TrainingRun, WordEmbeddingLanguageModel
 
 
 class WordDataLoaderTests(unittest.TestCase):
+    def test_explicit_three_word_source_preserves_the_whole_cat_continuation(self):
+        words = list(dict.fromkeys(CAT_WORDS))
+        window = torch.tensor([[words.index(word) for word in CAT_WORDS]])
+        source, target = prepare_sequence_data(window, 8, 9, source_width=3)
+        self.assertEqual([words[index] for index in source[0]], ["the", "cat", "sat"])
+        self.assertEqual(target.tolist(), [[8, words.index("on"), words.index("the"), words.index("mat"), 9]])
+        for factory in (CBOWDataLoader, SkipGramDataLoader):
+            with self.assertRaisesRegex(ValueError, "odd width"):
+                factory(window)
+        with self.assertRaisesRegex(ValueError, "odd width"):
+            prepare_sequence_data(window, 8, 9)
+        for width in (0, 6):
+            with self.assertRaisesRegex(ValueError, "source_width"):
+                prepare_sequence_data(window, 8, 9, source_width=width)
+
     def test_objective_pairs_preserve_order_repeated_ids_and_unknown_words(self):
         windows = torch.tensor([[1, 2, 3, 4, 5], [0, 3, 2, 3, 0]])
         before = windows.clone()
@@ -199,6 +217,43 @@ class TrainingTemplateTests(unittest.TestCase):
 
         with self.assertRaisesRegex(RuntimeError, "observer failed"):
             model.train_model(loader, epochs=1, on_epoch_end=failing_observer)
+
+
+class ConsolidatedChapterTests(unittest.TestCase):
+    def test_recurrent_chapter_and_companion_have_the_same_executable_source(self):
+        root = Path(__file__).resolve().parent
+        stem = "03B-counts-to-recurrent-language-models"
+        notebook = json.loads((root / f"{stem}.ipynb").read_text(encoding="utf-8"))
+        code = "\n\n".join(
+            "".join(cell["source"]) for cell in notebook["cells"] if cell["cell_type"] == "code"
+        )
+        notebook_ast = ast.parse(code)
+        companion_ast = ast.parse((root / f"{stem}.py").read_text(encoding="utf-8"))
+        companion_ast.body = companion_ast.body[1:]
+        self.assertEqual(ast.dump(notebook_ast), ast.dump(companion_ast))
+        self.assertEqual(len({cell["id"] for cell in notebook["cells"]}), len(notebook["cells"]))
+
+    def test_recurrent_comparison_reuses_one_window_model_and_fit(self):
+        root = Path(__file__).resolve().parent
+        source = (root / "03B-counts-to-recurrent-language-models.py").read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        self.assertEqual(
+            len([node for node in ast.walk(tree) if isinstance(node, ast.ClassDef) and node.name == "WindowLM"]),
+            1,
+        )
+        window_initializations = [
+            node for node in ast.walk(tree)
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "WindowLM"
+        ]
+        self.assertEqual(len(window_initializations), 1)
+        window_fits = [
+            node for node in tree.body if isinstance(node, ast.For)
+            and any(
+                isinstance(call, ast.Call) and isinstance(call.func, ast.Name) and call.func.id == "window_model"
+                for call in ast.walk(node)
+            )
+        ]
+        self.assertEqual(len(window_fits), 1)
 
 
 if __name__ == "__main__":

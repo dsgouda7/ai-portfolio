@@ -6,6 +6,13 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 
 
+CAT_SENTENCE = "the cat sat on the mat"
+CAT_WORDS = tuple(CAT_SENTENCE.split())
+CAT_FAMILY_WORDS = tuple(dict.fromkeys(
+    (*CAT_WORDS, "dog", "rug", "slept", "purring", "panting"),
+))
+
+
 class WindowDataLoader(ABC):
     # Inherits ABC to require pairing hooks while owning window checks and seeded batching.
     """Split windows once; subclasses choose which words are inputs and answers."""
@@ -93,12 +100,24 @@ class SkipGramDataLoader(WindowDataLoader):
 
 
 def prepare_sequence_data(
-    window_ids: torch.Tensor, bos_id: int, eos_id: int,
+    window_ids: torch.Tensor, bos_id: int, eos_id: int, *, source_width: int | None = None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    WindowDataLoader.validate_window_ids(window_ids)
+    if source_width is None:
+        WindowDataLoader.validate_window_ids(window_ids)
+        source_width = window_ids.shape[1] // 2 + 1
+    else:
+        if not isinstance(window_ids, torch.Tensor):
+            raise TypeError("Word windows must be a tensor of IDs.")
+        if window_ids.ndim != 2 or len(window_ids) == 0:
+            raise ValueError("Sequence windows need a nonempty example and word dimension.")
+        if window_ids.dtype != torch.long:
+            raise TypeError("Word windows must use torch.long IDs.")
+        if bool((window_ids < 0).any()):
+            raise ValueError("Word windows must contain nonnegative IDs.")
+        if not isinstance(source_width, int) or not 1 <= source_width < window_ids.shape[1]:
+            raise ValueError("source_width must leave at least one source and one continuation word.")
     if bos_id < 0 or eos_id < 0 or bos_id == eos_id:
         raise ValueError("Start and stop markers need distinct nonnegative IDs.")
-    source_width = window_ids.shape[1] // 2 + 1
     sources = window_ids[:, :source_width]
     continuations = window_ids[:, source_width:]
     targets = torch.cat([

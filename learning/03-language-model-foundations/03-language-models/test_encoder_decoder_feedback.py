@@ -42,8 +42,8 @@ class EncoderFeedbackTests(unittest.TestCase):
             torch.manual_seed(17)
             self.model = self.model_type(9, 4, 6)
         self.source = torch.tensor([[1, 2, 3]])
-        self.targets = torch.tensor([[7, 4, 5, 8]])
-        self.words = ["<unk>", "the", "sleepy", "cat", "sat", "on", "mat", "<bos>", "<eos>"]
+        self.targets = torch.tensor([[7, 4, 1, 5, 8]])
+        self.words = ["<unk>", "the", "cat", "sat", "on", "mat", "dog", "<bos>", "<eos>"]
 
     def compare(self):
         with redirect_stdout(StringIO()):
@@ -54,7 +54,7 @@ class EncoderFeedbackTests(unittest.TestCase):
         self.assertLess(result.fused_logit_error, 1e-5)
         self.assertLess(result.fused_gradient_error, 1e-5)
         self.assertEqual(len(result.connected.encoder_states), 3)
-        self.assertEqual(len(result.connected.decoder_states), 3)
+        self.assertEqual(len(result.connected.decoder_states), 4)
         for state in result.connected.encoder_states + result.connected.decoder_states:
             self.assertEqual(tuple(state.shape), (1, 1, 6))
         self.assertTrue(all(norm > 0 for norm in result.connected.encoder_gradient_norms))
@@ -117,9 +117,9 @@ class EncoderFeedbackTests(unittest.TestCase):
                 self.model, self.source, self.targets, self.words, epochs=6,
             )
         self.assertEqual(playback.epochs, 6)
-        self.assertEqual(playback.feedback.target_ids[0, :-1].tolist(), [7, 4, 5])
-        self.assertEqual([step.input_id for step in playback.generation], [7, 2, 2])
-        self.assertEqual([step.predicted_id for step in playback.generation], [2, 2, 2])
+        self.assertEqual(playback.feedback.target_ids[0, :-1].tolist(), [7, 4, 1, 5])
+        self.assertEqual([step.input_id for step in playback.generation], [7, 2, 2, 2])
+        self.assertEqual([step.predicted_id for step in playback.generation], [2, 2, 2, 2])
         torch.testing.assert_close(
             playback.generation[0].state_before, playback.feedback.connected.encoder_states[-1],
         )
@@ -173,7 +173,7 @@ class EncoderFeedbackTests(unittest.TestCase):
             for phase, required in (
                 ("encoder", "Current word profile x"), ("handoff", "E3 = D0"),
                 ("teacher", "Next practice input"), ("writer-backward", "gradient at D"),
-                ("update", "cat row after"), ("zero", "PyTorch supplies an all-zero"),
+                ("update", "sat row after"), ("zero", "PyTorch supplies an all-zero"),
                 ("generation", "Generation: construct a hidden state"),
             ):
                 index = next(index for index, value in enumerate(stages) if value[0] == phase)
@@ -313,7 +313,7 @@ class EncoderFeedbackTests(unittest.TestCase):
                     text for axis in figure.axes for text in axis.texts
                 ]
             )
-            for term in ("cat + E2", "<bos> + D0", "Linear: 4 -> 18", "Linear: 6 -> 18",
+            for term in ("sat + E2", "<bos> + D0", "Linear: 4 -> 18", "Linear: 6 -> 18",
                          "same h_t values", "Linear 6 -> 9", "ignored by encode()"):
                 self.assertIn(term, text)
         finally:
@@ -326,17 +326,17 @@ class EncoderFeedbackTests(unittest.TestCase):
             self.model.output.bias[6] = 8
         with redirect_stdout(StringIO()):
             playback = record_state_playback(self.model, self.source, self.targets, self.words)
-        self.assertEqual(playback.feedback.target_ids[0, :-1].tolist(), [7, 4, 5])
-        self.assertEqual([step.input_id for step in playback.generation], [7, 6, 6])
+        self.assertEqual(playback.feedback.target_ids[0, :-1].tolist(), [7, 4, 1, 5])
+        self.assertEqual([step.input_id for step in playback.generation], [7, 6, 6, 6])
         self.assertEqual(teacher_forcing_stages(playback), [
-            ("practice", 0), ("practice", 1), ("practice", 2),
-            ("generation", 0), ("generation", 1), ("generation", 2),
+            ("practice", 0), ("practice", 1), ("practice", 2), ("practice", 3),
+            ("generation", 0), ("generation", 1), ("generation", 2), ("generation", 3),
         ])
         figure, axis = plt.subplots(figsize=(14, 9))
         try:
             draw_teacher_forcing(axis, playback, self.words, 1)
             text = "\n".join(item.get_text() for item in axis.texts)
-            for label in ("Shown now: 'sat'", "Shown now: 'mat'", "Check answer: 'sat'",
+            for label in ("Shown now: 'on'", "Shown now: 'dog'", "Check answer: 'on'",
                           "No reference word is supplied", "hidden state; do not reset it"):
                 self.assertIn(label, text)
         finally:
@@ -347,15 +347,15 @@ class EncoderFeedbackTests(unittest.TestCase):
         with Image.open(TEACHER_FORCING_IMAGE) as image:
             self.assertEqual(image.info["SourceFingerprint"], source_fingerprint())
             self.assertEqual(image.info["TrainingEpochs"], "6")
-            self.assertEqual(json.loads(image.info["TeacherInputs"]), ["<bos>", "sat", "on"])
-            self.assertEqual(json.loads(image.info["CheckingAnswers"]), ["sat", "on", "<eos>"])
+            self.assertEqual(json.loads(image.info["TeacherInputs"]), ["<bos>", "on", "the", "mat"])
+            self.assertEqual(json.loads(image.info["CheckingAnswers"]), ["on", "the", "mat", "<eos>"])
             guesses = json.loads(image.info["GenerationGuesses"])
             generation_inputs = json.loads(image.info["GenerationInputs"])
             self.assertEqual(generation_inputs, ["<bos>"] + guesses[:-1])
             self.assertEqual(json.loads(image.info["TeacherGuesses"])[0], guesses[0])
             self.assertTrue(all(0 <= value <= 1 for value in json.loads(image.info["CorrectWordShares"])))
         with Image.open(TEACHER_FORCING_IMAGE.with_suffix(".gif")) as image:
-            self.assertEqual(image.n_frames, 3 + len(guesses))
+            self.assertEqual(image.n_frames, 4 + len(guesses))
         html = TEACHER_FORCING_IMAGE.with_suffix(".html").read_text(encoding="utf-8")
         self.assertNotIn("https:", html)
         self.assertIn(">Next frame</button>", html)
@@ -369,7 +369,7 @@ class EncoderFeedbackTests(unittest.TestCase):
             self.assertGreaterEqual(image.width, 1800)
             self.assertGreaterEqual(image.height, 1000)
             self.assertEqual(image.info["SourceFingerprint"], source_fingerprint())
-            self.assertEqual(image.info["SourceOnlyWord"], "cat")
+            self.assertEqual(image.info["SourceOnlyWord"], "sat")
             self.assertGreater(float(image.info["ConnectedRowChange"]), 0)
             self.assertEqual(float(image.info["DetachedRowChange"]), 0)
             self.assertEqual(image.info["TrainingEpochs"], "6")
@@ -385,15 +385,15 @@ class EncoderFeedbackTests(unittest.TestCase):
             self.assertGreaterEqual(image.n_frames, len(metadata["Stages"]))
             self.assertLessEqual(image.n_frames, 90)
             self.assertEqual(metadata["SourceFingerprint"], source_fingerprint())
-            self.assertEqual(metadata["Source"], ["the", "sleepy", "cat"])
-            self.assertEqual(metadata["CheckingAnswers"], ["sat", "on", "<eos>"])
+            self.assertEqual(metadata["Source"], ["the", "cat", "sat"])
+            self.assertEqual(metadata["CheckingAnswers"], ["on", "the", "mat", "<eos>"])
             self.assertEqual(metadata["TrainingEpochs"], 6)
             self.assertEqual(metadata["OmittedStateError"], 0)
-            self.assertTrue(1 <= len(metadata["Generated"]) <= 3)
+            self.assertTrue(1 <= len(metadata["Generated"]) <= 4)
             self.assertIn("reset projected memory", metadata["GateMechanics"])
             self.assertTrue(0 <= metadata["FocusCoordinate"] < 48)
             self.assertEqual(metadata["PlaybackView"], "one-token-through-each-layer")
-            self.assertEqual(metadata["EncoderToken"], "cat")
+            self.assertEqual(metadata["EncoderToken"], "sat")
             self.assertEqual(metadata["DecoderToken"], "<bos>")
             self.assertEqual(metadata["RecurrentLayers"], 1)
             self.assertTrue(metadata["GRUOutputEqualsCarriedState"])
@@ -427,8 +427,9 @@ class EncoderFeedbackTests(unittest.TestCase):
         with Image.open(EMBEDDING_LEARNING_IMAGE) as image:
             self.assertEqual(image.info["SourceFingerprint"], source_fingerprint())
             self.assertEqual(image.info["Checkpoint"], "fresh model before training")
-            self.assertGreater(float(image.info["ConnectedCatRowChange"]), 0)
-            self.assertEqual(float(image.info["DetachedCatRowChange"]), 0)
+            self.assertEqual(image.info["SourceOnlyWord"], "sat")
+            self.assertGreater(float(image.info["ConnectedSourceRowChange"]), 0)
+            self.assertEqual(float(image.info["DetachedSourceRowChange"]), 0)
         with Image.open(PROFILE_LEARNING_IMAGE) as image:
             self.assertEqual(image.info["SourceFingerprint"], source_fingerprint())
             self.assertEqual(image.info["TrainingEpochs"], "6")
@@ -450,7 +451,7 @@ class EncoderFeedbackTests(unittest.TestCase):
             {"cell_type": "code", "source": ["value = 1"], "metadata": {},
              "outputs": [], "execution_count": None},
         ]}
-        with TemporaryDirectory() as directory:
+        with TemporaryDirectory(dir=Path(__file__).parent) as directory:
             path = Path(directory) / "notebook.ipynb"
             path.write_bytes((json.dumps(notebook, ensure_ascii=False, indent=1) + "\n").encode("utf-8"))
             refresh_saved_replay_attachment(path, ANIMATION)

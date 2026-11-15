@@ -941,6 +941,191 @@ def write_forward_gif(path: Path, figures: Iterable[Figure], durations: list[int
     )
 
 
+def write_forward_steps(path: Path, gif_path: Path) -> None:
+    """Package the first recorded read with model-specific playback controls."""
+    stages = []
+    with Image.open(gif_path) as image:
+        metadata = json.loads(image.info["comment"])
+        frames = metadata["frames"]
+        if not frames or image.n_frames != len(frames):
+            raise ValueError("The GIF frames do not match their recorded operations.")
+        if "close_show" in frames[0]:
+            kind, comparison = "LSTM", "close_show"
+        elif "close_reset" in frames[0]:
+            kind, comparison = "GRU", "close_reset"
+        else:
+            raise ValueError("Expected a recorded LSTM or GRU forward GIF.")
+        first_read = frames[0]["read_index"]
+        read = next((step for step in metadata["steps"] if step["index"] == first_read), None)
+        if read is None:
+            raise ValueError("The GIF's first read is missing from its recording.")
+        title = f"{kind}: read {first_read} ({read['note']})"
+        for index, frame in enumerate(frames):
+            if frame["read_index"] != first_read or frame["progress"] != 1:
+                continue
+            image.seek(index)
+            buffer = BytesIO()
+            with image.convert("RGBA") as snapshot:
+                crop = None
+                if kind == "LSTM":
+                    crop = (0, round(snapshot.height * .20), snapshot.width, round(snapshot.height * .98))
+                    with snapshot.crop(crop) as diagram:
+                        diagram.save(buffer, format="WEBP", lossless=True, exact=True, method=6)
+                else:
+                    snapshot.save(buffer, format="WEBP", lossless=True, exact=True, method=6)
+            label = f"{title} | operation {frame['phase'] + 1}"
+            if frame[comparison]:
+                label += " | SHOW = 0" if kind == "LSTM" else " | RESET = 0"
+            stages.append({
+                "image": "data:image/webp;base64," + base64.b64encode(buffer.getvalue()).decode("ascii"),
+                "label": label,
+            })
+            if kind == "LSTM":
+                stages[-1].update({
+                    "crop": crop,
+                    "description": (
+                        "SHOW = 0 leaves stored c unchanged, but h becomes zero and the head loses its context."
+                        if frame[comparison] else GIF_CAPTIONS[frame["phase"]]
+                    ),
+                })
+    if len(stages) < 2:
+        raise ValueError("The GIF needs at least two completed stages for its first read.")
+    data = json.dumps(stages, separators=(",", ":"), allow_nan=False).replace("<", "\\u003c")
+    if kind == "LSTM":
+        path.write_text(_lstm_playback_html(title, stages, data), encoding="utf-8", newline="\n")
+        return
+    html = f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{escape(title)}: manual steps</title>
+<style>
+body{{margin:0;background:#0d1b2e;color:#edf3ff;font:16px/1.5 system-ui,sans-serif}}
+main{{max-width:1130px;margin:auto}}nav{{position:sticky;top:0;background:#172941;padding:12px;z-index:1}}
+button{{font:inherit;color:inherit;background:#20364f;border:1px solid #7186a4;border-radius:6px;padding:7px 14px;cursor:pointer}}
+button:disabled{{opacity:.5;cursor:default}}button:focus-visible{{outline:3px solid #ffd172;outline-offset:2px}}
+p{{margin:6px 0}}#status{{color:#ffd172}}#snapshot{{display:block;width:100%;height:auto}}
+</style></head><body><main data-player="{kind.lower()}-forward-steps">
+<nav aria-label="{kind} manual walkthrough">
+<button id="back" type="button" disabled>Back</button>
+<button id="next" type="button">Next stage</button>
+<button id="reset" type="button">Reset</button>
+<p id="status" role="status">Step 1 / {len(stages)} | {escape(stages[0]["label"])}</p>
+<p>Take your time. Nothing advances or moves until you choose another stage.</p>
+</nav>
+<img id="snapshot" src="{stages[0]["image"]}" alt="{escape(stages[0]["label"], quote=True)}">
+<noscript>The controls need JavaScript. Use the notebook's static route map instead.</noscript>
+</main><script id="step-data" type="application/json">{data}</script>
+<script>
+(() => {{
+ const stages=JSON.parse(document.getElementById("step-data").textContent);
+ const image=document.getElementById("snapshot"),status=document.getElementById("status");
+ const back=document.getElementById("back"),next=document.getElementById("next");
+ let index=0;
+ function show(){{
+  image.src=stages[index].image;image.alt=stages[index].label;
+  status.textContent="Step "+(index+1)+" / "+stages.length+" | "+stages[index].label;
+  back.disabled=index===0;next.disabled=index===stages.length-1;
+ }}
+ back.addEventListener("click",()=>{{index=Math.max(0,index-1);show();}});
+ next.addEventListener("click",()=>{{index=Math.min(stages.length-1,index+1);show();}});
+ document.getElementById("reset").addEventListener("click",()=>{{index=0;show();}});
+ document.addEventListener("keydown",event=>{{
+  if(event.key==="ArrowRight"){{event.preventDefault();next.click();}}
+  if(event.key==="ArrowLeft"){{event.preventDefault();back.click();}}
+ }});
+ show();
+}})();
+</script></body></html>
+"""
+    path.write_text(html, encoding="utf-8", newline="\n")
+
+
+def _lstm_playback_html(title: str, stages: list[dict], data: str) -> str:
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{escape(title)}: playback</title>
+<style>
+*{{box-sizing:border-box}}body{{margin:0;background:#0d1b2e;color:#edf3ff;font:15px/1.4 system-ui,sans-serif}}
+main{{max-width:1130px;margin:auto;height:100vh;height:100dvh;display:flex;flex-direction:column}}
+nav{{flex:none;background:#172941;padding:10px 12px}}
+.controls,.timeline{{display:flex;gap:8px;align-items:center;flex-wrap:wrap}}
+button,select{{font:inherit;color:inherit;background:#20364f;border:1px solid #7186a4;border-radius:6px;padding:6px 12px;cursor:pointer}}
+button:disabled{{opacity:.45;cursor:default}}button:focus-visible,select:focus-visible,input:focus-visible{{outline:3px solid #ffd172;outline-offset:2px}}
+#play{{background:#ffd172;color:#17324d;font-weight:650}}
+p{{margin:5px 0}}#status{{color:#ffd172;font-weight:600}}#caption{{font-size:16px;min-height:2.8em}}
+.timeline{{margin-top:7px}}#stage{{flex:1;min-width:120px;accent-color:#ffd172}}label{{white-space:nowrap}}
+#viewport{{flex:1;min-height:0;display:flex;justify-content:center;overflow:hidden}}
+#snapshot{{display:block;width:100%;height:100%;min-height:0;object-fit:contain;object-position:center top}}
+main[data-fit=width] #viewport{{display:block;overflow:auto}}
+main[data-fit=width] #snapshot{{width:100%;height:auto;object-fit:initial}}
+@media(max-width:600px){{nav{{padding:8px}}button,select{{padding:5px 8px}}#caption{{font-size:14px}}}}
+</style></head><body><main data-player="lstm-forward-steps" data-fit="page" data-playing="false">
+<nav aria-label="LSTM playback controls">
+<div class="controls">
+<button id="back" type="button" disabled>Back</button>
+<button id="play" type="button">Play</button>
+<button id="pause" type="button" disabled>Pause</button>
+<button id="reset" type="button">Restart</button>
+<label>Pace <select id="pace"><option value="4000">4 seconds / stage</option><option value="7000">7 seconds / stage</option></select></label>
+<button id="zoom" type="button" aria-pressed="false">Fit width</button>
+</div>
+<div class="timeline"><label for="stage">Stage</label><input id="stage" type="range" min="0" max="{len(stages)-1}" step="1" value="0" aria-label="LSTM operation"></div>
+<p id="status" role="status">Step 1 / {len(stages)} | {escape(stages[0]["label"])}</p>
+<p id="caption" aria-live="polite">{escape(stages[0]["description"])}</p>
+</nav>
+<section id="viewport" aria-label="Diagram scaled to the available space">
+<img id="snapshot" src="{stages[0]["image"]}" alt="{escape(stages[0]["label"], quote=True)}">
+</section>
+<noscript>Playback needs JavaScript. The notebook's static route map remains available.</noscript>
+</main><script id="step-data" type="application/json">{data}</script>
+<script>
+(() => {{
+ const stages=JSON.parse(document.getElementById("step-data").textContent);
+ const root=document.querySelector("main"),image=document.getElementById("snapshot");
+ const back=document.getElementById("back"),play=document.getElementById("play"),pause=document.getElementById("pause");
+ const slider=document.getElementById("stage"),pace=document.getElementById("pace"),zoom=document.getElementById("zoom");
+ let index=0,timer=null;
+ function stop(){{
+  clearTimeout(timer);timer=null;root.dataset.playing="false";play.disabled=false;pause.disabled=true;
+ }}
+ function show(){{
+  image.src=stages[index].image;image.alt=stages[index].label;
+  document.getElementById("status").textContent="Step "+(index+1)+" / "+stages.length+" | "+stages[index].label;
+  document.getElementById("caption").textContent=stages[index].description;
+  slider.value=String(index);root.dataset.index=String(index);back.disabled=index===0;
+  play.textContent=index===stages.length-1?"Replay":"Play";
+ }}
+ function tick(){{
+  index++;show();
+  if(index===stages.length-1){{stop();return;}}
+  timer=setTimeout(tick,Number(pace.value));
+ }}
+ play.addEventListener("click",()=>{{
+  stop();if(index===stages.length-1){{index=0;show();}}
+  root.dataset.playing="true";play.disabled=true;pause.disabled=false;
+  timer=setTimeout(tick,Number(pace.value));
+ }});
+ pause.addEventListener("click",stop);
+ back.addEventListener("click",()=>{{stop();index=Math.max(0,index-1);show();}});
+ document.getElementById("reset").addEventListener("click",()=>{{stop();index=0;show();}});
+ slider.addEventListener("input",()=>{{stop();index=Math.max(0,Math.min(stages.length-1,Number(slider.value)));show();}});
+ pace.addEventListener("change",stop);
+ zoom.addEventListener("click",()=>{{
+  const width=root.dataset.fit!=="width";root.dataset.fit=width?"width":"page";
+  zoom.textContent=width?"Fit page":"Fit width";zoom.setAttribute("aria-pressed",String(width));
+ }});
+ document.addEventListener("keydown",event=>{{
+  if(["INPUT","SELECT"].includes(event.target.tagName))return;
+  if(event.key==="ArrowRight"){{event.preventDefault();stop();index=Math.min(stages.length-1,index+1);show();}}
+  if(event.key==="ArrowLeft"){{event.preventDefault();back.click();}}
+ }});
+ document.addEventListener("visibilitychange",()=>{{if(document.hidden)stop();}});
+ window.addEventListener("pagehide",stop);
+ show();
+}})();
+</script></body></html>
+"""
+
+
 def export_gif(path: Path = GIF) -> None:
     reads = record_reads()
     specifications = gif_frames()
@@ -954,10 +1139,11 @@ def export_gif(path: Path = GIF) -> None:
         path, (gif_figure(reads[frame.read_index - 1], frame) for frame in specifications),
         [frame.duration_ms for frame in specifications], metadata,
     )
+    write_forward_steps(path.with_name(path.stem + "-steps.html"), path)
 
 
 if __name__ == "__main__":
     export_player()
     export_storyboard()
     export_gif()
-    print("Exported the native LSTM player, inline gate-by-gate GIF and static role map.")
+    print("Exported the native LSTM player, manual stages, GIF and static role map.")

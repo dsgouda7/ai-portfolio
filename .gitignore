@@ -32,6 +32,10 @@ env/
 *.pkl
 *.pickle
 data/
+# Generated lesson fixture only; downloaded training corpora remain ignored.
+!learning/03-language-model-foundations/03-language-models/data/
+learning/03-language-model-foundations/03-language-models/data/*
+!learning/03-language-model-foundations/03-language-models/data/03c-cat-reversal-corpus.json
 
 # ── Build / dist ─────────────────────────────────────────────────────────────
 build/

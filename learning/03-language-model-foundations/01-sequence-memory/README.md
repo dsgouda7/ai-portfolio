@@ -42,6 +42,10 @@ how an A3 read updates each gated state, and what the held-out music scores
 do and do not establish. These explanations are not deferred to an optional
 link or left for the reader to infer from a figure.
 
+Section 5's [context-now versus memory-highway explanation](01A-sequence-memory-theory.ipynb#lstm-copy-before-showing)
+separates a clue needed later from the working view used now, before section 6
+opens the gates. Both c and h travel onward; their roles are not fixed lifetimes.
+
 The mathematical spine starts with ordinary gradient descent: which change
 in a shared weight will reduce the D3 prediction loss? The symbolic proof
 lives in the [loss-to-weight sheet](images/01a-rnn-gradient-discovery.png)
@@ -65,32 +69,37 @@ an optional [worked-details reference](01A1-sequence-memory-worked-details.ipynb
 with the [static snapshot](images/01a-gradient-three-cases.png) available separately.
 The main route omits the repeated recorded-values recap and table/image;
 it keeps the chain-rule proof and the numerical examples that explain it.
-The [inline LSTM GIF](images/01a-lstm-forward-walkthrough.gif) plays directly
-in section 6 without JavaScript or a Play button. It follows A3 after D3:
+The [inline LSTM playback walkthrough](images/01a-lstm-forward-walkthrough-steps.html)
+in section 6 starts paused, with Play/Pause, a stage timeline and a four- or
+seven-second pace. It follows A3 after D3:
 input and old h choose the three gate controls and a proposal; KEEP and WRITE
-make c; SHOW makes h; only h enters the note head. Moving contents and dashed
-control signals reveal results only after their inputs arrive. Visited blocks
-and links stay bright; moving markers identify the current operation.
-Spaced lanes and heavier arrows keep connections clear of unrelated blocks.
+make c; SHOW makes h; only h enters the note head. Pausing holds a completed stage indefinitely. Visited blocks and links stay bright,
+and the highlighted operation identifies what changed.
+The diagram fits the available page height; Fit width enlarges it when you want
+to inspect numbers. Repeated image headers are replaced by readable captions
+beside the controls, without removing any diagram contents.
 A SHOW=0 comparison preserves c, then the normal c/h pair continues into D4.
-Both recurrent GIFs explicitly separate the learned **Linear/Dense note head**
+Both manual walkthroughs explicitly separate the learned **Linear/Dense note head**
 from **softmax and next-note selection**. The head maps two h features to three
 actual note scores; only after those arrive do the probabilities and chosen
 note appear. The LSTM example has no head bias; the GRU example includes one.
-The [optional interactive player](01A1-sequence-memory-worked-details.ipynb#lstm-complete-read)
-lives only in the worked-details companion, keeping the main lesson to one GIF.
+The [optional full interactive player](01A1-sequence-memory-worked-details.ipynb#lstm-complete-read)
+retains all three reads and detailed arithmetic in the worked-details companion.
 It retains pause, exact arithmetic and all three reads. It starts paused; explicit
 Play enables motion even when reduced-motion preferences are active.
 
-The [matching GRU GIF](images/01a-gru-forward-walkthrough.gif) uses the same
+The [matching GRU manual walkthrough](images/01a-gru-forward-walkthrough-steps.html) uses the same
 spaced, cumulative style. RESET filters only the proposal's old-h context;
 KEEP preserves old amounts directly; WRITE=1-KEEP admits new content.
 Their blend is the one h read by both the head and the next step. A RESET=0
 comparison preserves the kept branch. The
 [optional interactive GRU board](01A1-sequence-memory-worked-details.ipynb#gru-forward-details)
 retains full forward/backward arithmetic in the companion, not a duplicate
-player in the main route. Both GIFs use recorded values, not fabricated
-animation intermediates.
+player in the main route. Both views use completed frames from the recorded GIFs, not fabricated
+animation intermediates. GRU remains manually stepped; LSTM advances only after
+Play and pauses when hidden. The static PNG route
+maps remain embedded for readers without JavaScript; the original GIF assets
+remain available separately.
 
 [MAI-Image-2.6 generated the blank paper](images/01a-handwritten-notes-prompts.json),
 not the mathematical content. The [shared renderer](handwritten_notes.py)
@@ -378,7 +387,7 @@ questions: a cell updates memory, encoder-decoder wiring assigns reader/writer
 jobs, and optional source attention revisits saved source positions before an
 output. Equal access does not mean equal weight. No attention model is trained
 in 01A; that implementation belongs in
-[03D](../03-language-models/03D-recurrent-encoder-decoder-to-attention.ipynb).
+[03C](../03-language-models/03C-recurrent-encoder-decoder-to-attention.ipynb).
 
 01A now has short native audio players in the learning flow: hear D3, A3 and D4
 separately and as the opening phrase, compare the actual original/reversed inputs,

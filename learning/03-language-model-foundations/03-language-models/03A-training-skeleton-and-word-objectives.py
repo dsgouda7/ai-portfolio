@@ -32,7 +32,8 @@ if str(CHAPTER_DIRECTORY) not in sys.path:
 from real_text_embeddings import read_story_sentences, read_stories, story_sentences, tokenize
 
 INTRO_STORIES = 1_000
-CAT_PROBE = "the sleepy cat sat on the mat"
+from language_data import CAT_SENTENCE, CAT_WORDS
+CAT_PROBE = CAT_SENTENCE
 real_documents = read_story_sentences(INTRO_STORIES)
 # One independent document at the END, not copies inserted among the stories.
 documents = real_documents + [tokenize(CAT_PROBE)]
@@ -103,14 +104,15 @@ print(f"All windows shape: {windows.shape}")
 print(f"Unknown window slots: {(windows == 0).mean():.1%}")
 print("Our cat document, sliding exactly as in the opening image:")
 # Print the last few windows to inspect the cat document
-for row in windows[-3:]:
+cat_window_count = len(id_documents[-1]) - window_width + 1
+for row in windows[-cat_window_count:]:
     print([itos[index] for index in row])
 
 # Convert the windows to PyTorch tensors for model input
 window_ids = torch.tensor(windows, dtype=torch.long)
 
 # Extract the windows corresponding to the last document (the cat document)
-cat_window_ids = window_ids[-3:]
+cat_window_ids = window_ids[-cat_window_count:]
 
 # %% 2.2 - Your turn: Change only the probe width
 probe_width = 3
@@ -204,8 +206,8 @@ cbow_batch_contexts, cbow_batch_targets = next(iter(cbow_dataloader))
 print("CBOW: neighbours -> middle word")
 print(
     "Illustrated cat-document pair:",
-    [itos[index] for index in cbow_contexts[-3].tolist()],
-    "->", itos[cbow_targets[-3]],
+    [itos[index] for index in cbow_contexts[-1].tolist()],
+    "->", itos[cbow_targets[-1]],
 )
 print("Questions:", len(cbow_contexts))
 print("Batch inputs:", tuple(cbow_batch_contexts.shape))
@@ -387,10 +389,10 @@ print("Vocabulary logits:", tuple(untrained_logits.shape))
 # %% 3.1 - Import prediction recording helpers
 from language_validation import ModelProbeRecorder, word_probe
 
-# %% 3.1 - Before training: inspect three familiar questions
+# %% 3.1 - Before training: inspect two familiar questions
 cat_contexts, _ = CBOWDataLoader(cat_window_ids).prepare_data()
 cbow_recorder = ModelProbeRecorder(
-    model, cat_contexts, words=itos, expected_words=("cat", "sat", "on"), name="CBOW",
+    model, cat_contexts, words=itos, expected_words=("sat", "on"), name="CBOW",
 )
 cbow_before_record = cbow_recorder.record_before(show=True)
 embedding_before = cbow_before_record.embeddings
@@ -407,28 +409,28 @@ cbow_validator = CBOWValidator(validation_windows, words=itos)
 validation_loss_before = cbow_validator.record_before(model).loss
 cbow_learning_history = [{
     "epoch": 0, "train_loss": None, "heldout_loss": validation_loss_before,
-    "cat_probability": cbow_before["cat"]["probability"],
-    "cat_rank": cbow_before["cat"]["rank"], "cat_row_shift": 0.0,
+    "on_probability": cbow_before["on"]["probability"],
+    "on_rank": cbow_before["on"]["rank"], "cat_row_shift": 0.0,
 }]
-print("CBOW epoch | practice loss | reserved loss | P(cat) | cat rank | cat row change")
+print("CBOW epoch | practice loss | reserved loss | P(on) | on rank | cat row change")
 print(f"0 | not trained | {validation_loss_before:.4f} | "
-      f"{cbow_before['cat']['probability']:.3%} | {cbow_before['cat']['rank']} | 0")
+      f"{cbow_before['on']['probability']:.3%} | {cbow_before['on']['rank']} | 0")
 
 
 def record_cbow_epoch(epoch, epoch_loss):
     with torch.inference_mode():
-        epoch_cat = word_probe(model(cat_contexts[:1])[0], "cat", words=itos)
+        epoch_on = word_probe(model(cat_contexts[1:2])[0], "on", words=itos)
         cat_row_shift = (
             model.embedding.weight[stoi["cat"]] - embedding_before[stoi["cat"]]
         ).norm().item()
     epoch_heldout = cbow_validator.evaluate(model).loss
     cbow_learning_history.append({
         "epoch": epoch, "train_loss": epoch_loss, "heldout_loss": epoch_heldout,
-        "cat_probability": epoch_cat["probability"], "cat_rank": epoch_cat["rank"],
+        "on_probability": epoch_on["probability"], "on_rank": epoch_on["rank"],
         "cat_row_shift": cat_row_shift,
     })
     print(f"{epoch} | {epoch_loss:.4f} | {epoch_heldout:.4f} | "
-          f"{epoch_cat['probability']:.3%} | {epoch_cat['rank']} | {cat_row_shift:.4f}")
+          f"{epoch_on['probability']:.3%} | {epoch_on['rank']} | {cat_row_shift:.4f}")
 
 
 cbow_run = model.train_model(cbow_dataloader, epochs=10, on_epoch_end=record_cbow_epoch)
@@ -520,19 +522,19 @@ from language_validation import SkipGramValidator
 skipgram_validator = SkipGramValidator(validation_windows, words=itos)
 skipgram_validator.record_before(skipgram_model)
 # each error is treated as given a word, making the neighbors more likely to be predicted
-# which means cat will be associated with all of its neighbors.
+# The instructional window supplies on -> cat / sat / the / mat.
 # during inference we simply pick the top 4 most likely words given a single center word
 skipgram_run = skipgram_model.train_model(skipgram_dataloader, epochs=4)
 skipgram_losses = skipgram_run.losses
 skipgram_seconds = skipgram_run.seconds
 
 with torch.inference_mode():
-    neighbour_logits = skipgram_model(torch.tensor([stoi["cat"]]))
+    neighbour_logits = skipgram_model(torch.tensor([stoi["on"]]))
     predicted_ids = neighbour_logits.topk(4, dim=1).indices[0]
 
 print(f"Skip-gram loss: {skipgram_losses[0]:.4f} -> {skipgram_losses[-1]:.4f}; "
       f"{skipgram_seconds:.1f}s (4 epochs)")
-print("cat ->", [itos[index] for index in predicted_ids.tolist()])
+print("on ->", [itos[index] for index in predicted_ids.tolist()])
 
 # %% 4.2 - Compare Skip-gram validation before and after this run
 skipgram_validation_comparison = skipgram_validator.compare_after(
@@ -559,18 +561,26 @@ display(HTML(_saved_replay_path.read_text(encoding="utf-8")))
 
 # %% 5.1 - Prepare source words and continuation answers
 def prepare_sequence_data(
-    window_ids: torch.Tensor, bos_id: int, eos_id: int,
+    window_ids: torch.Tensor, bos_id: int, eos_id: int, *, source_width: int | None = None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    WindowDataLoader.validate_window_ids(window_ids)
+    if source_width is None:
+        WindowDataLoader.validate_window_ids(window_ids)
+        source_width = window_ids.shape[1] // 2 + 1
+    else:
+        if not isinstance(window_ids, torch.Tensor):
+            raise TypeError("Word windows must be a tensor of IDs.")
+        if window_ids.ndim != 2 or len(window_ids) == 0:
+            raise ValueError("Sequence windows need a nonempty example and word dimension.")
+        if window_ids.dtype != torch.long:
+            raise TypeError("Word windows must use torch.long IDs.")
+        if bool((window_ids < 0).any()):
+            raise ValueError("Word windows must contain nonnegative IDs.")
+        if not isinstance(source_width, int) or not 1 <= source_width < window_ids.shape[1]:
+            raise ValueError("source_width must leave at least one source and one continuation word.")
     if bos_id < 0 or eos_id < 0 or bos_id == eos_id:
         raise ValueError("Start and stop markers need distinct nonnegative IDs.")
-
-    # Split each window into source tokens and continuation tokens.
-    source_width = window_ids.shape[1] // 2 + 1
     sources = window_ids[:, :source_width]
     continuations = window_ids[:, source_width:]
-
-    # Add BOS before and EOS after each continuation.
     targets = torch.cat([
         torch.full((len(window_ids), 1), bos_id, dtype=torch.long, device=window_ids.device),
         continuations,
@@ -583,21 +593,27 @@ EOS_ID = vocabulary_size + 1
 sequence_itos = itos + ["<bos>", "<eos>"] # add the <bos> and <eos> tokens to the vocab
 sequence_vocabulary_size = len(sequence_itos)
 
-# for each window of size 5, use the first 3 tokens as the source and the last 2 as the continuation.
-source_sequences, sequence_targets = prepare_sequence_data(window_ids, BOS_ID, EOS_ID)
+# A separate six-word cutter preserves the same sentence boundaries and vocabulary.
+sequence_window_ids = torch.tensor(make_document_windows(id_documents, 6), dtype=torch.long)
+source_sequences, sequence_targets = prepare_sequence_data(
+    sequence_window_ids, BOS_ID, EOS_ID, source_width=3,
+)
+sequence_validation_windows = prepare_validation_windows(
+    stoi, INTRO_STORIES, reserved_stories=VALIDATION_STORIES, window_width=6,
+)
 sequence_dataloader = WindowDataLoader.batch_tensors(source_sequences, sequence_targets, seed=SEED)
 
 print("Source shape:", tuple(source_sequences.shape))
 print("Target shape:", tuple(sequence_targets.shape))
-print("Source:", [sequence_itos[index] for index in source_sequences[-3].tolist()])
-print("Target:", [sequence_itos[index] for index in sequence_targets[-3].tolist()])
+print("Source:", [sequence_itos[index] for index in source_sequences[-1].tolist()])
+print("Target:", [sequence_itos[index] for index in sequence_targets[-1].tolist()])
 
 
 sequence_batch_inputs, sequence_batch_targets = next(iter(sequence_dataloader))
 print("Sequence batch sources:", tuple(sequence_batch_inputs.shape))
 print("Sequence batch full answers:", tuple(sequence_batch_targets.shape))
-print("Writer sees:", [sequence_itos[index] for index in sequence_targets[-3, :-1].tolist()])
-print("Loss checks:", [sequence_itos[index] for index in sequence_targets[-3, 1:].tolist()])
+print("Writer sees:", [sequence_itos[index] for index in sequence_targets[-1, :-1].tolist()])
+print("Loss checks:", [sequence_itos[index] for index in sequence_targets[-1, 1:].tolist()])
 
 # %% 5.1 - Define the reader, writer, and shared embedding
 class EncoderDecoderLM(TrainableLanguageModel):
@@ -614,7 +630,7 @@ class EncoderDecoderLM(TrainableLanguageModel):
         self.output = nn.Linear(hidden_width, vocabulary_size)
 
     def encode(self, source_ids):
-        # source_ids: e.g. [the, sleepy, cat]                          [B, 3]
+        # source_ids: e.g. [the, cat, sat]                          [B, 3]
         # Look up rows, read them in order. We keep only the final note
         # (the "summary card"), not the note after each word.          [1, B, H]
         # Lookup expands [B, 3] -> [B, 3, D]; GRU keeps its final state [1, B, H].
@@ -622,7 +638,7 @@ class EncoderDecoderLM(TrainableLanguageModel):
         return hidden
 
     def decode(self, decoder_input_ids, hidden):
-        # decoder_input_ids: the words the writer is shown, e.g. [<bos>, sat, on]
+        # decoder_input_ids: the words the writer is shown, e.g. [<bos>, on, the, mat]
         # Starting from the reader's note, write one note per step.    [B, T, H]
         # Lookup [B, T] -> [B, T, D]; recurrence produces [B, T, H] states in order.
         decoder_states, hidden = self.decoder(
@@ -639,17 +655,17 @@ class EncoderDecoderLM(TrainableLanguageModel):
         # 1. Read the source into one summary note.
         hidden = self.encode(source_ids)
         # 2. Teacher forcing: show the writer the CORRECT previous words
-        #    (<bos>, sat, on), dropping the last one, which it never needs to see.
-        #    targets_for_loss() below supplies the matching answers (sat, on, <eos>).
-        # [B, 4] -> [B, 3]: drop the last answer; keep <bos> and previous words.
+        #    (<bos>, on, the, mat), dropping the last one, which it never needs to see.
+        #    targets_for_loss() below supplies the matching answers (on, the, mat, <eos>).
+        # [B, 5] -> [B, 4]: drop the last answer; keep <bos> and previous words.
         logits, _ = self.decode(target_ids[:, :-1], hidden)
         return logits
 
     def targets_for_loss(self, target_ids):
-        # forward() fed the writer target_ids[:, :-1]  -> <bos>, sat, on
-        # so its answers are shifted one step left    -> sat,   on,  <eos>
+        # forward() fed the writer target_ids[:, :-1]  -> <bos>, on, the, mat
+        # so its answers are shifted one step left    -> on, the, mat, <eos>
         # Each input word is marked against the word that should come next.
-        # [B, 4] -> [B, 3]: drop <bos> to align each score with the NEXT token.
+        # [B, 5] -> [B, 4]: drop <bos> to align each score with the NEXT token.
         return target_ids[:, 1:]
 
 # %% 5.3 - Check the input-row teaching route on model copies
@@ -657,8 +673,8 @@ torch.manual_seed(SEED)
 sequence_model = EncoderDecoderLM(
     sequence_vocabulary_size, embedding_width=EMBEDDING_WIDTH, hidden_width=48,
 )
-cat_sources = source_sequences[-3:]
-cat_answers = sequence_targets[-3:]
+cat_sources = source_sequences[-1:]
+cat_answers = sequence_targets[-1:]
 from encoder_decoder_feedback import compare_feedback_routes
 embedding_feedback = compare_feedback_routes(
     sequence_model, cat_sources[:1], cat_answers[:1], sequence_itos,
@@ -666,7 +682,9 @@ embedding_feedback = compare_feedback_routes(
 
 # %% 5.4 - Train the reader/writer; keep reporting separate
 from language_validation import EncoderDecoderProbeRecorder, EncoderDecoderValidator
-sequence_validator = EncoderDecoderValidator(validation_windows, words=sequence_itos)
+sequence_validator = EncoderDecoderValidator(
+    sequence_validation_windows, words=sequence_itos, source_width=3,
+)
 sequence_validator.record_before(sequence_model)
 sequence_recorder = EncoderDecoderProbeRecorder(
     sequence_model, cat_sources, cat_answers, sequence_itos,

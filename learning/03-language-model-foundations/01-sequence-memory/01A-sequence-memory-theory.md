@@ -82,22 +82,48 @@ It does not rewrite memory, restore faded guidance or preserve a clue.
 **Attempt 1: remix everything.** Every RNN read transforms old contents.
 A clue can become harder to recover.
 
-**Attempt 2: just add writes.** An early change survives, but every
-distraction enters too. In the check, D3 A3 D4 A3 and D4 A3 D3 A3
-produce the same final card. A surviving change is not a surviving
-distinction.
+**Attempt 2: keep a running total.** A write is an amount added to memory.
+Adding the same notes in a different order gives the same total:
+D3 A3 D4 A3 and D4 A3 D3 A3 both finish at `[0.80, 3.00]`.
+That total cannot tell us which note came first.
+
+Make the first D3 contribution 0.01 larger and the final total also
+grows by 0.01. The little change survived; the opening's identity did not.
+Keeping a change intact is not enough to keep a useful clue.
 
 **Attempt 3: select.** Keep useful old amounts and reject unwanted writes.
 Other memory numbers can still change.
 
-Long short-term memory (LSTM) adds a **cell state**: a separate fixed-size
-running store of computed memory numbers. A controlled view of that store
-supplies current context. Quieting the message should not rub out the notecard.
+### Two jobs: context for now, a memory highway for later
 
-Now name them: **c is the stored contents; h is the exposed view**.
-Both continue onward. The improvement is a controlled carry/update route
-and separate readout, not extra capacity alone. Selected old contents
-can pass onward without being remixed and squeezed again.
+Imagine a much longer repeat-the-opening phrase: D3, then many middle
+notes, then the request to repeat D3. Each new note needs processing now.
+The opening clue must also survive reads where it is not needed yet.
+**Not needed right now does not mean safe to forget.**
+
+Long short-term memory (LSTM) separates what to carry from what to use:
+
+- **Cell state c is the memory highway:** a fixed-size store of computed
+  clues passed between reads. KEEP and WRITE control what stays and joins.
+- **Hidden state h is the working view:** SHOW controls how much of a
+  bounded view of c is exposed. The note head reads h, not c directly.
+
+Think of c as the cargo on a through-train, and h as the local truckload serving the current stop.
+KEEP and WRITE decide what stays on the train and what fresh cargo joins; SHOW prepares the local delivery.
+The prediction head is the store using that delivery to choose the next note.
+Serving one stop need not empty the train, and new notes can supply cargo for later stops.
+
+Both continue onward; h also helps choose the next read's controls.
+These are roles, not fixed lifetimes: c can change now, and h can carry
+old clues.
+
+**The highway needs learned controls, not just another store.** Different
+weight sets propose new content and choose KEEP, WRITE and SHOW.
+KEEP can learn to protect the D3 clue while middle A3 notes arrive.
+Later prediction errors teach which clues deserve to survive.
+These are parallel computations, often packed into separate blocks of
+larger matrices, not necessarily extra stacked layers.
+Weak KEEP settings can still wear a clue down.
 
 **Complaint:** how do these two roles cooperate during one read?
 
@@ -109,8 +135,9 @@ Think of three learned volume controls, one setting per memory number:
 **KEEP** admits old contents, **WRITE** admits proposed new contents,
 and **SHOW** controls the working view.
 
-The note and old h choose these settings together using shared weights;
-the gates do not feed through one another. Follow the notebook's inline GIF,
+The note and old h feed distinct weight sets for the proposal and each gate.
+Each set is reused across reads; the gates do not feed through one another.
+Follow the notebook's Play/Pause walkthrough and stage timeline,
 whose initialized weights demonstrate mechanics, not trained musical skill:
 
 1. Input and old h choose controls and proposed content.
@@ -124,7 +151,7 @@ direct choices of the next note.
 KEEP and WRITE are independent; the signed proposal is content, not a
 fourth gate.
 
-The SHOW=0 preview hides h without erasing c. It changes one read only;
+The SHOW=0 comparison hides h without erasing c. It changes one read only;
 continuation restores the recorded run. A genuinely changed h could
 alter later controls.
 
@@ -137,6 +164,7 @@ readout can still saturate.
 
 A gated recurrent unit (GRU) carries one h, used by both the head and the next read.
 Picture a whiteboard with selected areas protected.
+The matching Next/Back walkthrough stays on each operation until you move it.
 
 KEEP preserves part of old h. WRITE is its complement: keeping less
 admits more proposed content. The blend has no final tanh, so kept
@@ -179,4 +207,4 @@ recall.
 Next, [01B](01B-sequence-memory-pytorch-lab.ipynb) asks whether padded
 blanks can rewrite memory after the last real note.
 
-**Memory is current context; learning shapes the shared rules that keep it useful.**
+**Memory carries clues between reads; learning shapes the shared rules for keeping and using them.**

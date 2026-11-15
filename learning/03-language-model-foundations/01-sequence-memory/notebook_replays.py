@@ -16,12 +16,18 @@ from PIL import Image
 HERE = Path(__file__).resolve().parent
 ERROR_FEEDBACK_FILE = "01a-gradient-three-cases.html"
 LSTM_FORWARD_FILE = "01a-lstm-forward-walkthrough.html"
+FORWARD_STEP_FILES = (
+    "01a-lstm-forward-walkthrough-steps.html",
+    "01a-gru-forward-walkthrough-steps.html",
+)
 SEQUENCE_STORYBOARD_FILES = ("01a-lstm-sequence-storyboard.html", "01a-gru-sequence-storyboard.html")
 NATIVE_PLAYER_MARKERS = {
     ERROR_FEEDBACK_FILE: "gradient-three-cases",
     LSTM_FORWARD_FILE: "lstm-forward-walkthrough",
     SEQUENCE_STORYBOARD_FILES[0]: "lstm-sequence-storyboard",
     SEQUENCE_STORYBOARD_FILES[1]: "gru-sequence-storyboard",
+    FORWARD_STEP_FILES[0]: "lstm-forward-steps",
+    FORWARD_STEP_FILES[1]: "gru-forward-steps",
 }
 REPLAY_FILES = (
     "01a-backprop-saved-cards.html",
@@ -34,6 +40,7 @@ REPLAY_FILES = (
     ERROR_FEEDBACK_FILE,
     LSTM_FORWARD_FILE,
     *SEQUENCE_STORYBOARD_FILES,
+    *FORWARD_STEP_FILES,
 )
 EMBED_VERSION = 1
 NOTEBOOK_SIZE_LIMIT = 65_000_000
@@ -112,11 +119,17 @@ def _packed_html(raw: bytes) -> str:
 
 
 def _player_height(filename: str) -> int:
+    if filename in FORWARD_STEP_FILES:
+        return 780 if filename == FORWARD_STEP_FILES[0] else 1350
     if filename in SEQUENCE_STORYBOARD_FILES:
         return 900
     if filename == LSTM_FORWARD_FILE:
         return 1200
     return 1400 if filename == ERROR_FEEDBACK_FILE else 1050 if "musical" in filename else 740
+
+
+def _player_height_css(filename: str) -> str:
+    return "clamp(520px,85vh,850px)" if filename == FORWARD_STEP_FILES[0] else f"{_player_height(filename)}px"
 
 
 def saved_replay(filename: str, *, images_directory: Path | None = None) -> HTML:
@@ -131,12 +144,12 @@ def saved_replay(filename: str, *, images_directory: Path | None = None) -> HTML
             raise ValueError("The saved tracker does not contain its interactive player.")
     else:
         packed = _packed_html(raw)
-    height = _player_height(filename)
+    height = _player_height_css(filename)
     title = filename.removesuffix(".html").replace("01a-", "").replace("-", " ")
     return HTML(
         f'<iframe title="{escape(title, quote=True)}" sandbox="allow-scripts" '
         f'srcdoc="{escape(packed, quote=True)}" '
-        f'style="display:block;width:100%;height:{height}px;border:0;background:white" '
+        f'style="display:block;width:100%;height:{height};border:0;background:white" '
         f'data-saved-replay="{filename}"></iframe>'
     )
 
@@ -165,7 +178,7 @@ def refresh_embedded_replays(notebook: dict, *, images_directory: Path | None = 
         )
         if (replay.get("source_sha256") == digest and replay.get("embed_version") == EMBED_VERSION
                 and output_html.startswith("<iframe ")
-                and f"height:{_player_height(filename)}px" in output_html
+                and f"height:{_player_height_css(filename)}" in output_html
                 and replay.get("output_sha256") == hashlib.sha256(output_html.encode()).hexdigest()):
             continue
         html = saved_replay(filename, images_directory=directory).data

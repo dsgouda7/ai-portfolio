@@ -1,0 +1,56 @@
+[
+  {
+    "filename": "03-evo-01-model-evolution-map.png",
+    "semantic_anchor": "shared-word-route",
+    "aspect_ratio": "16:9",
+    "prompt": "The cat sentence stays fixed while counts, windows, recurrence and source access answer different questions.",
+    "acceptance_criteria": "Use the canonical cat words; keep causal routes and source positions explicit.",
+    "prohibited_content": "No fabricated probabilities, gradients or performance; no digit or color-clue story.",
+    "alt_text": "The cat sentence stays fixed while counts, windows, recurrence and source access answer different questions."
+  },
+  {
+    "filename": "03-evo-02-fixed-window-blind-spot.png",
+    "semantic_anchor": "animal-outside-window",
+    "aspect_ratio": "16:9",
+    "prompt": "Cat and dog prefixes share on the mat but require purring and panting; the three-word window loses the animal clue.",
+    "acceptance_criteria": "Use the canonical cat words; keep causal routes and source positions explicit.",
+    "prohibited_content": "No fabricated probabilities, gradients or performance; no digit or color-clue story.",
+    "alt_text": "Cat and dog prefixes share on the mat but require purring and panting; the three-word window loses the animal clue."
+  },
+  {
+    "filename": "03-evo-03-fading-notecard.png",
+    "semantic_anchor": "running-context-boundary",
+    "aspect_ratio": "16:9",
+    "prompt": "The cat clue passes through successive running states; fading is conceptual rather than measured.",
+    "acceptance_criteria": "Use the canonical cat words; keep causal routes and source positions explicit.",
+    "prohibited_content": "No fabricated probabilities, gradients or performance; no digit or color-clue story.",
+    "alt_text": "The cat clue passes through successive running states; fading is conceptual rather than measured."
+  },
+  {
+    "filename": "03-evo-04-one-card-bottleneck.png",
+    "semantic_anchor": "fixed-summary-access",
+    "aspect_ratio": "16:9",
+    "prompt": "A reader processes the full cat sentence but passes only its final summary to a writer asked to reverse the words.",
+    "acceptance_criteria": "Use the canonical cat words; keep causal routes and source positions explicit.",
+    "prohibited_content": "No fabricated probabilities, gradients or performance; no digit or color-clue story.",
+    "alt_text": "A reader processes the full cat sentence but passes only its final summary to a writer asked to reverse the words."
+  },
+  {
+    "filename": "03-evo-05-writer-looks-back.png",
+    "semantic_anchor": "source-state-access",
+    "aspect_ratio": "16:9",
+    "prompt": "A writer can query all six contextual reader states; repeated the tokens occupy distinct source positions.",
+    "acceptance_criteria": "Use the canonical cat words; keep causal routes and source positions explicit.",
+    "prohibited_content": "No fabricated probabilities, gradients or performance; no digit or color-clue story.",
+    "alt_text": "A writer can query all six contextual reader states; repeated the tokens occupy distinct source positions."
+  },
+  {
+    "filename": "03-evo-06-practice-vs-generation.png",
+    "semantic_anchor": "previous-word-alignment",
+    "aspect_ratio": "16:9",
+    "prompt": "Correct previous words and hypothetical generated words give different inputs while reversing the same cat sentence.",
+    "acceptance_criteria": "Use the canonical cat words; keep causal routes and source positions explicit.",
+    "prohibited_content": "No fabricated probabilities, gradients or performance; no digit or color-clue story.",
+    "alt_text": "Correct previous words and hypothetical generated words give different inputs while reversing the same cat sentence."
+  }
+]

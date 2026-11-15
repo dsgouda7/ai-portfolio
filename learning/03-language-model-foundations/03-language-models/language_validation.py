@@ -185,21 +185,21 @@ class SequenceLearningReadout:
 
 
 class EncoderDecoderProbeRecorder(ModelProbeRecorder):
-    # Specializes snapshot/reporting for the same three cat windows; never owns optimization.
+    # Specializes snapshot/reporting for a fixed source and its continuation.
     def __init__(self, model: ProbeModel, sources: torch.Tensor, targets: torch.Tensor, words: Sequence[str]):
         super().__init__(
             model, sources, target_ids=targets, words=words,
-            expected_words=("sat", "mat"), positions=((0, 0), (2, 1)),
-            labels=("Next 'sat' after 'the sleepy cat' + start",
-                    "Next 'mat' after 'cat sat on' + correct previous 'the'"),
+            expected_words=("on", "mat"), positions=((0, 0), (0, 2)),
+            labels=("Next 'on' after 'the cat sat' + start",
+                    "Next 'mat' after 'the cat sat' + correct previous 'the'"),
         )
         self.history: list[dict[str, float | int | None]] = []
 
     def record_before(self, *, show: bool = False) -> ModelProbeSnapshot:
         snapshot = super().record_before(show=show)
-        probability = snapshot.probes["sat"]["probability"]
+        probability = snapshot.probes["on"]["probability"]
         self.history = [{
-            "epoch": 0, "train_loss": None, "sat_probability": probability, "embedding_shift": 0.0,
+            "epoch": 0, "train_loss": None, "on_probability": probability, "embedding_shift": 0.0,
         }]
         print("Epoch | practice loss | correct first-word share | input-table movement")
         print(f"0 | not trained | {probability:.3%} | 0")
@@ -209,11 +209,11 @@ class EncoderDecoderProbeRecorder(ModelProbeRecorder):
         if self.before is None or self.target_ids is None:
             raise RuntimeError("Record the reader/writer's baseline before monitoring epochs.")
         with torch.inference_mode():
-            probe = word_probe(self.model(self.input_ids[:1], self.target_ids[:1])[0, 0], "sat", self.words)
+            probe = word_probe(self.model(self.input_ids[:1], self.target_ids[:1])[0, 0], "on", self.words)
             shift = (self.model.embedding.weight - self.before.embeddings).norm().item()
         self.history.append({
             "epoch": epoch, "train_loss": epoch_loss,
-            "sat_probability": probe["probability"], "embedding_shift": shift,
+            "on_probability": probe["probability"], "embedding_shift": shift,
         })
         print(f"{epoch} | {epoch_loss:.4f} | {probe['probability']:.3%} | {shift:.4f}")
 
@@ -468,11 +468,16 @@ class SkipGramValidator(ModelValidator):
 
 class EncoderDecoderValidator(ModelValidator):
     # Inherits read-only evaluation and reporting; supplies teacher-forced next-token answers.
-    def __init__(self, windows: torch.Tensor, *, words: Sequence[str], batch_size: int = 512):
+    def __init__(
+        self, windows: torch.Tensor, *, words: Sequence[str], batch_size: int = 512,
+        source_width: int | None = None,
+    ):
         if "<bos>" not in words or "<eos>" not in words:
             raise ValueError("Reader/writer validation needs start and stop markers.")
         super().__init__(
-            *prepare_sequence_data(windows, words.index("<bos>"), words.index("<eos>")),
+            *prepare_sequence_data(
+                windows, words.index("<bos>"), words.index("<eos>"), source_width=source_width,
+            ),
             words=words, name="Encoder-decoder",
             description="Teacher-forced next-token validation, including stop. "
                         "Correct previous words are supplied; this is not free-running generation.",

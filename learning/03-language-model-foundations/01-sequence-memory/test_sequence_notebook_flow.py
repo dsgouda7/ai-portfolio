@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 import unittest
 
+from notebook_replays import FORWARD_STEP_FILES
 from PIL import Image
 from sequence_music_comparison import RNNSequenceModel, LSTMSequenceModel, GRUSequenceModel
 
@@ -97,7 +98,7 @@ class SequenceNotebookFlowTests(unittest.TestCase):
             if cell["cell_type"] == "code":
                 ast.parse("".join(cell["source"]))
 
-    def test_main_gifs_keep_interactive_replays_in_companion(self):
+    def test_main_manual_steps_are_embedded_with_static_fallbacks_and_full_companion_replays(self):
         players = {
             cell["metadata"]["saved_replay"]["file"]: cell
             for cell in self.main["cells"] if "saved_replay" in cell.get("metadata", {})
@@ -113,30 +114,35 @@ class SequenceNotebookFlowTests(unittest.TestCase):
         for name in (lstm, gru):
             self.assertIn(name, companion_players)
             self.assertIn(f'data-saved-replay="{name}"', "".join(companion_players[name]["source"]))
+        for name in FORWARD_STEP_FILES:
+            self.assertIn(name, players)
+            self.assertIn(f'data-saved-replay="{name}"', "".join(players[name]["source"]))
+            self.assertEqual(players[name]["cell_type"], "markdown")
         text = "\n".join("".join(cell["source"]) for cell in self.main["cells"]
                          if cell["cell_type"] == "markdown" and "saved_replay" not in cell["metadata"])
         self.assertIn("not one architecture's states literally glued together", text)
         self.assertIn("not raw notes", text)
         intro = self.cells["main-lstm-story-intro"]
         source = "".join(intro["source"])
-        filename = "01a-lstm-forward-walkthrough.gif"
-        self.assertIn(f"](attachment:{filename})", source)
         self.assertIn("01A1-sequence-memory-worked-details.ipynb#lstm-complete-read", source)
-        self.assertNotIn("optional player below", source)
-        self.assertNotIn("<details", source.split(f"attachment:{filename}", 1)[0])
-        with Image.open(BytesIO(base64.b64decode(intro["attachments"][filename]["image/gif"]))) as image:
-            self.assertEqual(image.format, "GIF")
-            self.assertTrue(image.is_animated)
+        self.assertIn("Play", source)
+        self.assertNotIn("](attachment:01a-lstm-forward-walkthrough.gif)", source)
         gru_intro = self.cells["main-gru-intuition"]
         gru_source = "".join(gru_intro["source"])
-        filename = "01a-gru-forward-walkthrough.gif"
-        self.assertIn(f"](attachment:{filename})", gru_source)
-        self.assertNotIn("<details", gru_source.split(f"attachment:{filename}", 1)[0])
+        self.assertIn("Next stage", gru_source)
+        self.assertNotIn("](attachment:01a-gru-forward-walkthrough.gif)", gru_source)
         self.assertIn("01A1-sequence-memory-worked-details.ipynb#gru-forward-details",
                       "".join(self.cells["main-gru-steps"]["source"]))
-        with Image.open(BytesIO(base64.b64decode(gru_intro["attachments"][filename]["image/gif"]))) as image:
-            self.assertEqual(image.format, "GIF")
-            self.assertTrue(image.is_animated)
+        order = [cell["id"] for cell in self.main["cells"]]
+        for kind, filename in zip(("lstm", "gru"), FORWARD_STEP_FILES, strict=True):
+            fallback = self.cells[f"main-{kind}-steps"]
+            image_name = f"01a-{kind}-forward-walkthrough.png"
+            self.assertIn(f"](attachment:{image_name})", "".join(fallback["source"]))
+            raw = base64.b64decode(fallback["attachments"][image_name]["image/png"])
+            self.assertEqual(raw, (HERE / "images" / image_name).read_bytes())
+            with Image.open(BytesIO(raw)) as image:
+                self.assertEqual(image.format, "PNG")
+            self.assertLess(order.index(players[filename]["id"]), order.index(fallback["id"]))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,14 @@
+[
+  {
+    "filename": "03c-encoder-decoder-animation-base.png",
+    "model": "MAI-Image-2.6",
+    "semantic_anchor": "reader-context-writer-teacher",
+    "aspect_ratio": "16:9",
+    "width": 1536,
+    "height": 864,
+    "prompt": "Create a polished, warm, visual-first textbook illustration as an UNDERLAY for a real encoder-decoder teaching animation. Use an ivory paper background, subtle hand-drawn ink, watercolor teal and amber, and soft editorial shadows. Wide landscape composition. Along the far left edge show a small friendly blue reading desk with an unmarked input paper roll; along the far right edge show a small amber writing desk with an unmarked output paper roll. At the bottom right corner show a small open teacher's answer book with completely blank pages. In the center behind the main scene show a very subtle blank courier notecard, suggesting information passing from reader to writer. Keep most of the canvas light, spacious and uncluttered: the actual words, state vectors, boxes, connections and moving indicators will be added by verified software. Keep the top 20 percent and bottom 20 percent especially clear for captions and word chips. The main overlay panels will occupy x=80..560 and x=970..1450, y=250..610, so do not paint meaningful detailed objects inside those regions. This artwork is a calm supporting setting, not a diagram that invents neural computations. No people are necessary.",
+    "acceptance_criteria": "A beautiful restrained ivory/teal/amber educational illustration with a small reading motif on the left, a writing motif on the right, and a teacher-book motif at the bottom right. Large pale blank areas are available for deterministic labels. The image contains no semantic arrows, no fabricated model outputs and no written content.",
+    "prohibited_content": "Any letters, words, numbers, equations, watermarks, logos, charts, probabilities, gradients, neural-node diagrams, extra instructional panels, dark backgrounds, dense decoration, or illegible pseudo-writing.",
+    "alt_text": "MAI-generated blank reader, courier-note, writer and teacher-book setting. All instructional words, states and playback are overlaid from actual model recordings."
+  }
+]
