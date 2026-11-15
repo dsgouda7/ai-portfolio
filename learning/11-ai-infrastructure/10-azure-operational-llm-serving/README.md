@@ -45,6 +45,9 @@ chapter was authored.
 
 This chapter composes mechanisms owned elsewhere; it does not reteach them:
 
+- [Real pretrained-model GPU serving](../07-inference-systems/real-llm-serving-lab.ipynb)
+  owns actual model execution, token-cache measurements, context limits and prefix
+  reuse. The substituted backend in this operational chapter is not that model server.
 - [Fine-tuning comparison and release evidence](../../06-llm-finetuning/03-llm-finetuning-comparison-and-decision.ipynb)
 - [Gateway routing, rate limiting, fallback, and caching](../../09-llm-gateway/02-gateway-routing-resilience-lab.ipynb)
 - [Quantized artifacts and backend compatibility](../06-quantization/quantization-in-depth.ipynb)

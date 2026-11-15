@@ -46,6 +46,14 @@ For exploratory third-party course material, see [playground/](../playground/).
 -> 12 role synthesis
 ```
 
+## Serving an Existing LLM
+
+For an actual pretrained-model-serving milestone after the stated prerequisites,
+use Stage 11's [Real GPU LLM Serving Lab](11-ai-infrastructure/07-inference-systems/real-llm-serving-lab.ipynb).
+It requires Linux/WSL and NVIDIA hardware, does not require a fine-tuned checkpoint,
+and measures caching, native memory/context limits and concurrent requests.
+Its GPU results remain unvalidated in checked-in source; protocol fixtures are not GPU benchmarks.
+
 ## Returning-Reader Shortcut
 
 If neural-network mechanics are familiar and only the PyTorch contract is rusty, run

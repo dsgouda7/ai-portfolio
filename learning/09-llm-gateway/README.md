@@ -41,6 +41,14 @@ savings are claimed. Circuit breakers remain a forward boundary until measured. 
 batching, KV-cache management, GPU scheduling, and serving backpressure continue in the AI
 Infrastructure track.
 
+Do not confuse three caches: saving earlier attention work during one generation
+(KV cache), reusing an identical input beginning across requests (prefix caching),
+and returning a saved whole answer without running the model (response caching).
+The first two are measured in the
+[real GPU serving lab](../11-ai-infrastructure/07-inference-systems/real-llm-serving-lab.ipynb);
+the response-cache controls belong to this gateway chapter. Disabling prefix
+caching in the engine does not disable its within-generation KV cache.
+
 ## Simulation Labels
 
 | Simulation | Mechanics built and measured | Capability earned | Evidence boundary |

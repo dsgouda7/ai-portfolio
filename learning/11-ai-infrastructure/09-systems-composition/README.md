@@ -6,6 +6,12 @@
 **Current:** Required systems-composition bridge  
 **Next:** [Azure Operational LLM Serving](../10-azure-operational-llm-serving/README.md)
 
+For actual pretrained-model measurements, first use the
+[real GPU serving lab](../07-inference-systems/real-llm-serving-lab.ipynb).
+It distinguishes per-request context limits, shared KV capacity, and the number
+of actively scheduled sequences. None of those alone bounds the waiting HTTP queue:
+that unresolved problem motivates the composition work here.
+
 Adding replicas sounds like a serving fix. It is not a fix when an upstream concurrency gate still
 serializes requests, when queues grow without admission control, or when no layer owns the signal
 that should trigger scaling.

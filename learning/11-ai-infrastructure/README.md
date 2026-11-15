@@ -22,10 +22,15 @@
 | 04 | FlashAttention Internals | 60% of attention time at S=512 → why and how to fix it | IO complexity, tiling algorithm, online softmax, SDPA dispatch |
 | 05 | Distributed Training | Riverside 70B grant + 4 A100s → which parallelism strategy? | DDP, FSDP, tensor parallelism, pipeline parallelism |
 | 06 | Quantization in Depth | Riverside MacBook 16GB → compress the model without breaking it | int8 PTQ, GPTQ, AWQ, GGUF formats, NF4 |
-| 07 | Inference Systems | Riverside 100× traffic spike → make the gateway 10× faster | KV cache, continuous batching, speculative decoding |
+| 07 | [Inference Systems and Real GPU Serving](07-inference-systems/README.md) | Toy mechanisms are not a capacity forecast → measure one actual pretrained model behind an API | KV reuse, real cache tensors, native cache budgets, context limits, concurrency, prefix hits |
 | 08 | Custom Kernels with Triton | 87% of peak HBM bandwidth → write it in Python | Triton programming model, tiled matmul, fused ops, autotuning |
 | 09 | [Systems Composition](09-systems-composition/README.md) | Three replicas, same p95 → which boundary is withholding capacity? | Replica topology, queue ownership, batching, admission, backpressure, scaling signals, SLOs, rollback state |
 | 10 | [Azure Operational LLM Serving](10-azure-operational-llm-serving/README.md) | Riverside adapter → bounded service under concurrency and release changes | Contracts, readiness, admission, deadlines, retries, idempotency, telemetry, blue/green, Azure mapping |
+
+Chapter 07's [real GPU lab](07-inference-systems/real-llm-serving-lab.ipynb) serves an
+unchanged pretrained model; fine-tuning is not a prerequisite. It is authored for
+Linux/WSL and NVIDIA hardware, with GPU results explicitly unvalidated on the
+authoring machine. Its portable HTTP/protocol tests are fixtures, not GPU benchmarks.
 
 Chapter 09 is the required systems-composition bridge between isolated inference mechanisms and an
 operational service. Its deterministic queue fixture demonstrates mechanics, not production
@@ -94,4 +99,7 @@ pip install torch>=2.0 numpy matplotlib transformers
 # Chapter-specific: see each chapter's requirements.txt
 ```
 
-GPU is recommended but not required. All notebooks run on CPU with graceful fallbacks that show the same learning content with reference numbers where live timing is not possible.
+The mechanism notebooks provide CPU/reference paths with their evidence limits.
+The real GPU serving lab deliberately requires Linux/WSL and a CUDA-visible NVIDIA
+GPU: use its separate `setup-serving.sh` and `.venv-serving`. It fails explicitly
+on unsupported hardware instead of substituting reference timings for live results.

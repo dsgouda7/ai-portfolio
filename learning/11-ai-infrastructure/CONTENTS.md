@@ -11,6 +11,7 @@ Locate memory, computation, queue, and ownership limits before changing a traini
 - [Distributed Training](05-distributed-training/distributed-training.ipynb) — Compare ways to divide examples, model state, and computation across devices while accounting for communication.
 - [Quantization in Depth](06-quantization/quantization-in-depth.ipynb) — Store model numbers with fewer bits and measure the accuracy and memory trade-offs of the compressed artifact.
 - [Inference Systems](07-inference-systems/inference-systems.ipynb) — Reuse previous token calculations and share serving work across requests to improve generation capacity.
+- [Real GPU LLM Serving Lab](07-inference-systems/real-llm-serving-lab.ipynb) · [Theory notes](07-inference-systems/real-llm-serving-lab-theory.md) — Serve a pinned pretrained model with vLLM and measure real token-cache memory, context limits, concurrency, prefix reuse, and native cache-budget behavior; Linux/NVIDIA required, GPU results unvalidated in source.
 - [Custom Kernels with Triton](08-triton-kernels/triton-kernels.ipynb) — Write small graphics-card programs and measure how splitting work into blocks or combining steps changes memory movement and execution cost.
 - [Systems Composition](09-systems-composition/README.md) — Find which service boundary prevents added replicas from improving long waits.
 - [Azure Operational LLM Serving](10-azure-operational-llm-serving/README.md) — Test a bounded local serving contract before mapping it to cloud services.
