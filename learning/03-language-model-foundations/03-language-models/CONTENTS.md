@@ -1,20 +1,20 @@
 # Contents: Chapter 03 - Language Models
 
-Follow the failures that lead from counting continuations to a writer that can look back at the input.
+Follow the failures that lead from counting continuations to separate reading/writing and the need to look back at the input.
 
 ## Required route
 
-- [Chapter 03 Route Guide](README.md) — Follow the three lessons from fetching word rows to a writer that can look back.
+- [Chapter 03 Route Guide](README.md) — Follow the three lessons from fetching word rows to separate reading/writing and the motivation for source access.
 - [03A - Training Skeleton and Word Objectives](03A-training-skeleton-and-word-objectives.ipynb) — Follow saved window/profile evidence, optional Skip-gram, and the [compact encoder-decoder preview](03A-training-skeleton-and-word-objectives.ipynb#encoder-decoder-preview): feedback teaches a shared input table; recurrent order leads to an attention prelude.
 - [03A - Theory Notes](03A-training-skeleton-and-word-objectives-theory.md) — Keep lookup, word guessing, running notes, and reading/writing jobs straight.
 - [03B - Counts to Recurrent Language Models](03B-counts-to-recurrent-language-models.ipynb) — Follow controlled cat/dog continuations from counts to ordered windows and recurrent memory, then check a word LSTM's training and causality.
 - [03B - Theory Notes](03B-counts-to-recurrent-language-models-theory.md) — Review what order and carried memory fix, what the state intervention demonstrates, and which limits remain.
-- [03C - Recurrent Reader-and-Writer Models to Attention](03C-recurrent-encoder-decoder-to-attention.ipynb) — Follow the reader/writer handoff, how the answer teaches the encoding and teacher forcing; three compact code cells train the fixed-summary model. End with the need for attention and links to the dedicated Transformer lessons, not an attention implementation.
+- [03C - Recurrent Reader-and-Writer Models to Attention](03C-recurrent-encoder-decoder-to-attention.ipynb) — Follow how continuing one stream motivates separate reading/writing, and how the one-summary handoff then motivates attention. Three compact code cells train the fixed-summary model; attention remains an intuition with links to the dedicated Transformer lessons.
 - [03C - Theory Notes](03C-recurrent-encoder-decoder-to-attention-theory.md) — Review why looking back at source notes differs from remembering one summary and from receiving correct earlier words during practice.
 
 ## Optional comparison lab
 
-- [03C1 - Encoder-Decoder Worked Details](03C1-encoder-decoder-worked-details.ipynb) · [Python](03C1-encoder-decoder-worked-details.py) — Preserve the original full `ReaderWriter`, initialized-role and teacher-input probes, gradient interventions, encoder-only proof, two-model attention benchmark, held-out evaluation and inherited-trainer adapter.
+- [03C1 - Encoder-Decoder Worked Details](03C1-encoder-decoder-worked-details.ipynb) · [Python](03C1-encoder-decoder-worked-details.py) — Preserve the original full `ReaderWriter`, initialized-role and teacher-input probes, gradient interventions, encoder-only proof, two-model attention benchmark, held-out evaluation and inherited-trainer adapter. Use the experiment-first menu after main 03C, or the retained recap for standalone reading.
 - [Word-objective comparison lab](03A-word-objective-comparison-lab.ipynb) · [Python](03A-word-objective-comparison-lab.py) — Run the original three-model experiment independently; inspect geometry, held-out curves, shortlists and best/final checkpoints. The appendix preserves the full teacher-forcing reference.
 - [Lab checks](test_word_objective_comparison_lab.py) — Verify fresh-kernel dependencies, companion parity and exact training equivalence with the inline model definitions.
 

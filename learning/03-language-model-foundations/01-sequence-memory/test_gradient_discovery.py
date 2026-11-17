@@ -1,6 +1,7 @@
 """Verify the loss-to-weight proof and its recorded numerical example."""
 
 import importlib.util
+import json
 import math
 from pathlib import Path
 import unittest
@@ -17,6 +18,24 @@ from gradient_discovery import (
 
 
 class GradientDiscoveryTests(unittest.TestCase):
+    def test_notepad_values_are_rounded_autograd_path_gains(self):
+        manifest = Path(__file__).parent / "images" / "01a-rnn-notepad-prompts.json"
+        entries = json.loads(manifest.read_text(encoding="utf-8"))
+        values = next(entry["calculation_provenance"] for entry in entries
+                      if "calculation_provenance" in entry)
+        for case in values["cases"]:
+            for hops, displayed in zip(values["handoffs"], case["display"], strict=True):
+                with self.subTest(weight=case["weight"], handoffs=hops):
+                    opening = torch.tensor(.25, dtype=torch.float64, requires_grad=True)
+                    memory = opening
+                    for index in range(hops):
+                        memory = case["weight"] * memory + .001 * (index + 1)
+                    response = torch.autograd.grad(memory, opening)[0].item()
+                    self.assertAlmostEqual(response, case["weight"] ** hops, delta=1e-10)
+                    feedback = values["ending_feedback"] * response
+                    places = len(displayed.partition(".")[2])
+                    self.assertEqual(f"{feedback:.{places}f}", displayed)
+
     def test_linear_feedback_vanishes_or_explodes_without_a_squash(self):
         cases = linear_cases()
         for case in cases:

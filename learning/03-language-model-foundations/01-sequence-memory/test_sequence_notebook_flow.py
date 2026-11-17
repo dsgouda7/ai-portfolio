@@ -98,6 +98,31 @@ class SequenceNotebookFlowTests(unittest.TestCase):
             if cell["cell_type"] == "code":
                 ast.parse("".join(cell["source"]))
 
+    def test_main_feedback_story_embeds_the_notepads_and_defers_the_old_proofs(self):
+        entries = json.loads((HERE / "images" / "01a-rnn-notepad-prompts.json").read_text(encoding="utf-8"))
+        for raw_id, entry in zip(
+            ("main-rnn-saved-card-player", "main-gradient-cases-intro"), entries, strict=True,
+        ):
+            with self.subTest(page=entry["filename"]):
+                cell = self.cells[raw_id]
+                filename = entry["filename"]
+                self.assertIn(f"](attachment:{filename})", "".join(cell["source"]))
+                raw = base64.b64decode(cell["attachments"][filename]["image/png"], validate=True)
+                self.assertEqual(raw, (HERE / "images" / filename).read_bytes())
+                with Image.open(BytesIO(raw)) as image:
+                    self.assertEqual(image.format, "PNG")
+                    self.assertEqual(image.size, (entry["width"], entry["height"]))
+        for cell in self.main["cells"]:
+            for filename in ("01a-rnn-gradient-discovery.png", "01a-rnn-gradient-chain.png"):
+                self.assertNotIn(filename, cell.get("attachments", {}))
+                self.assertNotIn(f"attachment:{filename}", "".join(cell["source"]))
+        main_players = {cell["metadata"]["saved_replay"]["file"] for cell in self.main["cells"]
+                        if "saved_replay" in cell.get("metadata", {})}
+        companion_players = {cell["metadata"]["saved_replay"]["file"] for cell in self.details["cells"]
+                             if "saved_replay" in cell.get("metadata", {})}
+        self.assertNotIn("01a-backprop-saved-cards.html", main_players)
+        self.assertIn("01a-backprop-saved-cards.html", companion_players)
+
     def test_main_manual_steps_are_embedded_with_static_fallbacks_and_full_companion_replays(self):
         players = {
             cell["metadata"]["saved_replay"]["file"]: cell

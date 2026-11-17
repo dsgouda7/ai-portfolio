@@ -1,6 +1,7 @@
 # Authoring Guide — AI Portfolio
 
-> This is the living standard for all authored content under `notes/` and `learning/`.
+> The repository-wide content requirements below apply to generated content throughout this repository.
+> The detailed chapter-authoring standard governs `notes/` and `learning/`.
 > It supersedes both the archived [`genai-authoring-guide.md`](archive/learning-migrations/genai-authoring-guide.md) and [`notes/authoring-guidelines.md`](notes/authoring-guidelines.md).
 > Those documents remain as historical reference; this document is the single source of truth going forward.
 >
@@ -8,6 +9,20 @@
 > - Mechanistic depth — [`learning/04-transformers/02-attention-and-position.ipynb`](learning/04-transformers/02-attention-and-position.ipynb)
 > - Narrative/business framing — [`learning/06-llm-finetuning/01-llm-finetuning-data-techniques.ipynb`](learning/06-llm-finetuning/01-llm-finetuning-data-techniques.ipynb)
 > - Notes chapter — [`notes/03-llm/ch01-transformer-architecture/README.md`](notes/03-llm/ch01-transformer-architecture/README.md)
+
+---
+
+## Repository-wide Content Requirements
+
+All generated explanations, notebook prose, notes, READMEs, and other documentation must meet this bar:
+
+1. **Be intuitive and easy to understand.** Start with a concrete question, familiar example, or visible problem. Build from the reader's stated prerequisites rather than assuming the new idea is already understood.
+2. **Use plain English.** Prefer familiar words, short sentences, and concrete descriptions. Simplify the explanation without weakening technical accuracy.
+3. **Let intuition drive the math.** Explain the problem and how the mechanism helps before introducing a formula. Include only math that clarifies the idea, and explain its symbols in words when they become necessary.
+4. **Earn the technical vocabulary.** Explain what happens and why it is useful in ordinary language first; then introduce the technical name as a label for that understood idea. Do not substitute name-dropping or a list of definitions for an explanation.
+5. **Keep the evolutionary spine visible.** Show what the current approach can do, the specific drawback that remains, and how the next model or technique addresses it. Carry that unresolved problem into the next section or chapter instead of restarting with an unrelated feature tour.
+
+The default teaching order is: **plain-English problem, concrete intuition, mechanism, technical name, necessary math**.
 
 ---
 
@@ -136,7 +151,7 @@ Every chapter opens with three items in a `>` blockquote, in this order:
 
 **Item 2 — Where you are.** One paragraph naming what previous chapters delivered and what gap remains. Named constraint statuses, specific metric numbers.
 
-**Item 3 — Notation.** A single inline sentence listing all symbols used in this chapter:
+**Item 3 — Notation, only when needed.** After the corresponding ideas have been explained in plain English, define the symbols needed for the next step. Do not open with a notation inventory or introduce symbols for ideas the reader has not met. For an already motivated relation, a compact gloss can look like:
 > "$x$ — input feature (`MedInc`); $y$ — true target; $\hat{y} = wx + b$ — model prediction; $N$ — samples; $L$ — MSE loss; $\eta$ — learning rate."
 
 ### 4.2 § 0 — The Challenge

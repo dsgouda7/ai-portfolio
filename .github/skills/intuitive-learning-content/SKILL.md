@@ -1,6 +1,6 @@
 ---
 name: intuitive-learning-content
-description: 'Create or substantially enhance intuitive technical learning notebooks and handwritten theory notes in this AI portfolio. Use when asked to author GenAI, Transformer, ML, agentic-AI, infrastructure, or other educational chapters; restore golden-version learning flow; add diagrams or animations; build complaint-chain and failure-first explanations; create toy-to-real bridges; audit topic coverage; or bring content to Transformer gold-standard quality. Enforces public refinement attempts, continuity across chapters, visual-first pedagogy, minimal necessary math, prove-dont-assert experiments, concise handwritten companions, notebook safety, and executable validation.'
+description: 'Create or substantially enhance intuitive technical learning notebooks and handwritten theory notes in this AI portfolio. Use when asked to author GenAI, Transformer, ML, agentic-AI, infrastructure, or other educational chapters; restore golden-version learning flow; add diagrams or animations; build complaint-chain and failure-first explanations; create toy-to-real bridges; audit topic coverage; or bring content to Transformer gold-standard quality. Enforces plain English before jargon, intuition before math, public refinement attempts, continuity across chapters, visual-first pedagogy, minimal necessary math, prove-dont-assert experiments, concise handwritten companions, notebook safety, and executable validation.'
 argument-hint: 'Describe the learning topic, target notebook or chapter, audience, and desired endpoint.'
 user-invocable: true
 disable-model-invocation: false
@@ -60,6 +60,8 @@ Rules:
 5. **One running example.** Keep the same domain, entities, and data across sections so only the mechanism changes.
 6. **Toy first, real second.** Build an inspectable version, then map it explicitly to production dimensions, configuration, or artifacts.
 7. **Honest boundaries.** A toy result demonstrates mechanics, not production quality, reasoning, or readiness.
+8. **Plain English must be easy to follow.** Use familiar words, concrete examples, and short explanations grounded in the reader's prerequisites. Keep the technical precision; remove avoidable difficulty from the wording.
+9. **Explain before naming.** Describe the problem, what the proposed mechanism does, and why that helps in ordinary language before introducing its technical name. Jargon labels an idea the reader has already met; it does not replace the explanation. Introduce notation only after that intuition, when the math adds clarity.
 
 ## The Golden-Version Essence
 

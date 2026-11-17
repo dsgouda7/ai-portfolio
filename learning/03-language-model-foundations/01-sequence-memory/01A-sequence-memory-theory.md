@@ -50,9 +50,10 @@ change? Negative suggests increasing it; positive suggests decreasing it.
 It is a local rate, not the error itself. Loss can improve before the
 highest-scoring note changes.
 
-The [handwritten proof](images/01a-rnn-gradient-discovery.png) keeps
-`softmax(scores)` as a named block. The numerical check lowers a weight
-with positive feedback and reduces D3 loss.
+The [handwritten page](images/01a-rnn-feedback-notepad.png) follows one
+shared memory rule, then traces the ending's feedback back to that rule.
+The [optional numerical audit](01A1-sequence-memory-worked-details.ipynb#loss-to-weight-worked-audit)
+checks that a small weight change really lowers the D3 loss.
 
 Backward leaves saved values unchanged; weights stay fixed throughout
 the pass. Add contributions from every use of each shared weight,
@@ -62,11 +63,15 @@ update once, then read forward again.
 
 ## 4. Feedback can fade or grow
 
-The [longer-chain proof](images/01a-rnn-gradient-chain.png) follows repeated
-handoffs. Even without tanh, twenty multiplications by 0.8 leave about
-1.15% of the feedback; multiplying by 1.2 amplifies it about 38-fold.
-Tanh adds each read's local response; it did not create the repeated-chain
-problem.
+The [second notepad page](images/01a-rnn-feedback-values-notepad.png)
+shows one teaching message crossing the same kind of link repeatedly:
+
+- Pass 80% each time and the message fades to a whisper.
+- Pass 100% and this linear route keeps the message's size.
+- Boost the current message by 20% each time and it can become a shout.
+
+Tanh can weaken the message too, but the repeated multipliers already
+create the problem without it. A large weight alone does not guarantee growth.
 
 Vanishing means weak guidance reaches an early read. Exploding means
 guidance amplifies along the route. Neither measures notes remembered or
@@ -83,12 +88,12 @@ It does not rewrite memory, restore faded guidance or preserve a clue.
 A clue can become harder to recover.
 
 **Attempt 2: keep a running total.** A write is an amount added to memory.
-Adding the same notes in a different order gives the same total:
-D3 A3 D4 A3 and D4 A3 D3 A3 both finish at `[0.80, 3.00]`.
-That total cannot tell us which note came first.
+Add one more note before asking for the opening. D3 A3 D4 A3 and
+D4 A3 D3 A3 contain the same notes, so adding their fixed writes gives
+the same total. That total cannot tell us which note came first.
 
-Make the first D3 contribution 0.01 larger and the final total also
-grows by 0.01. The little change survived; the opening's identity did not.
+Make an early write a little larger and the final total grows by the
+same amount. The little change survived; the opening's identity did not.
 Keeping a change intact is not enough to keep a useful clue.
 
 **Attempt 3: select.** Keep useful old amounts and reject unwanted writes.

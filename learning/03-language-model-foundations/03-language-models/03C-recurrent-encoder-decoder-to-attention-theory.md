@@ -2,6 +2,15 @@
 
 **Question:** how does an answer's error teach a reader that never chooses the answer itself?
 
+**Keep the thread:** recurrent memory helped us continue a stream. Separating
+listening from speaking lets us answer a complete input in a different order
+and length. But one final note still limits what the writer can check;
+attention adds a route back to source details.
+
+Reading one sequence and producing another is **sequence-to-sequence**, or
+**seq2seq**. Encoder-decoder names the arrangement; GRU names the memory unit
+we chose inside it.
+
 Follow [03C](03C-recurrent-encoder-decoder-to-attention.ipynb) or its
 [Python companion](03C-recurrent-encoder-decoder-to-attention.py).
 The main notebook explains the roles and learning process in plain English, with
@@ -28,6 +37,12 @@ None of these checks measures translation or English-writing ability.
 
 ## 1. Two jobs, not necessarily two layer families
 
+The earlier workflow kept one word stream going. Translation asks for something
+different: finish listening, then speak in the answer's own order and length.
+We do not want each incoming source word to dictate an outgoing answer word.
+That is a reason to separate the two jobs, not a claim that GRUs inherently
+require word-for-word output.
+
 First read the source, then write a separate answer. The encoder is the reader:
 it turns source words into useful contextual notes. The decoder is the writer:
 it uses source context and its previous answer input to make the next writing state.
@@ -37,6 +52,8 @@ Both components use GRUs here. That does not make them the same component.
 They have separate learned weights because retaining source details and using them
 while writing are different jobs. Their word table is shared; their recurrent weights
 are not. The roles could also be implemented with other layer types.
+We share the word table because reversal uses the same vocabulary on both sides;
+translation can use separate input and answer dictionaries.
 
 **Complaint:** what exactly can the reader hand over?
 
@@ -45,6 +62,8 @@ are not. The roles could also be implemented with other layer types.
 Six source words fetch six 24-number word rows. The reader makes a 64-number note
 after each read. Its final note initializes the writer's 64-number state.
 This is not the literal last word, a transcript, or a copied set of reader weights.
+A GRU carries one hidden state. An LSTM carries a hidden state and an additional
+cell state; the missing second state is not a bug in our GRU handoff.
 
 The writer also needs an input that says writing has begun: `<bos>`.
 That word row and source-derived state make its first new writing state.
@@ -53,6 +72,7 @@ The writer changes its own state as it proceeds; it does not rerun the source re
 
 A fixed-width summary can work well. The restriction is that this first writer
 cannot reopen earlier source notes when it needs a detail.
+The split freed the writer's timing, but did not remove this one-note restriction.
 
 **Who says what the right encoding is?** Nobody gives a target note.
 We give the correct answer and grade what the encoder/decoder pair produces.
@@ -104,6 +124,8 @@ Practising with correct history but generating with imperfect history creates
 **exposure bias**. Teacher forcing alone does not teach recovery from every wrong
 history, so check generation separately. One mistake can affect later words
 without necessarily ruining all of them.
+Evaluation mode and disabling gradient recording do not choose the previous
+word. Correct history versus own-guess history is a separate choice.
 
 **Complaint:** correct practice inputs still do not guarantee correct predictions.
 
@@ -113,7 +135,8 @@ At each writing position, check how much probability the scores give the current
 correct answer. Low probability means a larger error. Combine those word errors,
 including the stopping answer.
 
-We train through scores and cross-entropy, not through the spelling of an argmax guess.
+The head returns raw scores, called logits. Cross-entropy handles their normalization
+for grading; we train through those scores, not through a chosen word's spelling.
 Supplying `mat` as the second input does not forgive the first prediction of `cat`.
 Our controlled next-input check holds weights and the first state fixed:
 changing only `mat` to `cat` changes the next computation.
@@ -164,6 +187,10 @@ the decoder's answer, not closer to a supplied target vector.
 
 ## 7. Attention changes access, not the teaching rule
 
+Keep the listening/speaking split; change the handoff so the writer can consult
+source details as it goes. This is the next refinement, not a replacement for
+the reader/writer roles or a requirement to stop using GRUs.
+
 Keep the reader's note after every source word. At each writing step, project the
 current writer state into a query, compare it with those notes, and blend them by
 the match weights. That fresh context helps the writer update and score its answer.
@@ -194,6 +221,9 @@ Whole-answer accuracy fails a row after one wrong word. Token accuracy reveals
 later mistakes hidden by that unit. Practice and generation can tie on whole
 answers while their later histories and token scores differ.
 A bright attention square diagnoses one route; it does not prove why an answer was correct.
+Translation can have several valid answers. Reference phrase-overlap scores such
+as BLEU address that different task; they are not proof that meaning or fluency
+is right, and are not needed to grade an exact reversal.
 
 ## 9. The trainer does not invent reading or writing
 

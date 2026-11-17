@@ -46,15 +46,28 @@ Section 5's [context-now versus memory-highway explanation](01A-sequence-memory-
 separates a clue needed later from the working view used now, before section 6
 opens the gates. Both c and h travel onward; their roles are not fixed lifetimes.
 
-The mathematical spine starts with ordinary gradient descent: which change
-in a shared weight will reduce the D3 prediction loss? The symbolic proof
-lives in the [loss-to-weight sheet](images/01a-rnn-gradient-discovery.png)
-and [longer-chain continuation](images/01a-rnn-gradient-chain.png).
-They keep `softmax(scores)` as a named block rather than expanding its
-probability algebra. The notebook text plugs in recorded forward/backward
-values and checks the direction and effect of one weight update.
-Their [recorder/exporter](gradient_discovery.py) verifies the numbers with
-autograd and finite differences; running it rebuilds both static sheets.
+Sections 3–5 now use two clean handwritten notepad pages as their spine:
+the [shared-rule and backward-feedback story](images/01a-rnn-feedback-notepad.png),
+then [what repeated multipliers do to one message](images/01a-rnn-feedback-values-notepad.png).
+Short plain-English takeaways replace the default probability arrays,
+long substitutions and running-total table. The first page distinguishes
+adding a shared weight's uses from multiplying one backward route.
+The second plugs each chosen weight into the same backward-feedback formula:
+first as two explicit factors, then as powers for ten and twenty handoffs.
+These are calculated linear-path gains, not training measurements,
+prediction errors or numbers of notes remembered. The tanh caveat stays visible.
+
+<a id="gradient-proof-audit-pages"></a>
+
+**Optional gradient proof audits:** the original
+[loss-to-weight sheet](images/01a-rnn-gradient-discovery.png) and
+[longer-chain continuation](images/01a-rnn-gradient-chain.png) remain unchanged.
+Their full numerical substitutions are preserved in the
+[worked-details audits](01A1-sequence-memory-worked-details.ipynb#loss-to-weight-worked-audit),
+alongside the original memory-design explanation. The larger proof PNGs are
+linked from there rather than copied again into the asset-rich companion.
+Their [recorder/exporter](gradient_discovery.py) still verifies the numbers
+with autograd and finite differences and rebuilds those older proof sheets.
 
 Section 9 is a [quick memory-design cheat sheet](01A-sequence-memory-theory.ipynb#sequence-memory-cheat-code):
 RNN rewrites; LSTM stores, then shows; GRU keeps, then blends. Each recipe
@@ -67,8 +80,9 @@ stay in the optional worked-details route.
 The [three-case gradient player](images/01a-gradient-three-cases.html) remains
 an optional [worked-details reference](01A1-sequence-memory-worked-details.ipynb#rnn-gradient-microscope),
 with the [static snapshot](images/01a-gradient-three-cases.png) available separately.
-The main route omits the repeated recorded-values recap and table/image;
-it keeps the chain-rule proof and the numerical examples that explain it.
+The main route uses the two notepad pages and one-line value takeaways.
+The [original saved-card replay](01A1-sequence-memory-worked-details.ipynb#rnn-saved-card-replay)
+and longer numerical substitutions are optional companion material.
 The [inline LSTM playback walkthrough](images/01a-lstm-forward-walkthrough-steps.html)
 in section 6 starts paused, with Play/Pause, a stage timeline and a four- or
 seven-second pace. It follows A3 after D3:
@@ -101,18 +115,30 @@ Play and pauses when hidden. The static PNG route
 maps remain embedded for readers without JavaScript; the original GIF assets
 remain available separately.
 
+For the calculation players,
 [MAI-Image-2.6 generated the blank paper](images/01a-handwritten-notes-prompts.json),
-not the mathematical content. The [shared renderer](handwritten_notes.py)
+not their mathematical content. The [shared renderer](handwritten_notes.py)
 embeds the paper and the [Kalam handwriting font](images/kalam/OFL.txt) directly
 in each offline player. Equations and substituted numbers still come from
 the recorded calculations, with expandable exact text and full traces.
 There are no model-invented numbers, external font requests or handwritten
 screenshots that stop matching the current playback step.
 
-Rebuild these three players with `gradient_cases.py` and
+The two new static notepad pages are different: their
+[dedicated prompts](images/01a-rnn-notepad-prompts.json) ask MAI to draw the
+whole handwritten explanation, without a hand, thumb or surrounding scene.
+The formulas were visually checked, and every displayed path gain was checked
+against autograd. The first page's misspelled footer was proofread locally
+with the bundled handwriting font; its mathematical content was not altered.
+The manifest records that correction and the calculated-number provenance.
+Regenerate these pages only intentionally with the
+[existing image generator](../03-language-models/generate_illustrations.py),
+then check the text and refresh their notebook attachments.
+
+Rebuild the calculation players with `gradient_cases.py` and
 `gated_sequence_storyboards.py`, then refresh their notebook embeds using
-the existing replay helper. The MAI generation manifest is only needed when
-intentionally replacing the paper surface.
+the existing replay helper. The older blank-paper manifest changes only
+the players' paper surface, not the new full-page illustrations.
 
 The optional [full LSTM board](01A1-sequence-memory-worked-details.ipynb#lstm-fixed-board-details)
 and [GRU](images/01a-gru-sequence-storyboard.html) keep all three note columns
@@ -249,18 +275,19 @@ JavaScript or images. All values are initially shown; Play/pause, Next and
 Reset optionally reveal the steps. Per-case inspectors retain all 21 reads.
 There is no parameter slider or random restart.
 
-Both former gradient images are removed from the notebook. Their
-**differentiate -> expand -> substitute -> distribute** reasoning remains
-as text in the local vector-detail block, using standard `x_t`, `h_t`,
+The main route no longer displays the older proof sheets or vector-detail
+blocks. The **differentiate -> expand -> substitute -> distribute**
+reasoning remains in the companion's vector-detail block, using standard `x_t`, `h_t`,
 `W_x`, `W_h`, `W_out`, prediction and loss notation. The linear sketch is
 clearly separate from the actual RNN handoff. A weight above one alone
 does not guarantee amplification, and gradient growth is not error growth.
 
-The [current proof exporter](gradient_discovery.py) renders verified equations
+The [proof exporter](gradient_discovery.py) renders the older optional equations
 on the shared [white MAI paper](images/01a-handwritten-paper.png), using the
 bundled [Kalam font](images/kalam/OFL.txt). The
-[proof and numerical checks](test_gradient_discovery.py) cover this version;
-the superseded math cards, dark reference sheet and their exporters are retired.
+[proof and numerical checks](test_gradient_discovery.py) cover those sheets
+and verify the new page's rounded path gains. The superseded math cards,
+dark reference sheet and their exporters remain retired.
 
 The optional technical appendix and its fixed-fraction drills are no longer
 in the notebook. Their unique teaching is restored locally: a

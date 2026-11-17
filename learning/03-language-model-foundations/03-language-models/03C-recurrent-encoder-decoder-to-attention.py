@@ -1,8 +1,25 @@
 """Code companion for the three-cell 03C reader/writer lesson."""
 
 # %% 3. Use a fixed reading task
+import sys
+from pathlib import Path
+
 import torch
 from torch import nn
+
+# Notebook kernels can start at the repository root instead of this chapter.
+CHAPTER_DIR = next(
+    folder
+    for folder in (
+        Path(globals().get("__file__", globals().get("__vsc_ipynb_file__", ""))).resolve().parent,
+        Path.cwd(),
+        Path.cwd() / "learning" / "03-language-model-foundations" / "03-language-models",
+    )
+    if (folder / "encoder_decoder_example.py").is_file()
+)
+if str(CHAPTER_DIR) not in sys.path:
+    sys.path.insert(0, str(CHAPTER_DIR))
+
 from language_data import CAT_WORDS
 from encoder_decoder_example import (
     BOS, EOS, VOCABULARY, decode_ids, encode_words, load_cat_corpus,

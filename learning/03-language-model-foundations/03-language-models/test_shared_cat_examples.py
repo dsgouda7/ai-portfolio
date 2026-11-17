@@ -6,6 +6,8 @@ from contextlib import redirect_stdout
 from io import StringIO
 import json
 from pathlib import Path
+import subprocess
+import sys
 import unittest
 from unittest.mock import patch
 
@@ -181,6 +183,30 @@ class MainEncoderDecoderTests(unittest.TestCase):
         cls.training_code = "".join(next(
             cell["source"] for cell in book["cells"] if cell["id"] == "ch03c-main-training"
         ))
+
+    def test_notebook_cells_run_in_order_from_repository_root_and_chapter(self):
+        notebook = (HERE / "03C-recurrent-encoder-decoder-to-attention.ipynb").resolve()
+        script = f"""
+import json
+from pathlib import Path
+
+book = json.loads(Path({str(notebook)!r}).read_bytes())
+cells = {{cell["id"]: "".join(cell["source"]) for cell in book["cells"]}}
+namespace = {{"__name__": "__main__"}}
+for cell_id in ("ch03c-main-data", "ch03c-main-model"):
+    exec(compile(cells[cell_id], cell_id, "exec"), namespace)
+batches = namespace["training_batches"]
+namespace["training_batches"] = lambda corpus: batches(corpus, updates=1)
+exec(compile(cells["ch03c-main-training"], "ch03c-main-training", "exec"), namespace)
+assert namespace["torch"].isfinite(namespace["loss"]).item()
+"""
+        for directory in (HERE.resolve().parents[2], HERE.resolve()):
+            with self.subTest(directory=directory):
+                result = subprocess.run(
+                    [sys.executable, "-c", script], cwd=directory,
+                    text=True, capture_output=True, check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_training_shifts_explicit_answers_and_teaches_the_separate_source_reader(self):
         source = torch.tensor([encode_words(CAT_WORDS)])

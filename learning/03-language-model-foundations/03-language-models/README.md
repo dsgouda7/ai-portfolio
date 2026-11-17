@@ -231,16 +231,34 @@ evaluation implementation on its independent split.
 |---|---|---|---|
 | [03A. Training skeleton and word objectives](03A-training-skeleton-and-word-objectives.ipynb) | How do fixed IDs select rows that learn? | [Theory](03A-training-skeleton-and-word-objectives-theory.md) | [Python](03A-training-skeleton-and-word-objectives.py) |
 | [03B. Counts to recurrent language models](03B-counts-to-recurrent-language-models.ipynb) | Ordered seats expose a missing clue; a running note carries it, but a separate answer needs a writer | [Theory](03B-counts-to-recurrent-language-models-theory.md) | [Python](03B-counts-to-recurrent-language-models.py) |
-| [03C. Recurrent reader/writer to attention](03C-recurrent-encoder-decoder-to-attention.ipynb) | The writer needs access beyond one final summary | [Theory](03C-recurrent-encoder-decoder-to-attention-theory.md) | [Python](03C-recurrent-encoder-decoder-to-attention.py) |
+| [03C. Recurrent reader/writer to attention](03C-recurrent-encoder-decoder-to-attention.ipynb) | Continuing a stream needs to become a separate answer; one summary then limits source access | [Theory](03C-recurrent-encoder-decoder-to-attention-theory.md) | [Python](03C-recurrent-encoder-decoder-to-attention.py) |
 | [03C1. Encoder-decoder worked details](03C1-encoder-decoder-worked-details.ipynb) | Optional runnable diagnostics and the original summary/attention comparison | Same 03C theory | [Python](03C1-encoder-decoder-worked-details.py) |
 
-03C follows the two learned jobs in plain English: source reading, the state handoff,
-previous-answer inputs and word scoring. Its three code cells show only setup/frozen
+03C keeps the evolutionary thread visible: recurrent memory helped us continue a
+stream, but a completed input needs a separate answer. The encoder-decoder splits
+listening from speaking; its one-note handoff then motivates attention.
+Its three code cells show only setup/frozen
 data, a small `EncoderDecoder` and its optimizer loop. The encoder reads the source
 once; the separate decoder carries its own state and receives explicitly shifted
 previous-answer inputs during training. The familiar sentence is one probe, not the
 entire training set. Generation remains visible in the recorded player; the standalone
-generation/evaluation section now lives outside the main lesson, keeping its closing brief.
+generation/evaluation implementation remains outside the main lesson, keeping its closing brief.
+
+Run those three cells top to bottom, or use Restart Kernel and Run All: setup,
+model definition, then training. Setup finds the local chapter helpers whether
+the kernel starts at the repository root or in the chapter folder.
+
+The inline walkthrough follows the unchanged statements: what each layer size
+counts, what the encoder returns, how its note starts the decoder, and how scores
+line up with answers. It distinguishes GRU and LSTM states, explains vocabulary
+and padding choices, and follows the same learned parts during generation.
+The executable main lesson remains three code cells.
+
+For a first pass, use the main chapter's two-path guide and follow the source,
+note, answer inputs, scores and feedback. Optional reference boxes retain the
+full shape/layout comparisons, input-reversal check, generation-helper walk,
+translation metrics and checkpoint notes. They shorten the reading path without
+removing explanation. Run all three code cells in order on either path.
 
 Section 5 stops at the intuition for attention: the writer cannot reopen a source
 detail once everything has passed through the final summary. No attention layer
@@ -264,6 +282,10 @@ and preserves the full original `ReaderWriter` implementation and experiments:
 [attention comparison](03C1-encoder-decoder-worked-details.ipynb#attention),
 [held-out evaluation](03C1-encoder-decoder-worked-details.ipynb#evaluation) and
 [inherited-trainer adapter](03C1-encoder-decoder-worked-details.ipynb#adapter).
+Its opening experiment menu is the direct route for readers coming from main 03C;
+the original recap remains for standalone use. The workbench's one-step writer
+and target-prefix interface are deliberately distinguished from the compact
+main model, even though both routes share the frozen source corpus.
 The saved 76.43% versus 97.50% complete-generation scores belong to that original
 comparison, **not** to the compact main demo.
 
