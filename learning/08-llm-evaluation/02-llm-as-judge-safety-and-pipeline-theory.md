@@ -1,81 +1,144 @@
-# LLM-as-Judge, Safety, and Evaluation Pipelines: Intuition Notes
+# Who Checks the Judge?
 
-This chapter is the canonical owner of evaluator bias, human agreement, safety gates, and release
-evidence. The companion notebook demonstrates pipeline shape; production values require in-domain
-calibration.
+Follow the [notebook](02-llm-as-judge-safety-and-pipeline.ipynb).
+Its closing [Concept recap](02-llm-as-judge-safety-and-pipeline.ipynb#concept-recap)
+pairs these ideas with short code sketches.
 
-## 1. Begin with the release decision
+## 1. Another model's opinion is not the final answer
 
-Write the decision first: for example, "Can this checkpoint replace the approved model?" Then identify the required evidence. Keep factuality, completeness, relevance, latency, and cost as separate dimensions. Safety is a parallel gate: a fluent answer can still be unsafe, and a high mean can hide a severe slice failure.
+The previous lesson showed an answer changing an award from "longlisted" to "won"
+while keeping much of the source wording. Suppose another model gives that answer
+a high grade. We have moved the judgment, not removed the need to check it.
 
-## 2. Treat the judge as an instrument
+Start with what a good answer must do. For Riverside's pendant question, naming
+the pendant is not enough: the answer needs the letter and family claim, without
+inventing a new explanation.
 
-An LLM judge is a measurement instrument, not an oracle. Its model, prompt, rubric, context, decoding settings, and output schema jointly define what it measures, so version them together.
+Separate three questions:
 
-A rubric should ask one observable question per dimension. Factuality asks whether material claims match supplied evidence; completeness asks whether required points are present; relevance asks whether the response addresses the request. Anchor the scale with concrete examples. On a 1-5 factuality scale, 5 can mean every material claim is supported, 3 that the central answer is supported but an important detail is absent, and 1 that the answer is mainly unsupported or contradictory.
+| Question | Common label |
+| --- | --- |
+| Do important claims follow from the evidence? | Factuality |
+| Did the answer include the required information? | Completeness |
+| Did it answer this question? | Relevance |
 
-Require validated structured output. Store the score, evidence rationale, versions, and raw response. Parseable JSON does not make a verdict correct.
+These questions form a **rubric**: instructions for grading. Give examples of good,
+borderline and bad answers rather than leaving a grader to invent its own scale.
+For example, an answer that mentions the pendant but omits the letter is incomplete;
+an answer that invents its purpose needs an evidence check.
 
-![Handwritten flow from evaluation question through rubric, judge, checks, and evidence](images/02-llm-as-judge-safety-and-pipeline-theory-01.png)
+**The notebook's shortcut matters:** it calculates all three fields from word
+overlap. The wrong award answer receives about 0.727 in the field called
+`factuality`. That field name describes a goal, not an ability the toy has earned.
+No live LLM judge is called in this lesson.
 
-## 3. Rubric and pairwise scoring
+## 2. Keep the grading process fixed while comparing answers
 
-**Rubric scoring** evaluates one answer against absolute, anchored dimensions. It suits gates such as "factuality must be at least 4/5," but scale use can drift across judges, topics, or time. Calibrate against human-labeled examples and inspect item and slice results, not only the mean.
+A judge's model, instructions, rubric, context and decoding settings all affect
+its verdict. Save them together. Otherwise a score change may come from the
+grader changing, not the answer improving.
 
-**Pairwise scoring** asks whether A, B, or neither better meets the same criterion. Comparing concrete alternatives is often easier than inventing an absolute score, and directly answers whether a candidate beats a baseline. Run both `A vs B` and `B vs A`, map verdicts back to system identity, and accept a win only when it survives the swap. Otherwise mark it order-sensitive. Allow ties and abstentions when evidence is insufficient or differences are immaterial.
+When a model judge returns structured output, validate that structure and keep
+the raw answer and reason. Correctly formatted JSON is easier to inspect; it
+does not make the decision correct. A plausible written reason can also be wrong,
+so check it against the evidence rather than treating an explanation as proof.
 
-Decomposition can strengthen either flow: identify required claims, check support, omissions, and contradictions, then score. Visible subchecks improve auditability, but can still contain biased or hallucinated reasoning.
+![Conceptual path from a grading question to a checked verdict](images/02-llm-as-judge-safety-and-pipeline-theory-01.png)
 
-## 4. Human agreement and judge bias
+The diagram shows a wider model-judge workflow. The runnable notebook opens its
+small rule-based controls, not every production component in the drawing.
 
-Agreement asks whether evaluators apply the task similarly; correctness asks whether their labels match the intended behavior. Measure human-human agreement, judge-human agreement, and repeated-run stability separately.
+## 3. Would the verdict survive a change of position?
 
-Observed agreement is simply how often raters choose the same label. Chance agreement is the overlap expected because each rater may heavily favor common labels. A chance-corrected statistic discounts that easy overlap. It can fall when label prevalence is skewed even if raw agreement looks high, so always inspect raw agreement, label frequencies, confusion cases, and uncertainty alongside it. Low agreement is a debugging signal: clarify anchors, train annotators, review ambiguous items, and relabel a pilot set.
+Comparing two answers directly is **pairwise judging**. The judge chooses A,
+B or a tie. But A and B are display positions, not permanent model identities.
 
-Position bias favors the first or second answer; the order swap exposes it. Verbosity bias mistakes length for quality, so test matched answers that preserve facts while changing length. Self-preference favors outputs resembling the judge's family or voice. Use human calibration, isolated counterfactual tests, and genuinely diverse judges.
+Show the same answers as A/B and then B/A. Map the choices back to the real
+answers before comparing them. A winner that changes only because of position
+deserves investigation.
 
-## 5. Safety is a gated pipeline
+Our toy deliberately gives the first position a bonus of 0.04. All four default
+comparisons remain stable: their score gaps are larger than the bonus. That is
+a passing control, not proof that the function has no preference.
 
-Start from a threat model covering users, capabilities, protected data, plausible misuse, and harm severity. Build probes from realistic benign traffic, difficult legitimate requests, adversarial prompts, and domain edge cases. The notebook demonstrates toxicity, demographic counterfactuals, and refusal behavior; actual coverage must follow product risks rather than a generic catalog.
+The stronger probe changes only that bonus to 0.15. Now the award winner changes
+after a swap. We exposed a defect that we deliberately inserted; we did not
+measure a typical bias rate for real LLM judges.
 
-Treat classifier thresholds as triage policy, not probabilities of real-world harm. Calibrate review and block bands on labeled in-domain outputs, examine false positives and false negatives, and assign human escalation for high-risk or ambiguous cases. Counterfactual tests change one demographic cue while holding the prompt fixed; differences flag investigation, not proof of unfairness. Refusal evaluation must catch both unsafe compliance and unnecessary refusal of benign requests.
+Allow ties and uncertain verdicts. Forcing a winner creates false precision
+when the evidence does not distinguish the answers.
 
-![Handwritten safety and release pipeline with threshold bands, regression checks, and archive](images/02-llm-as-judge-safety-and-pipeline-theory-02.png)
+## 4. Other preferences need their own checks
 
-## 6. Regression and evidence pipeline
+Perhaps a judge rewards longer answers, even when the added words contribute
+nothing. Keep the facts fixed and change length, then inspect the difference.
+Our pendant probe grows from 16 to 26 words and its toy score falls from about
+0.608 to 0.504. Word overlap penalizes the unmatched additions.
 
-A regression table is not operational until it names the failed version, baseline delta, affected slice, severity, and release action. The useful output is an alert such as `judge 4.1 -> 3.8, MCQ 0.60 -> 0.50: HOLD`, not a dashboard someone must remember to inspect.
+A real model judge might favor the longer version instead. The probe teaches
+how to check; its result does not establish another model's behavior.
+Similarly, a judge may prefer its own wording style. Test that possibility
+with controlled examples and human review rather than assuming a second model
+is automatically independent or fair.
+Repeat real judge trials on unchanged inputs too: stability across display order
+does not establish stability across runs.
 
-Thresholds encode policy. Give each one an owner, rationale, calibration set, direction, unit, effective date, and review schedule. Do not reuse one delta across metrics with different scales and noise. State whether change is absolute or relative, estimate repeated-run variation, and examine critical slices.
+## 5. Agreement is useful, but agreement with whom?
 
-The release flow is `dataset -> run -> score -> compare -> decide -> archive`. Freeze and hash the comparison set; pin the baseline, candidate artifact, prompts, judge configuration, dependencies, and relevant seeds. Archive item-level outputs, disagreement cases, safety reviews, metric and slice summaries, threshold configuration, and the accountable human decision. A stable holdout preserves comparability; new failures should enter through controlled, versioned updates with overlap between old and new sets.
+The notebook declares twelve example labels for two reviewers and one judge.
+These are not ratings collected from a human study.
 
-An alert is not a diagnosis. It should pause promotion, expose failed examples, and produce a documented decision. A credible release requires no safety-gate failure, no material regression on critical slices, and evidence that aggregate gains are practically meaningful.
+`human_a` and the judge agree on ten of twelve labels; `human_b` and the judge
+agree on seven. Inspect the disputed rows before deciding which grader needs repair.
+We have not established either reviewer as the final source of truth.
 
-## 7. Common failure modes
+**Raw agreement** counts matching labels. If both graders mostly choose one
+common label, some matching is easy. **Cohen's kappa** discounts the agreement
+expected from those label frequencies. The example kappas are about 0.636 and
+0.167 respectively.
 
-- **Rubric leakage:** rewarding reference wording instead of desired behavior.
-- **Contamination:** evaluation examples enter training or prompt tuning.
-- **Aggregate masking:** a mean hides regressions in a language, task, or risk slice.
-- **Judge drift:** unversioned model or prompt changes alter the instrument.
-- **Forced certainty:** no tie, abstention, or human-review state exists.
-- **Rationale theater:** plausible explanations are accepted without source checks.
-- **Safety monoculture:** one classifier is treated as complete coverage.
-- **Threshold folklore:** copied numbers replace in-domain calibration.
-- **Missing evidence:** outputs, versions, hashes, or decisions are not archived.
-- **Goodhart pressure:** tuning improves the visible benchmark more than the product.
+Neither statistic checks correctness by itself. Keep label frequencies and
+the actual disagreements beside the summaries, especially on small or
+unbalanced sets. In a real study, clarify the instructions, review ambiguous
+items and compare against carefully adjudicated examples.
 
-## 8. Operating rules
+## 6. Safety is a separate reason to stop
 
-1. Define the release decision and threat model before metrics.
-2. Anchor observable quality dimensions and keep safety as independent gates.
-3. Calibrate judges with humans; test order, verbosity, and self-preference.
-4. Version inputs, instruments, thresholds, outputs, and decisions.
-5. Report item and slice evidence with uncertainty, and retain human ownership.
+An editorial assistant should handle harmless public editing requests. It
+should also avoid disclosing private personal data. Unsafe compliance and
+unnecessary refusal are different failures.
 
-The durable model is simple: judges produce evidence, safety gates constrain action, and a versioned regression pipeline turns evidence into accountable release decisions.
+The notebook's four declared probes expose both. Its checker searches for
+refusal words; it is not a complete safety model. Two probes fail.
+No quality average should erase those failures.
 
-Reference and semantic metric behavior remains in
-[Part 1](01-llm-evaluation-metrics-and-benchmarks.ipynb); unsupported-claim localization remains in
-[Part 3](03-hallucination-detection.ipynb); confidence policy remains in
-[Part 4](04-calibration-and-confidence.ipynb).
+![Conceptual safety checks and release review](images/02-llm-as-judge-safety-and-pipeline-theory-02.png)
+
+For real use, choose safety tests from the service's users, data and plausible
+harms. Toxicity, demographic counterfactuals and adversarial prompts need their
+own evaluation; this notebook has not implemented that coverage.
+
+## 7. Keep a receipt, not just a dashboard
+
+A release decision needs enough information to be reconstructed later:
+the compared versions, data identity, grader settings, item results, failed
+checks and accountable action.
+
+The small example record keeps a dataset fingerprint and named versions beside
+summary readings. It says `HOLD` because safety failed even though the default
+swap test passed. The stronger bonus probe remains a separate diagnostic.
+A full release record also needs raw answers, exact thresholds, instructions
+and the human decision; the dataclass alone is not that complete system.
+
+Keep evaluation cases out of prompt tuning and training when claiming an
+independent comparison. Inspect important question groups, not only averages.
+Changing the judge or its instructions creates a new grading setup; repeatedly
+optimizing for familiar tests can improve the visible grade without improving
+the service. Add reviewed new failures through versioned evaluation-set updates.
+
+**What we demonstrated:** local controls for instructions, position, length,
+label agreement and a safety-gated decision.
+**What remains unproven:** a live judge's accuracy or release readiness.
+
+**A judge provides evidence; it does not create its own authority.**
+Next, [find the particular claim that needs checking](03-hallucination-detection.ipynb).

@@ -1,18 +1,25 @@
 # Contents: LLM Evaluation
 
-Build independent checks for quality, safety, unsupported claims, and decisions to decline an answer.
+Follow one problem: a convincing answer can still change a fact. Check what the score,
+grader, evidence and confidence each establish before deciding what may be returned.
 
-## Required route
+## Read in Order
 
-- [LLM Evaluation 1 of 4: What Can Each Metric Observe?](01-llm-evaluation-metrics-and-benchmarks.ipynb) — Compare wording scores, model-assigned ratings, and how unexpected text looks to a model without treating any reading as correctness.
-- [LLM Evaluation Metrics and Benchmarks: Handwritten Theory Notes](01-llm-evaluation-metrics-and-benchmarks-theory.md) — Review why quality measures disagree and why that disagreement is evidence to inspect.
-- [LLM Evaluation 2 of 4: Trust the Judge and the Release Pipeline](02-llm-as-judge-safety-and-pipeline.ipynb) — Test judging rules, swap answer order, and combine independent safety checks into a repeatable release review.
-- [LLM-as-Judge, Safety, and Evaluation Pipelines: Intuition Notes](02-llm-as-judge-safety-and-pipeline-theory.md) — Review how to check a model-based judge before using its scores in a release pipeline.
-- [LLM Evaluation 3 of 4: Localize Unsupported Claims](03-hallucination-detection.ipynb) — Split an answer into checkable claims and choose review thresholds from the costs of missed and false warnings.
-- [Hallucination Detection and Factual Grounding](03-hallucination-detection-theory.md) — Review how to locate unsupported claims instead of giving the whole answer one unexplained score.
-- [LLM Evaluation 4 of 4: Turn Confidence into Abstention Policy](04-calibration-and-confidence.ipynb) — Compare stated confidence with observed correctness and decide when declining to answer reduces risk.
-- [Calibration and Confidence: Handwritten Theory Notes](04-calibration-and-confidence-theory.md) — Review why confidence adjustment and independent risk gates solve different problems.
+1. [What Can a Score Really Tell Us?](01-llm-evaluation-metrics-and-benchmarks.ipynb) —
+   Compare word matches, contextual similarity and expected wording, then inspect actual
+   CPU-generated answers. [Theory notes](01-llm-evaluation-metrics-and-benchmarks-theory.md).
+2. [Who Checks the Judge?](02-llm-as-judge-safety-and-pipeline.ipynb) —
+   Make grading questions explicit, swap positions, inspect declared reviewer labels and
+   keep safety separate. [Theory notes](02-llm-as-judge-safety-and-pipeline-theory.md).
+3. [Which Claim Does the Passage Support?](03-hallucination-detection.ipynb) —
+   Find specific review questions and see why crude splitting and word rules are not
+   a validated detector. [Theory notes](03-hallucination-detection-theory.md).
+4. [Does 80% Confidence Mean 80% Right?](04-calibration-and-confidence.ipynb) —
+   Compare confidence with outcomes, keep a failed calibration attempt visible, and
+   reject empty returned sets as zero-error success.
+   [Theory notes](04-calibration-and-confidence-theory.md).
 
-## Optional
-
-No optional lessons are listed in this directory.
+Each notebook ends with a **Concept recap** and short code sketches.
+Part 1 runs real pretrained models on CPU; Parts 2-4 use declared teaching examples.
+The [chapter guide](README.md) explains setup, retained results, image provenance and the
+handoff to the gateway.

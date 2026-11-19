@@ -1,6 +1,6 @@
 ---
 name: intuitive-learning-content
-description: 'Create or substantially enhance intuitive technical learning notebooks and handwritten theory notes in this AI portfolio. Use when asked to author GenAI, Transformer, ML, agentic-AI, infrastructure, or other educational chapters; restore golden-version learning flow; add diagrams or animations; build complaint-chain and failure-first explanations; create toy-to-real bridges; audit topic coverage; or bring content to Transformer gold-standard quality. Enforces plain English before jargon, intuition before math, public refinement attempts, continuity across chapters, visual-first pedagogy, minimal necessary math, prove-dont-assert experiments, concise handwritten companions, notebook safety, and executable validation.'
+description: 'Create or substantially enhance any chapter under learning/ in this AI portfolio. Use for technical notebooks, theory notes, plain-English rewrites, diagrams, animations, complaint-chain explanations, toy-to-real bridges, coverage audits, and cross-chapter continuity. Enforces concrete examples before terminology, intuition before math, short code and result walkthroughs, measured rather than asserted outcomes, honest toy boundaries, abstractly titled concept recaps, notebook safety, and executable validation.'
 argument-hint: 'Describe the learning topic, target notebook or chapter, audience, and desired endpoint.'
 user-invocable: true
 disable-model-invocation: false
@@ -9,12 +9,15 @@ disable-model-invocation: false
 # Intuitive Learning Content
 
 Create technical learning material that makes each mechanism feel necessary before naming it. Optimize for durable intuition, executable evidence, and a clean path from a small visible example to the real system.
+This explanation style applies to **every chapter under `learning/`**, not only language-model
+or evaluation chapters. Apply it when creating content and when revising existing content.
 
 ## Canonical References
 
 Read only the references needed for the task:
 
 - Repository standard: [AUTHORING_GUIDE.md](../../../AUTHORING_GUIDE.md)
+- Plain-English teaching voice: [what a score can really tell us](../../../learning/08-llm-evaluation/01-llm-evaluation-metrics-and-benchmarks.ipynb)
 - Historical GenAI notebook patterns: [archived authoring guide](../../../archive/learning-migrations/genai-authoring-guide.md)
 - Mechanistic gold standard: [attention, position, and RoPE](../../../learning/04-transformers/02-attention-and-position.ipynb)
 - Complete-block continuation: [the complete Transformer block](../../../learning/04-transformers/03-complete-transformer-block.ipynb)
@@ -32,7 +35,7 @@ Use this skill for:
 - creating a new educational notebook or chapter;
 - substantially restructuring or deepening an existing notebook;
 - adding intuitive diagrams, animations, exercises, or toy-to-real bridges;
-- writing concise `-theory.md` handwritten-note companions;
+- writing concise `-theory.md` companions and concept recaps;
 - auditing topic coverage before authoring;
 - fixing pedagogy that states mechanisms without demonstrating them.
 
@@ -62,6 +65,44 @@ Rules:
 7. **Honest boundaries.** A toy result demonstrates mechanics, not production quality, reasoning, or readiness.
 8. **Plain English must be easy to follow.** Use familiar words, concrete examples, and short explanations grounded in the reader's prerequisites. Keep the technical precision; remove avoidable difficulty from the wording.
 9. **Explain before naming.** Describe the problem, what the proposed mechanism does, and why that helps in ordinary language before introducing its technical name. Jargon labels an idea the reader has already met; it does not replace the explanation. Introduce notation only after that intuition, when the math adds clarity.
+
+## Plain-English Chapter Style
+
+Use the evaluation lesson linked above as a voice reference, not a template to copy word for word.
+
+1. **Start with something the reader can judge.** Show a concrete input, two plausible outputs,
+   or one attempt that visibly fails. Explain what you wanted and what went wrong before naming
+   the technique. Historical background is optional, not the opening requirement.
+2. **Make each new noun earn its place.** Explain roles such as reference answer, claim,
+   confidence, batch, or checkpoint in ordinary language when they first matter. Do not front-load
+   an inventory of jargon or use headings such as "canonical owner" in place of a learner's question.
+3. **Keep one familiar example in view.** Reuse it through the small calculation, code, result
+   and next limitation. When the data or scale changes, say what changed and why.
+4. **Guide the reader through non-obvious code.** Before the block, state the question or prediction.
+   After it, explain the key inputs, operation and output in a few sentences. Prefer a short
+   prose walkthrough to comments on every obvious line. A block shorter than 30 lines may still
+   need a reading guide.
+5. **Read an actual result before summarizing.** Point to one real row, answer or failure.
+   Explain which quantity moved and why that supports only the stated claim. A passing control,
+   unchanged result or worse result is valid evidence; never invent improvement for the narrative.
+6. **Compare close variants in small tables.** Say what changes, what that buys and what remains
+   missing. Implement a representative when variants share the same mechanism. Do not pretend
+   every tool is a historical successor or that newer means universally better.
+7. **Separate what a label promises from what the code does.** Word overlap named "factuality"
+   is still word overlap. A hand-coded judge is not a live model judge. A declared fixture is
+   not a collected human study. Put the boundary beside the result it qualifies.
+8. **Make failures explicit.** No feasible policy, zero observations, missing evidence and
+   undefined metrics must remain visible. Do not turn them into zero-error success or quietly
+   relax a requirement. Check that the suggested exercise works with the actual code and guards.
+9. **Keep the main reading path conversational.** Use optional details for lengthy setup choices,
+   notation or reference material. Retain scope and provenance without opening with bureaucracy.
+10. **Use abstract recap titles.** Prefer "Concept recap" or "Summary", not a handwriting-specific
+    title. Pair concise explanations with short code sketches when useful, marking sketches
+    versus executable recipes. Let the learner choose how to record the notes.
+
+Before finishing, answer these without relying on terminology:
+**What failed? What did we change? Why might that help? What happened? What is still missing?**
+Then verify that the prose, figures, numbers and exercises tell the same story.
 
 ## The Golden-Version Essence
 
@@ -267,11 +308,13 @@ End with:
 - practical failure modes;
 - the exact next chapter or boundary.
 
-## Handwritten Theory Companions
+## Theory Companions and Concept Recaps
 
 Create `[notebook-name]-theory.md` when the chapter introduces durable concepts.
 
-Theory notes are concise discovery narratives that can be copied verbatim by hand. They are not compressed API documentation or a section-by-section notebook recap.
+Theory notes are concise discovery narratives that a learner can copy into their own notes.
+Use a topic-based title rather than labeling the learner's note-taking medium.
+They are not compressed API documentation or a section-by-section notebook recap.
 
 Use the same complaint chain as the notebook:
 
@@ -297,6 +340,10 @@ Theory notes should:
 - finish with practical failure modes and one durable summary sentence.
 
 Link the theory companion beside the notebook in local and track-level READMEs.
+
+A notebook's closing **Concept recap** can include short, clearly labeled code sketches with
+plain-English explanations. Keep setup and download boilerplate out of that recap; preserve
+the distinction between the mechanism and a complete runnable program.
 
 ## Notebook Safety
 

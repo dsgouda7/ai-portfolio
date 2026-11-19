@@ -1,4 +1,4 @@
-# Packages required to run the four deterministic 04-llm-evaluation notebooks.
+# Packages for Stage 08 fixtures and the real CPU metric experiment in Part 1.
 numpy
 pandas
 matplotlib
@@ -10,3 +10,11 @@ ipykernel
 nbformat
 nbclient
 nbconvert
+transformers
+huggingface-hub
+safetensors
+peft
+rouge-score
+sacrebleu
+nltk
+bert-score

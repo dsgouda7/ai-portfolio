@@ -63,15 +63,16 @@ class ReaderWriterTrainingTests(unittest.TestCase):
     def setUpClass(cls):
         namespace = {
             "torch": torch, "nn": nn, "BOS": len(CAT_FAMILY_WORDS) + 1,
-            "V": len(CAT_FAMILY_WORDS) + 3,
+            "EOS": len(CAT_FAMILY_WORDS) + 2, "V": len(CAT_FAMILY_WORDS) + 3,
         }
         tree = ast.parse((HERE / "03C1-encoder-decoder-worked-details.py").read_text(encoding="utf-8"))
         for node in tree.body:
             if isinstance(node, (ast.FunctionDef, ast.ClassDef)) and node.name in {
-                "practice_prefix", "ReaderWriter",
+                "practice_prefix", "reversal_targets", "ReaderWriter",
             }:
                 exec(compile(ast.Module(body=[node], type_ignores=[]), "<reader-writer>", "exec"), namespace)
         cls.model_type = namespace["ReaderWriter"]
+        cls.namespace = namespace
         cls.bos, cls.eos = len(CAT_FAMILY_WORDS) + 1, len(CAT_FAMILY_WORDS) + 2
         word_ids = {word: index + 1 for index, word in enumerate(CAT_FAMILY_WORDS)}
         cls.source = torch.tensor([[word_ids[word] for word in CAT_WORDS]])
@@ -120,6 +121,31 @@ class ReaderWriterTrainingTests(unittest.TestCase):
                 altered, _ = model(self.source, target_ids=changed, teacher=True)
                 torch.testing.assert_close(original[:, :2], altered[:, :2], rtol=0, atol=0)
                 self.assertGreater((original[:, 2:] - altered[:, 2:]).abs().max().item(), 0)
+
+    def test_source_memory_probe_reuses_notes_without_updating_the_trained_model(self):
+        book = json.loads((HERE / "03C1-encoder-decoder-worked-details.ipynb").read_bytes())
+        cell = next(cell for cell in book["cells"] if cell["id"] == "ch03c1-source-memory-probe")
+        original = self.model(True)
+        parameters = {name: parameter.detach().clone() for name, parameter in original.named_parameters()}
+        namespace = dict(self.namespace, models={True: original}, CAT_WORDS=CAT_WORDS,
+                         encode_words=encode_words, decode_ids=decode_ids)
+        with torch.random.fork_rng(devices=[]), redirect_stdout(StringIO()):
+            exec(compile("".join(cell["source"]), "<read-only-source-memory>", "exec"), namespace)
+        rows = namespace["memory_probe_rows"]
+        self.assertEqual([row["previous"] for row in rows], ["<bos>", "mat", "the"])
+        self.assertTrue(all(row["source_change"] == 0 for row in rows))
+        self.assertTrue(any(row["writer_change"] > 0 for row in rows))
+        self.assertIsNone(rows[0]["attention_change"])
+        self.assertTrue(any(row["attention_change"] > 0 for row in rows[1:]))
+        self.assertTrue(original.training)
+        for name, parameter in original.named_parameters():
+            torch.testing.assert_close(parameter, parameters[name], rtol=0, atol=0)
+            self.assertIsNone(parameter.grad)
+        notebook_code = "\n\n".join("".join(cell["source"]) for cell in book["cells"]
+                                   if cell["cell_type"] == "code")
+        companion = ast.parse((HERE / "03C1-encoder-decoder-worked-details.py").read_text(encoding="utf-8"))
+        companion.body.pop(0)
+        self.assertEqual(ast.dump(ast.parse(notebook_code)), ast.dump(companion))
 
     def test_detaching_the_handoff_blocks_reader_learning_without_changing_predictions(self):
         for look_back in (False, True):

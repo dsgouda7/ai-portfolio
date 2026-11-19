@@ -3,6 +3,8 @@
 **Chapter 03A:** [notebook](03A-training-skeleton-and-word-objectives.ipynb) |
 [Python companion](03A-training-skeleton-and-word-objectives.py) |
 [shared trainer](language_model.py).
+The closing [Concept recap](03A-training-skeleton-and-word-objectives.ipynb#concept-recap)
+pairs the ID-to-row-to-score story with short code sketches and objective comparisons.
 
 **Guiding question:** if the input IDs never change, what exactly does training change?
 Use **cat sat ___ the mat**, answer **on**, from **the cat sat on the mat**, inside

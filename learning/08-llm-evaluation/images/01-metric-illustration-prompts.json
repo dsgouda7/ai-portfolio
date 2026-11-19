@@ -1,0 +1,86 @@
+[
+  {
+    "filename": "01-metrics-rouge-mai.png",
+    "notebook_filename": "01-metrics-rouge.png",
+    "model": "MAI-Image-2.6",
+    "semantic_anchor": "ROUGE variants change the shape of the word match; an inserted word can break adjacent pairs without breaking ordered coverage",
+    "aspect_ratio": "3:2",
+    "width": 1536,
+    "height": 1024,
+    "prompt": "Create a polished, highly legible educational infographic, landscape 1536x1024. White background, dark navy rounded sans-serif lettering, restrained teal reference tiles, purple answer tiles, gold matching ribbons, coral for a changed condition. Crisp rich flat vector-style artwork, not a generic box-and-arrow flowchart and not a photograph. Title: 'Which kind of matching do we mean?' At the top place two horizontal tile sentences with EXACT lowercase words: Reference: 'the pendant hides a letter'. Answer: 'the pendant hides a small letter'. Give every word a separate spacious tile. The inserted word 'small' is an unfilled purple tile. Below show three clearly separated illustrated rows. Row one 'ROUGE-1: the word checklist' connects each of the five reference words to the corresponding answer word: 'All 5 reference words appear; 5 of 6 answer words match.' Row two 'ROUGE-2: neighboring pairs' displays the four reference pairs as capsules: 'the pendant', 'pendant hides', 'hides a', 'a letter'. Highlight the first three as matched and show the last pair broken by the inserted 'small'. Caption: '3 of 4 reference pairs survive.' Do not count 'a small' or 'small letter' as reference matches. Row three 'ROUGE-L: keep order, allow gaps' draws one continuous ribbon linking 'the', 'pendant', 'hides', 'a', 'letter' in order while stepping around 'small'. Caption: 'All 5 reference words stay in order.' Beside it use a small note: 'precision 5/6; recall 5/5; F1 about 0.909'. In a small final contrasting strip show 'a letter hides the pendant' and the caption 'Same words, changed order: word matches 5; longest ordered match 2.' Highlight either 'a letter' or 'the pendant' as that ordered match, not both in one supposed subsequence. Footer: 'Related views, not newer-is-better replacements. Word overlap does not establish truth.' Use clear spacing and the tiles/ribbons as the main visual mechanism. No long equations, fake model scores, 3D scenery, hands, notebook paper, logos or decorative icons.",
+    "acceptance_criteria": "The exact five-word reference and six-word answer remain unchanged throughout. Three reference bigrams match and one is broken. The LCS has length five with the insertion, and two for the reordered answer. Precision 5/6, recall one and F1 about 0.909 are correct. Readable token tiles and actual correspondence ribbons carry the explanation. Entirely conceptual computed example, not measured model quality.",
+    "prohibited_content": "Wrong word order, misspelled tokens, connecting the inserted small to an absent reference word, claiming ROUGE measures truth, fabricated training curves, invented extra metrics, provider branding, watermarks, photographs, people, hands, handwriting or dense formulas.",
+    "alt_text": "The reference the pendant hides a letter is compared with the pendant hides a small letter. Word matching recovers five reference words; adjacent-pair matching retains three of four reference pairs; ordered matching retains all five while skipping small. A reordered answer has all the same words but an ordered match of only two.",
+    "evidence": "01-metric-visual-evidence.json: rouge",
+    "proofreading": "metric_visuals.py redraws token strips, adjacent pairs and exact correspondence lines to correct MAI's substituted labels and mistaken ribbon endpoints."
+  },
+  {
+    "filename": "01-metrics-bleu-mai.png",
+    "notebook_filename": "01-metrics-bleu.png",
+    "model": "MAI-Image-2.6",
+    "semantic_anchor": "BLEU stops repeated words and an extremely short answer from gaming naive matching",
+    "aspect_ratio": "3:2",
+    "width": 1536,
+    "height": 1024,
+    "prompt": "Create a polished educational infographic with white background, very readable dark navy rounded sans-serif labels, teal reference tiles, purple answer tiles, gold accepted matches and coral rejected copies. Landscape 1536x1024, rich flat vector illustration, not a flowchart or photograph. Title: 'Why matching words needs two safeguards'. Across the top show the EXACT five-word reference, each word on its own tile: 'the pendant hides a letter'. The main area has two generous side-by-side panels. LEFT title: '1. Do not count the same ticket three times'. Show answer tiles 'letter letter letter'. From the one reference 'letter' draw a single gold matching ticket/ribbon to the first answer 'letter'. The other two answer tiles remain visible but gray, stamped 'no extra credit'. Caption: 'Reference allows letter once. Clipped matches: 1 out of 3 answer words.' A small crossed-out note says 'Not 3 out of 3'. RIGHT title: '2. Do not reward a one-word shortcut'. Show the answer 'letter' in one purple tile underneath five outlined reference slots, only one of which is filled. Caption: 'That one word matches, but most of the answer is missing.' Draw a visibly short purple answer strip versus a five-tile teal reference strip. Under it write '1 answer word; 5 reference words' and 'brevity penalty about 0.018'. Do not label 0.018 as the final BLEU score; it is only a length penalty. Along the bottom show four short sample phrase lengths labeled 'BLEU-1 words', 'BLEU-2 pairs', 'BLEU-3 triples', 'BLEU-4 up to four words'. Final caption: 'BLEU combines clipped phrase matches and a short-answer penalty. These panels show its parts, not a full BLEU-4 calculation.' Make the matching-ticket and short-strip metaphors visually obvious, with lots of room, no complex formula and no invented precision or final corpus score.",
+    "acceptance_criteria": "Reference length five, repeated-answer length three, clipped unigram matches one. The tiny one-word answer has brevity penalty exp(1-5), about 0.018, explicitly not a final BLEU-4 score. Both safeguards are shown as visible consequences rather than equations. No semantic-quality or accuracy claim.",
+    "prohibited_content": "Treating the same reference word as three available copies, a final BLEU value fabricated from the unigram example, claiming higher BLEU proves factuality, unreadable text, excessive formulas, hands, people, scenery, notebook paper, handwriting, logos or watermarks.",
+    "alt_text": "A single reference occurrence of letter gives only one match to letter letter letter. A separate one-word answer letter matches but omits most of the five-word reference, so it receives a small brevity penalty. A bottom strip distinguishes BLEU word-group lengths.",
+    "evidence": "01-metric-visual-evidence.json: bleu",
+    "proofreading": "metric_visuals.py replaces overprinted token labels and sample phrase capsules with deterministic lettering."
+  },
+  {
+    "filename": "01-metrics-meteor-mai.png",
+    "notebook_filename": "01-metrics-meteor.png",
+    "model": "MAI-Image-2.6",
+    "semantic_anchor": "METEOR aligns exact words and related forms, then reduces credit when the matching words are scattered",
+    "aspect_ratio": "3:2",
+    "width": 1536,
+    "height": 1024,
+    "prompt": "Create a rich educational token-alignment illustration on a white background, landscape 1536x1024. Use readable dark navy sans-serif text, teal reference tiles, purple answer tiles, gold smooth alignment ribbons and coral crossing/broken ribbons. No photography, people, handwriting or scenery. Title: 'Right words: do they stay together?' At the top show two tiny related-form keys: 'hides / hiding -> hide' labeled 'shared stem', and 'hides / conceals' labeled 'WordNet synonym match'. These are matching resources, not guarantees of truth. Main upper panel title 'Related wording can still line up'. Reference tiles EXACTLY 'the pendant hides a letter'; answer tiles EXACTLY 'the pendant conceals a letter'. Connect the corresponding five positions with one broad parallel ribbon group; mark hides-to-conceals as a synonym connection. Label '5 aligned words, 1 continuous chunk'. Show the small checked result 'METEOR 0.996'. Main lower panel title 'The same words can become scattered'. Repeat the SAME reference 'the pendant hides a letter'. Answer tiles EXACTLY 'letter a hides pendant the'. Connect the same words by visibly crossed thin ribbons: reference the to answer the, pendant to pendant, hides to hides, a to a, letter to letter. No ribbon may connect different words. Label '5 aligned words, 5 separate chunks'. Show 'METEOR 0.500'. The comparison should make smooth versus fragmented alignment visible before the score. Footer: 'More scattered matches mean a larger order penalty. NLTK default settings; constructed examples, not model accuracy.' Keep the examples and alignment central, with only short captions. Do not add a derivation, probability chart or claim that 0.996 means the answer is factually correct.",
+    "acceptance_criteria": "The synonym example aligns all five positions and has one chunk. The reversed five-token answer matches all five words but has five chunks. Under NLTK defaults the two scores are 0.996 and 0.500. Related-form captions and all words must be correctly spelled. Matching ribbons connect only true corresponding words.",
+    "prohibited_content": "Incorrect ribbon endpoints, reordered reference, fictitious matching words, negative penalties, a claim that synonyms prove truth, extra numerical results, dense algebra, photographic elements, hands, handwriting, logos or watermarks.",
+    "alt_text": "METEOR aligns the pendant hides a letter with the pendant conceals a letter using a synonym match, keeping one continuous chunk. Reversing the same words makes five separate chunks and lowers the default illustrative score from 0.996 to 0.500.",
+    "evidence": "01-metric-visual-evidence.json: meteor",
+    "proofreading": "metric_visuals.py redraws the reversed sentence and five exact same-word ribbon endpoints."
+  },
+  {
+    "filename": "01-metrics-bertscore-mai.png",
+    "notebook_filename": "01-metrics-bertscore.png",
+    "model": "MAI-Image-2.6",
+    "semantic_anchor": "contextual-token similarity uses best matches rather than exact spellings, but similarity is not factual support",
+    "aspect_ratio": "3:2",
+    "width": 1536,
+    "height": 1024,
+    "prompt": "Create a professional educational infographic layout, landscape EXACTLY 1536x1024. White background, dark navy rounded sans-serif headings, teal/purple accent ribbons and a small gold highlight key. Title at x90 y50: 'BERTScore: close in context, not necessarily true'. Subtitle near x90 y135: 'Related words can match even when their spelling changes.' CRITICAL LAYOUT: leave the entire rectangle x70 to x1050 and y235 to y955 completely white and empty. Do not draw any frame, grid, number, placeholder, caption, line or decorative texture inside that rectangle. A real measured token-similarity heatmap will be inserted there by code; do not invent one. Put all remaining content in the RIGHT column x1100 to x1480, y245 to y940. Use short spacious illustrated callouts: a small purple word tile and teal word tile connected by a gold ribbon, labeled 'A close match need not be an exact word'. Then a numbered reading key: '1. Each row is an answer token.' '2. Gold outlines its best reference match.' '3. Read across for precision; down for recall.' Below: 'Best matches are averaged, then balanced as F1.' A small token-piece note: '##s continues the previous word.' At the lower right draw a coral warning card: 'Similarity is not truth'. Beneath it: 'Changing longlisted to won can still look similar.' No numerical values, fabricated heatmap cells, model logos or extra math. Keep the title and right-side callouts clear and compact, and obey the empty left rectangle exactly.",
+    "acceptance_criteria": "The specified left rectangle is completely empty for the deterministic measured plot; all conceptual content stays above it or in the right column. Rows/columns and precision/recall directions are correct. Explain token pieces and the factuality limit without invented numbers. Readable at notebook width.",
+    "prohibited_content": "Any heatmap, value, axis, placeholder text or illustration inside the reserved left rectangle; invented numerical similarities; claiming BERTScore proves correctness; dense mathematical notation; hands, photographs, paper texture, handwriting, watermarks or provider branding.",
+    "alt_text": "A measured DistilBERT token-similarity heatmap is paired with an explanation that each answer token seeks a close reference match. Gold outlines row maxima. A warning distinguishes semantic closeness from factual support and explains the subword piece ##s.",
+    "numerical_overlay": {
+      "source": "01-metric-visual-evidence.json: bertscore",
+      "renderer": "../metric_visuals.py",
+      "bounds": [55, 240, 850, 965],
+      "provenance": "MAI draws the conceptual layout; code inserts actual pinned-encoder cosine similarities. No heatmap values are generated by MAI."
+    }
+  },
+  {
+    "filename": "01-metrics-perplexity-mai.png",
+    "notebook_filename": "01-metrics-perplexity.png",
+    "model": "MAI-Image-2.6",
+    "semantic_anchor": "a model assigns a probability to each fixed reference token; unexpected tokens add loss, and token-weighted average loss becomes perplexity",
+    "aspect_ratio": "3:2",
+    "width": 1536,
+    "height": 1024,
+    "prompt": "Create a clean high-quality educational infographic layout, landscape EXACTLY 1536x1024, white background, readable dark navy rounded sans-serif lettering, teal and purple accents with restrained gold highlighting. Title near x90 y45: 'Perplexity: how surprised was the model?' Subtitle near x90 y120: 'Given the question and context, score the fixed reference one token at a time.' Across y175 to y220 draw four compact connected labels: 'context + earlier reference tokens' then 'chance of the next reference token' then 'token loss' then 'average surprise'. IMPORTANT: reserve the ENTIRE rectangle x65 to x1470, y245 to y935 as completely white and empty. Do not draw any placeholder, graph, numbers, lines, bars, words or texture in this area. A real measured token-probability/loss plot will be inserted by code, so do not invent a chart. At the bottom below y955 write the short footer: 'Prompt tokens are not scored. Lower surprise is not proof of truth.' Small simple token-shaped accents may appear only next to the title, never in the reserved area. No decorative gauges, fake probabilities or formulas. The page should be an elegant instructional frame, not a dense poster.",
+    "acceptance_criteria": "The exact central rectangle remains empty for a real measured chart. The top flow says the next token is scored using context and earlier reference tokens, not future tokens. The footer separates surprise from truth and states that prompt tokens are masked. No generated numerical claims.",
+    "prohibited_content": "Any invented probability, loss, token count or perplexity; any artwork or text inside the reserved chart rectangle; future-token leakage; claiming low perplexity implies a correct generated answer; hands, handwriting, photographs, scenery, logos or watermarks.",
+    "alt_text": "The first six real reference-token pieces show their probabilities and losses, followed by a bar chart for all 21 scored reference tokens. Less expected tokens contribute larger losses. The mean loss produces perplexity about 5.609, conditioned on the exact pendant prompt.",
+    "numerical_overlay": {
+      "source": "01-metric-visual-evidence.json: perplexity",
+      "renderer": "../metric_visuals.py",
+      "bounds": [65, 245, 1470, 935],
+      "proofreading_bounds": [[34, 24, 136, 193], [815, 129, 972, 157]],
+      "provenance": "MAI draws the conceptual frame; code inserts actual SmolLM2 reference-token probabilities and losses, checked against the saved CPU run. Small unrelated cat-word decorations are removed/replaced to preserve the pendant example."
+    }
+  }
+]

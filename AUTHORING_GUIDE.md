@@ -6,6 +6,7 @@
 > Those documents remain as historical reference; this document is the single source of truth going forward.
 >
 > **Gold standards:**
+> - Plain-English learning voice — [`learning/08-llm-evaluation/01-llm-evaluation-metrics-and-benchmarks.ipynb`](learning/08-llm-evaluation/01-llm-evaluation-metrics-and-benchmarks.ipynb)
 > - Mechanistic depth — [`learning/04-transformers/02-attention-and-position.ipynb`](learning/04-transformers/02-attention-and-position.ipynb)
 > - Narrative/business framing — [`learning/06-llm-finetuning/01-llm-finetuning-data-techniques.ipynb`](learning/06-llm-finetuning/01-llm-finetuning-data-techniques.ipynb)
 > - Notes chapter — [`notes/03-llm/ch01-transformer-architecture/README.md`](notes/03-llm/ch01-transformer-architecture/README.md)
@@ -23,6 +24,28 @@ All generated explanations, notebook prose, notes, READMEs, and other documentat
 5. **Keep the evolutionary spine visible.** Show what the current approach can do, the specific drawback that remains, and how the next model or technique addresses it. Carry that unresolved problem into the next section or chapter instead of restarting with an unrelated feature tour.
 
 The default teaching order is: **plain-English problem, concrete intuition, mechanism, technical name, necessary math**.
+
+### Required Style for Every `learning/` Chapter
+
+Use the evaluation lesson above as a voice reference across all learning topics:
+
+- Open with a concrete input, output or failed attempt. Define unfamiliar roles when they
+  become useful, not in an opening vocabulary catalog.
+- Keep the same example through the explanation, code and result. Say why a change of
+  dataset or scale is necessary.
+- Add short reading guides around non-obvious code, including small blocks. Read one actual
+  result aloud before drawing a general conclusion.
+- Compare closely related variants with a small "what changed / what it buys / what it misses"
+  table. Do not turn distinct tools into a fictitious history of universal improvements.
+- Keep passing controls, unchanged results and failed refinements honest. Check the actual
+  experiment instead of writing the result the story would prefer.
+- State toy limitations beside the relevant output. Undefined measurements and unavailable
+  policies are not zero-error successes.
+- Use abstract titles such as **Concept recap** or **Summary** for concise explanations and,
+  where useful, short code sketches. Do not prescribe the learner's note-taking medium.
+
+The [learning-content skill](.github/skills/intuitive-learning-content/SKILL.md) contains the
+operating checklist. Preserve technical precision while removing avoidable difficulty.
 
 ---
 
@@ -100,7 +123,8 @@ Every track is anchored to one production system with real constraints, a named 
 **What the grand challenge does:** it converts "learn about pagination" into "the API is silently truncating your training data and your model doesn't know it." The failure the reader just witnessed is real, measured, and belongs to a system they have been following since chapter one.
 
 Each chapter must:
-1. Open with § 0 showing the specific wall the system just hit — with named numbers
+1. Open with the specific wall the system just hit. Use measured numbers when available;
+   preserve an existing learning chapter's part structure rather than adding a redundant § 0.
 2. Unlock at least one constraint measurably by the end
 3. State that unlock with a measured result, not a description
 
@@ -145,9 +169,12 @@ Emojis render inconsistently across platforms, add visual noise, and reduce the 
 
 ### 4.1 Story Header
 
-Every chapter opens with three items in a `>` blockquote, in this order:
+Open with the concrete problem and a brief reminder of what the learner already knows.
+The following story-header elements can help; for `learning/`, they must not displace
+the example or become a mandatory history/notation preface.
 
-**Item 1 — The story.** Who invented this, in what year, on what problem. Specific names, dates, papers. One paragraph. The last sentence connects the historical moment to the reader's current system.
+**Item 1 — The problem.** Show what was attempted, what output was wanted and what went wrong.
+Add sourced historical context only when it clarifies the mechanism.
 
 **Item 2 — Where you are.** One paragraph naming what previous chapters delivered and what gap remains. Named constraint statuses, specific metric numbers.
 
@@ -156,7 +183,8 @@ Every chapter opens with three items in a `>` blockquote, in this order:
 
 ### 4.2 § 0 — The Challenge
 
-Every chapter opens with § 0. Format is fixed:
+When a separate challenge section helps, adapt this pattern. An existing `learning/` chapter
+may establish the same concrete problem in its opening part without a separate § 0.
 
 ```markdown
 ## 0 · The Challenge
@@ -177,7 +205,8 @@ Every chapter opens with § 0. Format is fixed:
 ```
 
 **Rules for § 0:**
-- The gap is never "our model is not accurate enough" — it is a specific numbered overshoot
+- The gap is never merely "our model is not accurate enough": show the specific failing case
+  and use a measured number when one exists, rather than inventing precision for the introduction.
 - The blocker is never abstract — it is the named failure in the track's running example
 - Constraint achievements note before and after numbers
 

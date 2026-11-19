@@ -6,6 +6,8 @@
 Keep those rows, give positions seats, then carry a clue beyond the seats' left edge.
 The recurrent mechanisms belong to [01A](../01-sequence-memory/01A-sequence-memory-theory.ipynb);
 here you check what they do inside a word-prediction task.
+The closing [Concept recap](03B-counts-to-recurrent-language-models.ipynb#concept-recap)
+collects the count/window/state distinctions without introducing another training run.
 
 ## 1. First ask what the predictor receives
 

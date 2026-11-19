@@ -1,0 +1,284 @@
+{
+  "reference": "the pendant hides a letter",
+  "rouge": {
+    "inserted": "the pendant hides a small letter",
+    "precision": 0.8333333333333334,
+    "recall": 1.0,
+    "f1": 0.9090909090909091,
+    "shared_adjacent_pairs": 3,
+    "reference_adjacent_pairs": 4,
+    "reordered": "a letter hides the pendant",
+    "reordered_rouge1": 1.0,
+    "reordered_lcs_length": 2
+  },
+  "bleu": {
+    "repeated": "letter letter letter",
+    "clipped_matches": 1,
+    "produced": 3,
+    "short": "letter",
+    "reference_length": 5,
+    "short_length": 1,
+    "short_brevity_penalty": 0.01831563888873418
+  },
+  "meteor": {
+    "cases": {
+      "synonym": {
+        "answer": "the pendant conceals a letter",
+        "matches": [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            3,
+            3
+          ],
+          [
+            4,
+            4
+          ]
+        ],
+        "chunks": 1,
+        "score": 0.996
+      },
+      "ordered": {
+        "answer": "the pendant hides a letter",
+        "matches": [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            3,
+            3
+          ],
+          [
+            4,
+            4
+          ]
+        ],
+        "chunks": 1,
+        "score": 0.996
+      },
+      "reversed": {
+        "answer": "letter a hides pendant the",
+        "matches": [
+          [
+            0,
+            4
+          ],
+          [
+            1,
+            3
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            4,
+            0
+          ]
+        ],
+        "chunks": 5,
+        "score": 0.5
+      }
+    },
+    "stem_example": {
+      "hides": "hide",
+      "hiding": "hide"
+    }
+  },
+  "bertscore": {
+    "encoder_id": "distilbert/distilbert-base-uncased",
+    "encoder_revision": "12040accade4e8a0f71eabdb258fecc2e7e948be",
+    "layers": 6,
+    "reference": "the pendant hides a letter",
+    "candidate": "the pendant conceals a note",
+    "reference_tokens": [
+      "the",
+      "pendant",
+      "hides",
+      "a",
+      "letter"
+    ],
+    "candidate_tokens": [
+      "the",
+      "pendant",
+      "conceal",
+      "##s",
+      "a",
+      "note"
+    ],
+    "cosine_similarities": [
+      [
+        0.9695901870727539,
+        0.6107809543609619,
+        0.6018203496932983,
+        0.7402021884918213,
+        0.4811701476573944
+      ],
+      [
+        0.5992951393127441,
+        0.9677115678787231,
+        0.6781017780303955,
+        0.6272920370101929,
+        0.6331146955490112
+      ],
+      [
+        0.548330545425415,
+        0.6510831117630005,
+        0.8692408800125122,
+        0.6217914819717407,
+        0.4931524395942688
+      ],
+      [
+        0.7049263715744019,
+        0.5685137510299683,
+        0.7412668466567993,
+        0.7655622959136963,
+        0.5113624930381775
+      ],
+      [
+        0.7232568264007568,
+        0.6285274028778076,
+        0.6640369892120361,
+        0.958303689956665,
+        0.662197470664978
+      ],
+      [
+        0.4894183576107025,
+        0.6596724987030029,
+        0.5494827628135681,
+        0.6503764390945435,
+        0.9015327095985413
+      ]
+    ],
+    "note": "Same layer-six contextual cosine construction as BERTScore's example plot; special tokens hidden."
+  },
+  "perplexity": {
+    "model": {
+      "source": "hf",
+      "model_id": "HuggingFaceTB/SmolLM2-135M-Instruct",
+      "revision": "12fd25f77366fa6b3b4b768ec3050bf629380bac"
+    },
+    "case": "pendant",
+    "prompt": "<|im_start|>system\nAnswer the question using only the supplied context. Use one short sentence. If the context does not answer it, say that you cannot tell.<|im_end|>\n<|im_start|>user\nContext: Inside the pendant, Mei-Lin finds a letter proving her lineage and restoring her claim to the family trade route.\nQuestion: Why does Mei-Lin keep the pendant?<|im_end|>\n<|im_start|>assistant\n",
+    "reference": "The pendant hides a letter proving Mei-Lin's lineage and lets her reclaim the family trade route.",
+    "token_pieces": [
+      "The",
+      " pend",
+      "ant",
+      " hides",
+      " a",
+      " letter",
+      " proving",
+      " Mei",
+      "-",
+      "Lin",
+      "'s",
+      " lineage",
+      " and",
+      " lets",
+      " her",
+      " reclaim",
+      " the",
+      " family",
+      " trade",
+      " route",
+      "."
+    ],
+    "token_ids": [
+      504,
+      25171,
+      403,
+      29876,
+      253,
+      4386,
+      17928,
+      46052,
+      29,
+      28062,
+      506,
+      20730,
+      284,
+      13144,
+      874,
+      26400,
+      260,
+      1564,
+      3735,
+      7410,
+      30
+    ],
+    "token_losses": [
+      3.516751289367676,
+      0.380840539932251,
+      4.5536911784438416e-05,
+      8.001420974731445,
+      0.8782101273536682,
+      3.220391273498535,
+      0.8571688532829285,
+      0.7105652093887329,
+      0.015373656526207924,
+      0.0003492222458589822,
+      0.017218507826328278,
+      0.17845772206783295,
+      0.36298105120658875,
+      9.170567512512207,
+      0.336426317691803,
+      5.335223197937012,
+      1.7834992408752441,
+      0.40187355875968933,
+      0.04280759394168854,
+      0.009082077071070671,
+      0.9928235411643982
+    ],
+    "token_probabilities": [
+      0.029695751145482063,
+      0.6832868456840515,
+      0.9999544620513916,
+      0.00033498628181405365,
+      0.41552597284317017,
+      0.039939429610967636,
+      0.42436182498931885,
+      0.4913663864135742,
+      0.9847438931465149,
+      0.9996508359909058,
+      0.9829288721084595,
+      0.8365594148635864,
+      0.6955996155738831,
+      0.00010405744251329452,
+      0.7143185138702393,
+      0.004818834364414215,
+      0.16804906725883484,
+      0.6690653562545776,
+      0.9580957293510437,
+      0.9909590482711792,
+      0.3705289959907532
+    ],
+    "mean_loss": 1.7243846654891968,
+    "perplexity": 5.609068393707275,
+    "note": "Actual fixed-reference tokens conditioned on the exact prompt; prompt tokens are not scored."
+  }
+}

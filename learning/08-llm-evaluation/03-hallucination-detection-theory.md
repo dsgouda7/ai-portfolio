@@ -1,84 +1,132 @@
-# Hallucination Detection and Factual Grounding
+# Which Claim Does the Passage Support?
 
-A hallucination is a fluent claim that conflicts with or lacks support from the evidence boundary. In a retrieval-augmented system, that boundary is usually the retrieved context. In open-domain fact-checking, it may include trusted external sources. The first question is therefore not "Does this sound good?" but "What evidence supports this claim?"
+Follow the [notebook](03-hallucination-detection.ipynb) and its closing
+[Concept recap](03-hallucination-detection.ipynb#concept-recap).
 
-This distinction matters because quality is not factuality. Similarity metrics measure resemblance, LLM judges may measure usefulness, and perplexity measures how expected the wording is. None independently establishes that a claim is correct.
+## 1. Give the editor a question they can actually check
 
-![Hallucination types and complementary detection signals](images/03-hallucination-detection-theory-01.png)
+Our source says Elena Marchetti was **longlisted for the Booker Prize in 2019**.
+The practice answer says she **won**, then adds *The Silence of Bridges* as a
+novel title. Both sentences contain the person, prize and year.
 
-## 1. Claim Outcomes Are Not a Hallucination Taxonomy
+A whole-answer similarity score can blur the important difference. The editor
+needs a more specific task: check the claimed prize outcome and find evidence
+for the added title.
 
-A claim is **grounded** when the supplied evidence supports it. A claim is **true** when it agrees with the world. These are related but different properties. A true claim omitted by retrieval is ungrounded, while a false statement in a faulty source can be grounded to that source. A RAG guard evaluates attribution to its evidence; world-truth verification requires authoritative sources or human fact-checking.
+A **claim** is something we could check, such as who won or when a book appeared.
+Being fluent, detailed or on-topic is not the same as being supported.
 
-Split answers into atomic claims, then use three evidence outcomes: **supported**,
-**contradicted**, or **unknown**. Unknown means the supplied evidence is silent; it does not mean
-the claim is globally false. After assigning an outcome, localize the reviewer target as an entity
-gap, relation mismatch, number/date change, or missing evidence span. These are operational labels,
-not a broad taxonomy of every possible hallucination.
+## 2. Missing evidence is different from opposing evidence
 
-## 2. One Riverside Claim, Four Signals
+Use three outcomes for the job we want the evaluator to perform:
 
-Riverside's source says: **"Elena Marchetti was longlisted for the Booker Prize in 2019."**
+| Outcome | What it means |
+| --- | --- |
+| Supported | The evidence establishes the claim |
+| Contradicted | The evidence establishes something incompatible |
+| Unknown | The supplied evidence does not settle it |
 
-The editorial assistant generates: **"Elena Marchetti won the Booker Prize in 2019 for her debut novel *The Silence of Bridges*."**
+Being longlisted alone establishes neither winning nor not winning.
+The stronger `won` claim is therefore unknown from this passage.
+If the evidence explicitly said she did not win, we would have a contradiction.
+Likewise, an absent title may be unsupported without being globally nonexistent.
 
-### Attribution
+**Grounded** means supported by the evidence supplied here. **True** means it
+agrees with the world. A true fact can be absent from retrieval; a faulty source
+can support a false statement. A passage-support check and authoritative
+world-fact verification are related but different jobs.
 
-Natural Language Inference (NLI) compares the source as the **premise** with the generated claim as the **hypothesis**. Entailment means the evidence supports the claim; contradiction means it conflicts; neutral means the evidence is silent. Here, the source supports only "longlisted" and does not entail the stronger "won" claim; the novel title is also unsupported. "Won" becomes a contradiction only if the evidence explicitly says she did not win. Claim-level attribution therefore surfaces unsupported and contradictory content more clearly than whole-answer similarity.
+## 3. Our first splitter is intentionally too crude
 
-Neutral does not mean false: the title could be true but missing from the passage. Likewise, partial support must not hide the wrong award relation. Review the evidence span and the unsupported or contradictory phrase, not only an aggregate score.
+We would like one complete checkable claim per row. The notebook first tries
+splitting at full stops, semicolons and `and`.
 
-### Entity Gap
+The award answer remains one piece containing several facts. Elsewhere,
+`calculation` becomes a standalone ReAct fragment. These are visible failures
+of the splitting rule, not successful extraction of atomic claims.
 
-Entity-gap detection compares names, dates, quantities, works, and roles in the claim with those in the evidence. Elena Marchetti, Booker Prize, and 2019 appear in both; *The Silence of Bridges* does not, so it becomes a concrete review target. However, entity matching alone misses "won" versus "longlisted" because all surrounding entities are present. Entity gaps locate suspicious details; they do not verify relations.
+The following word rules also take shortcuts: chosen word pairs trigger
+warnings, and enough shared vocabulary can trigger `supported`.
+Those labels are provisional outputs of the toy, not verified evidence
+judgments. Even a field called `contradicted` still needs its triggering words
+checked in context.
 
-### Consistency
+The purpose is to open the workflow and its limits, not claim that punctuation
+and shared-word counts solve factuality.
 
-When trusted context is absent or a case remains ambiguous, generate several independent answers and compare their claims. If samples alternate between "won," "longlisted," different years, or different novel titles, instability raises risk. If every sample repeats "won," consistency is high, but the claim can still be consistently false. Consistency is evidence about model stability, not truth, and extra generations add cost and latency.
+## 4. Familiar names do not verify the relationship
 
-### Perplexity
+Compare names, years and titles separately from what the answer says happened.
+The person, prize and 2019 can all match while `longlisted` changes to `won`.
 
-Perplexity asks how expected the token sequence is to a language model. The Riverside sentence is polished and conventional, so it may receive low perplexity despite being wrong. Length, domain style, and calibration also affect the value. Perplexity can diagnose fluency or domain fit; it must never serve as a factuality gate.
+The notebook's name extractor looks for capitalized word groups and four-digit
+years. For the added title it returns `The Silence` and `Bridges`, not one clean
+title. It even flags the sentence-opening word `In` elsewhere.
+These clues can focus review, but they are not a reliable entity recognizer.
 
-## 3. Proxies Versus Validated Classifiers
+An **entity gap** is a suspected name or detail in the answer that was not found
+in the passage. A **relation mismatch** is a changed link between otherwise
+familiar entities. Keep both; one cannot replace the other.
+The example's `won`/`longlisted` relation row is written for that case rather
+than discovered by a general relation model.
 
-A tutorial score, heuristic threshold, zero-shot wrapper, entity matcher, or weighted risk formula is a **proxy**. It can rank examples and demonstrate a workflow, but its output is not a calibrated probability and its threshold is not measured performance.
+## 5. How much review are we willing to do?
 
-A validated classifier has been evaluated on labeled, in-domain claims with the same retrieval and generation conditions used in deployment. Its label mapping is verified; thresholds are selected against the cost of false negatives and false positives; and precision, recall, calibration, and subgroup failures are measured on held-out data. Direct sequence-pair NLI is preferable to treating a context string as a zero-shot label, but even direct NLI must be validated and monitored.
+The code gives the provisional outcomes chosen risk numbers, adding a small
+amount when a name gap appears. These are hand-set ranking scores, not
+probabilities that a claim is false.
 
-Do not describe a proxy as a detector with a known catch rate unless a representative evaluation establishes that rate. Record which signals actually ran, and never replace a missing measurement with an estimated value presented as observed evidence.
+A threshold decides which rows go to review. Raising it usually reduces
+review work but may miss more problems.
 
-## 4. Layered Guard and Triage
+| Reading | Question |
+| --- | --- |
+| Precision | Of the rows flagged, how many carry the problem label? |
+| Recall | Of the labeled problems, how many were flagged? |
+| Review rate | What fraction of all rows was flagged? |
 
-The composite score does not choose its own threshold. Lowering the HIGH-risk gate catches more hallucinations and sends more answers to human review; raising it saves review capacity and misses more failures. Sweep the threshold on labeled cases and choose the operating point from recall, precision, and review budget. `0.50` is a starting hypothesis, not a law.
+At the chosen practice threshold 0.2, four of nine fragments are reviewed.
+All four have the declared wrong-answer label, yielding precision and recall
+of 1.0 on this constructed set.
 
-![Layered hallucination guard and triage flow](images/03-hallucination-detection-theory-02.png)
+That result is not a future 100% catch rate. Every fragment inherited its
+answer's label; no independent reviewer established claim-level truth.
+A real evaluation needs those reviewed labels and new cases.
 
-Use complementary signals in a deliberate order:
+The exercise increases required recall from 0.80 to 0.90. The selected point
+stays unchanged because both require the available 1.0-recall level.
+On a tiny discrete set, a stricter target need not change the workload.
 
-1. Split the answer into atomic, scoreable claims.
-2. Run attribution against the retrieved evidence and retain supporting or conflicting spans.
-3. Extract entity gaps to show the reviewer exactly what needs checking.
-4. Use consistency sampling only when context is unavailable or the measured risk remains ambiguous.
-5. Combine only observed signals, using weights and decision bands fitted on labeled deployment data.
-6. Serve low-risk claims, visibly qualify uncertain claims, and hold high-risk author-facing claims for review.
+## 6. What would a stronger checker add?
 
-For the Riverside claim, the guard should surface the unsupported upgrade from "longlisted" to "won" and the unsupported title. It should not silently rewrite the sentence or declare it globally false based only on the retrieved passage. The editor needs the claim, evidence, signal provenance, and reason for escalation.
+A trained **natural-language inference (NLI)** model compares a passage with
+a claim and estimates support, contradiction or missing support.
+It is a possible replacement for our word rules, not a component run here.
+It still needs evaluation on the actual domain and evidence conditions.
 
-## 5. Practical Rules
+![Conceptual support gaps and possible checking methods](images/03-hallucination-detection-theory-01.png)
 
-1. Separate prose quality from factual support.
-2. Define the evidence boundary before scoring.
-3. Score atomic claims rather than only complete answers.
-4. Treat contradiction as strong grounding risk and neutrality as a verification candidate.
-5. Use entity gaps to focus review, not to validate relations.
-6. Use consistency as a secondary stability signal, never as proof of truth.
-7. Use perplexity for fluency or domain fit, never factuality.
-8. Label tutorial heuristics as proxies until validated on representative data.
-9. Tune thresholds to business costs and monitor them across model and retrieval changes.
-10. Keep a human or authoritative-source path for consequential and relation-level claims.
+The diagram's intrinsic/extrinsic labels distinguish opposing the passage from
+adding unsupported details. They are orientation terms, not extra verified
+classes produced by our toy.
 
-A useful hallucination guard does not promise truth from one score. It makes evidence boundaries explicit, combines complementary signals, explains uncertainty, and routes unresolved claims to the right verification process.
+Repeated-answer consistency is another possible clue: changing stories across
+runs suggests instability. Repeating the same wrong answer does not establish
+truth. That sampling method is not implemented in this notebook.
+Perplexity likewise checks expected wording, not factual support.
 
-Judge bias is owned by [Part 2](02-llm-as-judge-safety-and-pipeline.ipynb). Confidence calibration
-and abstention thresholds are owned by [Part 4](04-calibration-and-confidence.ipynb).
+## 7. Preserve the review trail
+
+Keep the text being checked, source passage, output label, label origin, score
+and reason for review. A reviewer should be able to revisit the actual
+evidence, not just accept a risk number.
+
+![Conceptual review path that retains evidence](images/03-hallucination-detection-theory-02.png)
+
+Before deploying, test the real splitter and checker on independently reviewed
+claims, select cutoffs according to missed-problem and review costs, and
+evaluate on further untouched cases. Keep an authoritative-source or human
+verification path for consequential claims.
+
+**We built a transparent review workflow, not a validated hallucination detector.**
+Next, [ask whether a confidence number has a dependable meaning](04-calibration-and-confidence.ipynb).

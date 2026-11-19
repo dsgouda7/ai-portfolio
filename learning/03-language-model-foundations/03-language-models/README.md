@@ -154,6 +154,29 @@ original 8,000-story, shared-initialization, 16-epoch experiments, including plo
 shortlists, best/final checks and optional extra seeds. It uses its own split and
 fresh models; its results are not the small preview's before/after evidence.
 
+## Concept Recaps and Cross-Chapter Bridges
+
+The existing lessons and experiments stay in place. The closing recaps collect the small
+number of distinctions worth carrying forward:
+
+| What you want to remember | Where to revisit it |
+|---|---|
+| An ID, stored row, temporary average and word score are different objects | [03A Concept recap](03A-training-skeleton-and-word-objectives.ipynb#concept-recap) |
+| A wider window and a carried state change input access in different ways | [03B Concept recap](03B-counts-to-recurrent-language-models.ipynb#concept-recap) |
+| Separate reading/writing, one-summary restriction and reusable source notes | [03C memory-interface comparison](03C-recurrent-encoder-decoder-to-attention.ipynb#memory-interface) and [recap](03C-recurrent-encoder-decoder-to-attention.ipynb#concept-recap) |
+| Reading source notes does not consume them | [03C1 read-only source-memory check](03C1-encoder-decoder-worked-details.ipynb#source-memory-check) |
+| Exact reversal, correct-history loss and translation wording need different scores | [03C task/measurement bridge](03C-recurrent-encoder-decoder-to-attention.ipynb#task-and-measure) |
+
+The new source-memory check uses a copy of the already-trained look-back model. It reads
+once, supplies three correct previous-answer inputs and prints changes in source notes,
+writer state and attention. It does not update the original model or run another fit.
+The [Stage 08 reference check](../../08-llm-evaluation/01-llm-evaluation-metrics-and-benchmarks.ipynb#multiple-reference-check)
+then keeps one generated answer fixed while comparing one versus two prewritten reference
+wordings. Its results are separate from the retained one-reference CPU report.
+
+The short Transformer bridge explains parallel training positions versus sequential
+generation; detailed attention and cache mechanics remain in Stage 04.
+
 ## Engineering contracts inside the lesson
 
 Keep the responsibilities separate rather than rebuilding them in each cell:

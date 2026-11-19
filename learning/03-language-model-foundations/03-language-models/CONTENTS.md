@@ -20,6 +20,12 @@ Follow the failures that lead from counting continuations to separate reading/wr
 
 ## Code-only companions
 
+**Compact recall route:** [03A](03A-training-skeleton-and-word-objectives.ipynb#concept-recap),
+[03B](03B-counts-to-recurrent-language-models.ipynb#concept-recap), and
+[03C](03C-recurrent-encoder-decoder-to-attention.ipynb#concept-recap) end with Concept recaps.
+The optional [read-only source-memory check](03C1-encoder-decoder-worked-details.ipynb#source-memory-check)
+prints which values change while the same source notes remain available.
+
 - [Common training base](language_model.py) — Keep one practice loop while each model chooses how to guess and which answers to grade.
 - [Word-data loader contracts](language_data.py) — Keep shared window validation and seeded batching while CBOW and Skip-gram supply their own aligned input/target pairs.
 - [Engineering contract checks](test_language_contracts.py) — Verify loader shapes/order, abstract hooks, training-step order, and explicit failure behavior offline.

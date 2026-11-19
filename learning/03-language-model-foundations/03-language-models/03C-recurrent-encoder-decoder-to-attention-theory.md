@@ -246,3 +246,26 @@ skill learned by reversing these lists.
 
 **Durable summary:** the reader learns what to preserve because the writer's errors
 reach it; the writer learns what to say from source context and previous-answer inputs.
+
+## 10. What stays available while the writer changes?
+
+| Design | Source information available during writing | What changes at each writing step? |
+|---|---|---|
+| Our fixed-summary GRUs | The final note handed to the writer | The writer's state, without a direct reread of earlier source notes |
+| Recurrent source attention | Every saved source-position note | The query, reading weights and current weighted blend can change |
+| Transformer encoder-decoder | Contextual source vectors and layer-specific source K/V | Target representations ask new questions; cached target history grows |
+
+Attention reads reusable information. It does not delete a source word, subtract a
+remaining meaning, or guarantee one source word per answer word.
+Source activations stay fixed during this decode; training can still change the weights
+that will compute the next input's activations.
+The [read-only check](03C1-encoder-decoder-worked-details.ipynb#source-memory-check)
+tests that distinction without another fit.
+
+The main [Concept recap](03C-recurrent-encoder-decoder-to-attention.ipynb#concept-recap)
+keeps a short generation sketch and the recall chain together.
+Its [task/measurement table](03C-recurrent-encoder-decoder-to-attention.ipynb#task-and-measure)
+separates exact reversal from tasks with several valid answers.
+For original descriptions, see [seq2seq](https://arxiv.org/abs/1409.3215),
+[recurrent source attention](https://arxiv.org/abs/1409.0473) and
+[the Transformer](https://arxiv.org/abs/1706.03762).

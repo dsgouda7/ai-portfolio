@@ -1,77 +1,171 @@
-# LLM Evaluation Metrics and Benchmarks: Handwritten Theory Notes
+# Evaluating Answers: Same Task, Different Measuring Sticks
 
-LLM quality is multidimensional. A fluent answer can be wrong, and a correct paraphrase can look unlike its reference. Therefore, no single score can certify a model. Start with the decision or claim, then combine metrics that provide different kinds of evidence.
+Follow the [notebook](01-llm-evaluation-metrics-and-benchmarks.ipynb).
+Its [saved CPU run](results/metrics-cpu-smollm2-135m.json) contains the actual answers,
+per-case scores and settings. Four visible teaching cases show the mechanics; they
+are not a sealed benchmark or proof of general model quality.
+The closing [Concept recap](01-llm-evaluation-metrics-and-benchmarks.ipynb#concept-recap)
+pairs the core ideas with compact code sketches. Five local illustrations in the
+notebook make the matching and surprise mechanisms visible.
 
-This chapter is the canonical owner of that metric caveat and of reference, semantic,
-model-based, and benchmark evidence. Later chapters link back instead of repeating the full
-taxonomy.
+## 1. Start with two answers, not a score
 
-![Evaluation taxonomy from questions to evidence](images/01-llm-evaluation-metrics-and-benchmarks-theory-01.png)
+Riverside asks why Mei-Lin keeps a pendant. A good answer explains the hidden
+letter and family claim, but may use different words from the reference.
+Another calls it a valuable heirloom showing her family's status. That sounds
+related, but the passage does not support this explanation.
 
-## 1. Metric taxonomy
+The **reference** is an accepted answer to compare with, not the only correct
+way to say it. A **metric** turns a particular check into a number.
+Counting familiar words can help, but it does not automatically distinguish
+the supported answer from the plausible unsupported one.
+Before trusting a score, ask what its rule actually checked.
 
-**Reference-based string metrics** compare an answer with human-written references. BLEU measures matching n-grams, ROUGE-L measures ordered token coverage, and METEOR adds stems, synonyms, and a word-order penalty. They depend on reference wording.
+## 2. Same matching idea, slightly different questions
 
-**Model-based semantic metrics** compare meaning rather than exact strings. BERTScore uses contextual token embeddings and reports semantic precision, recall, and F1. It catches paraphrases such as "reclaim" versus "recover," but depends on the evaluator model and does not prove factual entailment. LLM-as-judge is another model-based method, developed separately because rubrics, bias, and answer-order effects need controls.
+Suppose the reference says "the pendant hides a letter." Add "small" before
+"letter": the central information and ordering survive, although one adjacent
+word pair changes. That small change motivates several related views.
 
-**Reference-free metrics** score text without a gold answer. Perplexity measures how surprising a sequence is to a language model. It is useful for domain-fit regression, not correctness.
+| Choice | What do we count? | Why use it? | What still goes wrong? |
+| --- | --- | --- | --- |
+| ROUGE-1 | Individual matching words | A cheap coverage checklist | The same words can express a different claim |
+| ROUGE-2 | Matching neighboring word pairs | Notice some phrase order | An innocent inserted word breaks a pair |
+| ROUGE-L | Words that match in the same order, allowing gaps | Tolerate insertions while keeping order | Miss synonyms; reward plausible falsehoods |
+| ROUGE-S | Ordered matching word pairs, allowing gaps | An older alternative way to tolerate gaps | Needs a stated gap policy; not measured here |
 
-**Capability benchmarks** contain fixed tasks, known answers, and scoring rules. Examples include MMLU, HellaSwag, TruthfulQA, HumanEval, and HELM. Riverside also needs a private manuscript benchmark.
+These are related alternatives, not a historical ladder where each replaces the last.
+The notebook opens ROUGE-L once. Libraries supply the other practical ROUGE readings.
 
-Thus, the taxonomy separates surface fidelity, semantic fidelity, model fit, and task capability. Human, factuality, safety, and calibration checks remain companion evidence.
+The matches themselves support three questions:
 
-## 2. Core metric intuition
+| Reading | Plain-English question |
+| --- | --- |
+| Precision | How much of the wording I produced matched? |
+| Recall | How much reference wording did I recover? |
+| F1 | Did I do reasonably well on both? |
 
-**BLEU** asks whether candidate n-grams occur in a reference. It clips repeated matches so copying one good phrase many times cannot inflate the score indefinitely. BLEU-4 combines one- through four-word matches, while a brevity penalty discourages tiny answers such as "noble birth" from receiving excessive credit. BLEU suits translation with close references, but valid open-ended answers often score poorly because they use different phrases.
+Extra unmatched text hurts precision; omitted reference wording hurts recall.
+Neither establishes factual accuracy. Copying an incorrect reference can score perfectly.
 
-**ROUGE-L** finds the longest shared token sequence in the same relative order; the tokens need not be adjacent. For example, "pendant hides a letter" and "pendant secretly hides an old letter" retain an ordered match. ROUGE-L helps measure summary coverage, but misses unseen synonyms and may reward extractive copying.
+**Complaint:** even preserved meaning can use different words.
 
-**METEOR** aligns exact words, stems, and WordNet synonyms, then penalizes fragmented matches. An answer containing the right words in a scrambled list loses credit. It is more paraphrase-tolerant than BLEU or ROUGE-L, though language resources limit it.
+## 3. Broader changes need different instruments
 
-**BERTScore** compares contextual token vectors. Each reference token takes its best candidate-token match for recall, and each candidate token takes its best reference-token match for precision; F1 balances them. It recognizes similar meanings despite vocabulary changes. However, "the colony was destroyed" and "the colony was thriving" discuss the same entities and may still appear semantically close. High BERTScore is not a factuality certificate.
+BLEU, METEOR and BERTScore are not small ROUGE variants.
 
-All reference metrics inherit reference quality. One reference represents one valid wording, not every correct answer. Use multiple independently written and reviewed references when possible.
+| Instrument | Problem it tries to fix | What it does | Remaining limitation |
+| --- | --- | --- | --- |
+| BLEU | Repeated matches or a tiny answer can flatter naive overlap | Caps repeated matches, combines short phrase matches, penalizes very short output | Penalizes many valid paraphrases |
+| METEOR | Exact words miss stems and synonyms | Aligns words and related forms; penalizes scattered matches | Word relationships do not prove a claim |
+| BERTScore | A fixed synonym list ignores sentence context | Compares learned lists of numbers that depend on the surrounding words | Close wording and entities can still hide a changed fact |
 
-## 3. Perplexity as average surprise
+Within BLEU, the variants are much smaller changes:
 
-Perplexity can be understood as the model's average surprise while reading text token by token. Lower perplexity means the next tokens were more expected. A Riverside-tuned model should be less surprised by names such as Mei-Lin and manuscript-specific phrases than base GPT-2.
+| Setting | Additional wording pattern checked |
+| --- | --- |
+| BLEU-1 | Individual words |
+| BLEU-2 | Adjacent pairs as well |
+| BLEU-3 | Three-word groups as well |
+| BLEU-4 | Four-word groups as well |
 
-This does not mean the text is true. "Aria discovered the colony was destroyed" and the false sentence "Aria discovered the colony was thriving" can both sound natural in the same fictional style. Use perplexity as an alarm for domain shift or model degradation. Compare it only on the same held-out corpus, tokenizer, and context policy, not across unrelated model families.
+Longer groups ask for closer wording, not deeper truth. Smoothing handles missing
+phrase matches; effective order handles answers shorter than the requested group size.
+Those choices must travel with the score.
 
-## 4. Riverside disagreement example
+BERTScore also reports precision, recall and F1 from the same token matches.
+Changing which reading you display does not require another evaluator model.
+Our earlier hand-mapped word-count cosine is only a toy; the real run uses DistilBERT.
 
-The useful moment is disagreement, not the average. A lexical metric can punish a valid paraphrase; a semantic metric can reward a fluent factual error. When two metrics rank the same answer differently, ask which failure each instrument can actually observe before choosing one as a gate.
+All reference metrics inherit the reference's omissions and wording choices.
+One reference is one accepted answer, not the complete set of correct answers.
+The [multiple-reference check](01-llm-evaluation-metrics-and-benchmarks.ipynb#multiple-reference-check)
+holds the real generated pendant answer fixed and compares one versus two prewritten
+accepted wordings. The slight score change is a protocol change, not model improvement.
+Choose references before comparing systems rather than writing one to fit a model's output.
 
-Reference: "The pendant hides a letter proving Mei-Lin's noble birth, allowing her to reclaim the family trade route."
+## 4. Surprise answers a different question
 
-A correct answer might say: "A document inside the pendant confirms Mei-Lin's lineage, letting her recover the trade permit." BLEU may be low because exact phrases changed; ROUGE-L finds limited ordered overlap; METEOR and BERTScore should reward the synonyms and preserved meaning.
+Perplexity describes how expected the next tokens were to a model.
+Lower means less surprise, not more truth.
+Do not confuse a probability with the cost derived from it.
+In the [one-token check](01-llm-evaluation-metrics-and-benchmarks.ipynb#loss-probability-check),
+a chosen correct-token probability of 0.01 gives loss about 4.605 and single-token
+perplexity 100. Cross-entropy is not restricted to zero through one.
+These are calculated teaching inputs, not extra model measurements.
+The notebook's tiny word-pair model gives the wrong award answer lower perplexity
+than the valid paraphrase. It counted local patterns, not what the passage established.
 
-A wrong answer might call the pendant "a jade heirloom symbolizing family status." It is fluent and shares topical words, so overlap and perplexity may look respectable, yet it omits the hidden letter and legal consequence. This is why metric disagreement is diagnostic rather than noise.
+In the real run, the question and context are supplied first. We then score the
+fixed reference answer, masking the prompt out of the loss. We do not grade
+generated answers by how much the model likes its own choices.
+Compare this number only under matching text, tokenization and context policies.
 
-## 5. Benchmarks, slices, and leakage
+To combine examples, add their reference-token losses and divide by their total
+token count before converting to perplexity. Averaging the example perplexities
+would answer a different question.
 
-Define a capability before writing benchmark items. Riverside's 20-question multiple-choice benchmark separates manuscript recall, general literary knowledge, and evaluation knowledge. For each option, a causal model can score the complete prompt and continuation; the lowest-loss option wins. Keep formatting fixed, score the answer continuation when possible, consider option-length effects, and shuffle option order to detect bias.
+**Complaint:** can an easy reference still accompany a bad generated answer?
 
-Record each item's source, skill, difficulty, answer, distractors, reviewer, and version. Separate development data from a sealed test set. Include positive, negative, contrastive, and boundary cases, and remove ambiguous items. Public benchmarks enable comparison but may have leaked into training data. Private tests better measure proprietary knowledge but are less comparable. Check exact and near-duplicate leakage across training data, prompts, retrieval indexes, and evaluator context.
+## 5. The real CPU run makes that failure visible
 
-MCQ accuracy measures recognition, not free-form generation. Pair it with representative generation prompts.
+The notebook checks public Hugging Face weights and earlier saved checkpoints,
+then explicitly chooses pinned SmolLM2-135M-Instruct. DistilBERT is a separate
+BERTScore evaluator. A selected broken local checkpoint raises an error rather
+than silently turning into the public model.
 
-![Benchmark construction, slicing, uncertainty, and leakage loop](images/01-llm-evaluation-metrics-and-benchmarks-theory-02.png)
+The generated award answer invents *The Lost City of the Ancients* and upgrades
+"longlisted" to "won." Its BERTScore F1 is still about 0.808.
+That is not 80.8% factual correctness. The reference itself has perplexity about
+1.627 because the context makes it predictable, yet generation went elsewhere.
 
-Keep per-example results and report slices that match risk: manuscript, query type, rare entities, answer length, and critical cases. Overall accuracy can hide a severe local regression. When scores disagree, move from the dashboard to the slice, item, claim, and likely cause: retrieval, prompt, decoding, reference, evaluator, or model. Low overlap plus high semantic similarity often means paraphrase; high similarity plus failed factual review often means contradiction or unsupported content. Report sample size and uncertainty, and use paired comparisons when models answer the same items.
+The rights answer changes review before external licensing into review before
+translation. Much wording remains, but the policy condition changes.
+Keep the answer and evidence beside the score; the biggest number is not the winner.
 
-## 6. Decision rules
+The saved record retains model/evaluator revisions, prompt, references, package
+versions, token counts and all per-case readings. ROUGE/METEOR/BERTScore summaries
+are means; corpus BLEU is not mean sentence BLEU.
 
-1. Close translation: BLEU, plus semantic or human checks for freer wording.
-2. Summarization: ROUGE-L for ordered coverage and BERTScore for paraphrases.
-3. Open-ended Riverside QA: BERTScore plus METEOR, followed by factual judging or human review.
-4. Domain style regression: held-out perplexity, never treated as accuracy.
-5. Factual recall: a private benchmark plus generated-answer evaluation.
-6. Safety, hallucination, and calibration: specialized protocols, not overlap metrics.
-7. Any disagreement: inspect examples and let the original task claim decide; never select whichever metric is largest afterward.
+## 6. Which tools deserve priority today?
 
-Riverside's minimum suite is BERTScore for semantic fidelity, perplexity for domain-fit regression, a private MCQ benchmark for manuscript recall, and recurring manual review. The governing principle is: **measure the claim, preserve disagreement, guard against leakage, and inspect the failures.**
+| Job | Sensible role for these metrics | What must accompany them? |
+| --- | --- | --- |
+| Language-model training | Held-out loss and perplexity remain useful | Task behavior, matching tokenizer/context policy |
+| Translation | BLEU remains a comparison baseline | Human checks and learned evaluators such as COMET/xCOMET or MetricX |
+| Summarization | ROUGE-1/2/L remain cheap wording checks | Coverage and factual-support checks; semantic similarity when useful |
+| Open-ended QA | Similarity can locate cases worth reviewing | Task-specific correctness, evidence support and human-calibrated judgments |
 
-Continue to [LLM-as-judge and safety](02-llm-as-judge-safety-and-pipeline.ipynb) for evaluator
-trust, [hallucination detection](03-hallucination-detection.ipynb) for unsupported-claim
-localization, and [calibration](04-calibration-and-confidence.ipynb) for abstention policy.
+METEOR is an older optional comparison, not a modern release gate by itself.
+ROUGE-S is lower priority than support checks in this practical route.
+COMET/MetricX are explained as alternatives, not downloaded or measured here.
+Current [ROUGE documentation](https://github.com/huggingface/evaluate/blob/main/metrics/rouge/README.md),
+[translation-evaluation research](https://aclanthology.org/2025.wmt-1.70/) and
+[task-specific evaluation guidance](https://developers.openai.com/api/docs/guides/evaluation-best-practices)
+support these bounded uses.
+
+![Match the evaluation instrument to the question](images/01-llm-evaluation-metrics-and-benchmarks-theory-01.png)
+
+## 7. Averages come last
+
+A **slice** is simply a group of similar questions. Keep each group's results
+beside the overall accuracy: improving several literary answers cannot cancel a
+failed policy question. The notebook's separate six-item table makes that visible;
+it is not another model run. Its exercise repairs evaluation item `b5` while leaving
+the policy miss in place, so the two effects can be read separately.
+
+An independent evaluation needs reviewed cases, representative coverage, controlled
+training/test overlap, repeated comparisons and uncertainty. Our four visible cases
+do not supply those guarantees.
+
+![Benchmark slicing and leakage checks](images/01-llm-evaluation-metrics-and-benchmarks-theory-02.png)
+
+**Built and measured:** representative ROUGE-L, the transparent toys, real CPU generation
+and the practical library metric suite.
+**Explained only:** ROUGE-S, neighboring BLEU settings and translation-specific alternatives.
+**Not established:** local-adapter superiority, general factual accuracy or release readiness.
+
+The next complaint is trust: who checks the evaluator?
+Continue to [judge controls](02-llm-as-judge-safety-and-pipeline.ipynb),
+[claim support](03-hallucination-detection.ipynb) and
+[confidence/abstention](04-calibration-and-confidence.ipynb).

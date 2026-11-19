@@ -397,6 +397,48 @@ for look_back in [False, True]:
 look_back_to_inspect = False  # CHANGE THIS: True
 print(models[look_back_to_inspect])
 
+# %% Source notes remain available while the writer changes
+from copy import deepcopy
+
+memory_probe_model = deepcopy(models[True]).eval()
+memory_probe_source = torch.tensor([encode_words(CAT_WORDS)])
+memory_probe_parameters = {
+    name: parameter.detach().clone()
+    for name, parameter in memory_probe_model.named_parameters()
+}
+memory_probe_rows, memory_probe_last_weights = [], None
+with torch.no_grad():
+    memory_probe_notes, memory_probe_state = memory_probe_model.read(memory_probe_source)
+    memory_probe_original = memory_probe_notes.clone()
+    memory_probe_previous = practice_prefix(reversal_targets(memory_probe_source))[:, :3]
+    for memory_probe_index in range(memory_probe_previous.shape[1]):
+        memory_probe_input = memory_probe_previous[:, memory_probe_index]
+        memory_probe_old_state = memory_probe_state.clone()
+        memory_probe_scores, memory_probe_state, memory_probe_weights = memory_probe_model.step(
+            memory_probe_input, memory_probe_state, memory_probe_notes,
+        )
+        if memory_probe_weights is None:
+            raise RuntimeError("The look-back model returned no source-attention reading.")
+        memory_probe_rows.append({
+            "step": memory_probe_index + 1,
+            "previous": decode_ids(memory_probe_input)[0],
+            "chosen": decode_ids(memory_probe_scores.argmax(-1))[0],
+            "source_change": (memory_probe_notes - memory_probe_original).abs().max().item(),
+            "writer_change": (memory_probe_state - memory_probe_old_state).abs().max().item(),
+            "attention_change": None if memory_probe_last_weights is None else (
+                memory_probe_weights - memory_probe_last_weights
+            ).abs().max().item(),
+        })
+        memory_probe_last_weights = memory_probe_weights.clone()
+assert torch.equal(memory_probe_notes, memory_probe_original)
+assert all(torch.equal(parameter, memory_probe_parameters[name])
+           for name, parameter in memory_probe_model.named_parameters())
+print("step | previous | chosen | source change | writer change | attention change")
+for memory_probe_row in memory_probe_rows:
+    memory_probe_change = "--" if memory_probe_row["attention_change"] is None else f'{memory_probe_row["attention_change"]:.6f}'
+    print(f'{memory_probe_row["step"]:>4} | {memory_probe_row["previous"]:>8} | {memory_probe_row["chosen"]:>6} | '
+          f'{memory_probe_row["source_change"]:.6f} | {memory_probe_row["writer_change"]:.6f} | {memory_probe_change}')
+
 # %% 5. Can it write without the teacher's history?
 results = []
 with torch.no_grad():
