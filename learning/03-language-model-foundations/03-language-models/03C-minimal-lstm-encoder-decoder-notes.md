@@ -9,6 +9,22 @@ sequence, in its own order and length?
 **Running example:** reverse a list. Reading `7 3 4` must produce `4 3 7`. Every
 answer can be checked by eye, and there is exactly one correct answer.
 
+**Why number lists and an LSTM here?** The main lessons in this chapter reverse
+the sentence "the cat sat on the mat" with a GRU. These notes make two deliberate
+swaps:
+
+- **Number lists instead of a sentence.** With words, it's tempting to judge
+  whether an answer "sounds right". With numbers there is nothing to judge except
+  whether the order is exactly reversed. Hundreds of fresh lists are also easy to
+  make, so we can test lists the model has never seen.
+- **An LSTM instead of a GRU.** Both are recurrent memory units, and either works.
+  An LSTM carries two pieces of memory, where a GRU carries one. Seeing both pieces
+  cross from reader to writer makes the "handoff" easier to picture. Many courses
+  also introduce encoder-decoders with an LSTM.
+
+The idea underneath is the same in both: finish reading, hand a memory to a
+separate writer, and let the writer's mistakes teach the reader.
+
 The code uses `Vocab`, `PAD`, `BOS`, `EOS`, `IGNORE` and `make_loader` from
 [text to batches](03C-minimal-tokens-embeddings-batches-notes.md).
 

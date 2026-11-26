@@ -84,7 +84,7 @@ class later. Ordinary indexing and gather operations can route by saved IDs too.
 
 Read the first **1,000 TinyStories stories** and append the familiar cat sentence
 once as an independent probe document. A fixed training vocabulary turns words
-into addresses. NumPy's sliding-window view collects complete windows separately
+into addresses. PyTorch's `unfold` collects complete windows separately
 inside each sentence; it never joins one sentence's ending to the next.
 Unknown words retain their positions as unknown IDs.
 
@@ -286,7 +286,7 @@ at. Order comes from recurrence here, not from attention. Transformer attention
 needs separate positional information. [03C](03C-recurrent-encoder-decoder-to-attention.ipynb)
 implements look-back access; this preview does not.
 
-The [optional comparison lab](03A-word-objective-comparison-lab.ipynb) preserves
+The [optional comparison lab](optional/03A-word-objective-comparison-lab.ipynb) preserves
 the larger three-model experiment, independent data split and full diagnostic
 reference without lengthening the main embedding-learning path.
 It samples 40,000 five-word training windows for CBOW and Skip-gram, and

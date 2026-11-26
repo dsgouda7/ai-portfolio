@@ -65,7 +65,7 @@ class ReaderWriterTrainingTests(unittest.TestCase):
             "torch": torch, "nn": nn, "BOS": len(CAT_FAMILY_WORDS) + 1,
             "EOS": len(CAT_FAMILY_WORDS) + 2, "V": len(CAT_FAMILY_WORDS) + 3,
         }
-        tree = ast.parse((HERE / "03C1-encoder-decoder-worked-details.py").read_text(encoding="utf-8"))
+        tree = ast.parse((HERE / "optional" / "03C1-encoder-decoder-worked-details.py").read_text(encoding="utf-8"))
         for node in tree.body:
             if isinstance(node, (ast.FunctionDef, ast.ClassDef)) and node.name in {
                 "practice_prefix", "reversal_targets", "ReaderWriter",
@@ -123,7 +123,7 @@ class ReaderWriterTrainingTests(unittest.TestCase):
                 self.assertGreater((original[:, 2:] - altered[:, 2:]).abs().max().item(), 0)
 
     def test_source_memory_probe_reuses_notes_without_updating_the_trained_model(self):
-        book = json.loads((HERE / "03C1-encoder-decoder-worked-details.ipynb").read_bytes())
+        book = json.loads((HERE / "optional" / "03C1-encoder-decoder-worked-details.ipynb").read_bytes())
         cell = next(cell for cell in book["cells"] if cell["id"] == "ch03c1-source-memory-probe")
         original = self.model(True)
         parameters = {name: parameter.detach().clone() for name, parameter in original.named_parameters()}
@@ -143,7 +143,7 @@ class ReaderWriterTrainingTests(unittest.TestCase):
             self.assertIsNone(parameter.grad)
         notebook_code = "\n\n".join("".join(cell["source"]) for cell in book["cells"]
                                    if cell["cell_type"] == "code")
-        companion = ast.parse((HERE / "03C1-encoder-decoder-worked-details.py").read_text(encoding="utf-8"))
+        companion = ast.parse((HERE / "optional" / "03C1-encoder-decoder-worked-details.py").read_text(encoding="utf-8"))
         companion.body.pop(0)
         self.assertEqual(ast.dump(ast.parse(notebook_code)), ast.dump(companion))
 
@@ -165,7 +165,7 @@ class ReaderWriterTrainingTests(unittest.TestCase):
                 self.assertGreater((connected.embedding.weight.grad - detached.embedding.weight.grad).norm().item(), 0)
 
     def test_encoder_only_update_changes_the_message_not_the_decoder(self):
-        book = json.loads((HERE / "03C1-encoder-decoder-worked-details.ipynb").read_bytes())
+        book = json.loads((HERE / "optional" / "03C1-encoder-decoder-worked-details.ipynb").read_bytes())
         cell = next(cell for cell in book["cells"] if cell["id"] == "ch03c-encoder-only-probe")
         word_ids = {word: index + 1 for index, word in enumerate(CAT_FAMILY_WORDS)}
         id_to_word = {value: word for word, value in word_ids.items()}

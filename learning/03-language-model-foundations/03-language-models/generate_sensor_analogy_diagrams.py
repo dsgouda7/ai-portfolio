@@ -358,17 +358,8 @@ def sentence_illustrations():
                   ha="center", color=ORANGE, fontsize=13)
         save(figure, HERE / "images" / filename)
 
-    figure, axis = canvas("A catalogue ID selects a profile; context supports prediction")
-    card(axis, 0.04, 0.51, 0.27, 0.26, "Earth / Object-417\nCatalogue identity\nSize / temperature / atmosphere")
-    card(axis, 0.37, 0.51, 0.26, 0.26, "Word IDs select rows\ncat / sat / the / mat\nLearned channels, not sensors", PURPLE)
-    card(axis, 0.70, 0.51, 0.26, 0.26, "cat sat ___ the mat\nPredict vocabulary scores\nCheck separately: on", ORANGE)
-    arrow(axis, (0.33, 0.64), (0.35, 0.64))
-    arrow(axis, (0.65, 0.64), (0.68, 0.64))
-    axis.text(0.5, 0.32, "Compare aligned, scaled object profiles; train word profiles from varied text.",
-              ha="center", color=NAVY, fontsize=14)
-    axis.text(0.5, 0.20, "Representation analogy only. No physical measurements or neural values are invented.",
-              ha="center", color=ORANGE, fontsize=13)
-    save(figure, HERE / "images" / "03a-celestial-neighborhood-principle.png")
+    # 03a-celestial-neighborhood-principle.png is generated artwork; rebuild it with
+    # generate_illustrations.py from images/03a-illustration-prompts.json, not here.
 
 
 if __name__ == "__main__":

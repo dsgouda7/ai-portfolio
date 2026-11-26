@@ -72,27 +72,26 @@ print(f"Vocabulary size: {vocabulary_size}")
 print("Cat-probe word counts (not weights):",
       {word: counts[word] for word in dict.fromkeys(tokenize(CAT_PROBE))})
 
-# %% 2.2 - Use NumPy's document-local sliding view
+# %% 2.2 - Use PyTorch's document-local sliding windows
 def make_document_windows(id_documents, window_width):
     """Keep complete windows in document order; never bridge document boundaries."""
     if window_width < 1:
         raise ValueError("window_width must be at least one.")
 
     per_document = [
-        np.lib.stride_tricks.sliding_window_view(
-            np.asarray(document, dtype=np.int64), window_width,
-        )
+        # unfold(dimension, size, step) slides a width-sized window one token at a time:
+        # a sentence of length L becomes [L - width + 1, width] windows.
+        torch.tensor(document, dtype=torch.long).unfold(0, window_width, 1)
         for document in id_documents
         if len(document) >= window_width
     ]
 
-    # If no document is long enough, return an empty array.
+    # If no document is long enough, return an empty [0, width] tensor.
     if not per_document:
-        return np.empty((0, window_width), dtype=np.int64)
+        return torch.empty((0, window_width), dtype=torch.long)
 
     # Concatenate windows from each document without crossing boundaries.
-    return np.concatenate(per_document)
-
+    return torch.cat(per_document)
 
 CONTEXT_RADIUS = 2
 window_width = 2 * CONTEXT_RADIUS + 1
@@ -101,15 +100,15 @@ windows = make_document_windows(id_documents, window_width)
 
 print(f"Window width: {window_width}")
 print(f"All windows shape: {windows.shape}")
-print(f"Unknown window slots: {(windows == 0).mean():.1%}")
+print(f"Unknown window slots: {windows.eq(0).float().mean():.1%}")
 print("Our cat document, sliding exactly as in the opening image:")
 # Print the last few windows to inspect the cat document
 cat_window_count = len(id_documents[-1]) - window_width + 1
 for row in windows[-cat_window_count:]:
-    print([itos[index] for index in row])
+    print([itos[index] for index in row.tolist()])
 
-# Convert the windows to PyTorch tensors for model input
-window_ids = torch.tensor(windows, dtype=torch.long)
+# The windows are already a tensor of word IDs, ready for the model.
+window_ids = windows
 
 # Extract the windows corresponding to the last document (the cat document)
 cat_window_ids = window_ids[-cat_window_count:]
@@ -118,7 +117,7 @@ cat_window_ids = window_ids[-cat_window_count:]
 probe_width = 3
 probe_windows = make_document_windows([id_documents[-1]], probe_width)
 for start, row in enumerate(probe_windows):
-    print(f"start={start}: {' '.join(itos[token_id] for token_id in row)}")
+    print(f"start={start}: {' '.join(itos[token_id] for token_id in row.tolist())}")
 print(f"{len(probe_windows)} complete {probe_width}-word windows; training width stays {window_width}.")
 
 # %% 2.3 - Deliver matching inputs and answers
@@ -594,7 +593,7 @@ sequence_itos = itos + ["<bos>", "<eos>"] # add the <bos> and <eos> tokens to th
 sequence_vocabulary_size = len(sequence_itos)
 
 # A separate six-word cutter preserves the same sentence boundaries and vocabulary.
-sequence_window_ids = torch.tensor(make_document_windows(id_documents, 6), dtype=torch.long)
+sequence_window_ids = make_document_windows(id_documents, 6)
 source_sequences, sequence_targets = prepare_sequence_data(
     sequence_window_ids, BOS_ID, EOS_ID, source_width=3,
 )

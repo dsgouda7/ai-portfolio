@@ -9,7 +9,8 @@ import torch
 
 CHAPTER_DIRECTORY = next(
     candidate for candidate in (
-        Path.cwd(), Path.cwd() / "learning" / "03-language-model-foundations" / "03-language-models",
+        Path.cwd(), Path.cwd().parent,
+        Path.cwd() / "learning" / "03-language-model-foundations" / "03-language-models",
     ) if (candidate / "real_text_embeddings.py").is_file()
 )
 if str(CHAPTER_DIRECTORY) not in sys.path:

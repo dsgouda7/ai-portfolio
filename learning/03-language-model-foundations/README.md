@@ -18,7 +18,7 @@ Each chapter has its own setup script and notebook kernel; its README tells you 
 
 Chapter 01B uses token IDs and masks to test memory before Chapter 02 explains how they work.
 
-The [optional word-objective comparison lab](03-language-models/03A-word-objective-comparison-lab.ipynb)
+The [optional word-objective comparison lab](03-language-models/optional/03A-word-objective-comparison-lab.ipynb)
 preserves the larger three-model experiment separately from the compact embedding-learning path.
 That preview is intentional: you don't need to master tokenization before studying recurrence.
 

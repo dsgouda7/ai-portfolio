@@ -38,12 +38,12 @@ class ComparisonLabTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.lab = json.loads((HERE / "03A-word-objective-comparison-lab.ipynb").read_text(encoding="utf-8"))
+        cls.lab = json.loads((HERE / "optional" / "03A-word-objective-comparison-lab.ipynb").read_text(encoding="utf-8"))
         cls.main = json.loads((HERE / "03A-training-skeleton-and-word-objectives.ipynb").read_text(encoding="utf-8"))
 
     def test_lab_companion_matches_and_has_no_live_main_notebook_dependencies(self):
         source = "\n\n".join("".join(cell["source"]) for cell in self.lab["cells"] if cell["cell_type"] == "code")
-        companion = ast.parse((HERE / "03A-word-objective-comparison-lab.py").read_text(encoding="utf-8"))
+        companion = ast.parse((HERE / "optional" / "03A-word-objective-comparison-lab.py").read_text(encoding="utf-8"))
         companion.body.pop(0)
         self.assertEqual(ast.dump(ast.parse(source)), ast.dump(companion))
         self.assertIn("from language_model import CBOW, SkipGram, EncoderDecoderLM", source)

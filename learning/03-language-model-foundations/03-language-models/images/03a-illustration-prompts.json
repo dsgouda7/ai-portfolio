@@ -1,5 +1,16 @@
 [
   {
+    "filename": "03a-celestial-neighborhood-principle.png",
+    "semantic_anchor": "A catalogue name identifies a record; sensor readings describe the object and make comparison possible.",
+    "aspect_ratio": "3:2",
+    "width": 1536,
+    "height": 1024,
+    "prompt": "Rich, cinematic yet clean educational space illustration on a deep navy starfield with a faint distant galaxy. Three celestial bodies in a single row from left to right: LEFT: planet Earth with blue oceans, green-brown continents and white clouds, medium size. MIDDLE: an alien ocean world slightly smaller than Earth: mostly deep teal ocean with many small scattered green-and-ochre island chains, a white polar cap and swirling white clouds. No large continents at all, so it cannot be mistaken for Earth. RIGHT: a banded tan-and-orange gas giant whose diameter is TWICE the diameter of Earth in the image, the dominant body in the scene, still fully visible inside the frame. Earth and the middle planet are smaller to leave room for it. Above each body, one small robotic space probe with solar panels shines a thin cyan scanning beam down onto that body. Directly below each body is a small dark glass name plate, then an identical dark holographic readout panel. Name plates, exactly: left 'Earth', middle 'Object-417', right 'Object-892'. Each readout panel is a simple two-column text table with exactly three rows in the same order: a label column and a value column. No bars, no gauges, no charts, no icons inside the panels: only text. Earth panel rows exactly: 'Size  6,371 km', 'Temp  15 °C', 'Air  N2 + O2'. Object-417 panel rows exactly: 'Size  5,900 km', 'Temp  22 °C', 'Air  N2 + O2'. Object-892 panel rows exactly: 'Size  70,000 km', 'Temp  -150 °C', 'Air  H2 + He'. Title across the top in clean white sans-serif: 'Names identify. Sensor readings describe.' Small subtitle under the title: 'Same three readings for every object'. Text must be sharp, horizontal, correctly spelled and fully legible; generous margins; nothing cropped.",
+    "acceptance_criteria": "Exactly three bodies and three probes; exactly three name plates with the exact names; exactly three readout panels, each with exactly the three rows Size, Temp, Air in that order with the exact values given; the exact title and subtitle; all text legible and correctly spelled.",
+    "prohibited_content": "Any other words, numbers or labels; word tokens such as cat or the; question marks; cubes; neural network diagrams; arrows; legends; backpropagation; error signals; extra planets with labels; misspellings; watermarks; cropped text. Gauge bars, progress bars, charts or icons inside the readout panels; recognizable Earth continents on the middle planet.",
+    "alt_text": "Space probes scan Earth, Object-417 and Object-892. Each object has a name plate and the same three readings: size, temperature and air."
+  },
+  {
     "filename": "03a-01-shared-word-features.png",
     "semantic_anchor": "Why not leave the rows random?",
     "aspect_ratio": "16:9",

@@ -37,7 +37,7 @@ class DocumentWindowTests(unittest.TestCase):
         np.testing.assert_array_equal(
             actual, [[1, 0, 1, 3, 4], [0, 1, 3, 4, 5], [1, 3, 4, 5, 6]],
         )
-        self.assertEqual(actual.dtype, np.int64)
+        self.assertEqual(actual.dtype, torch.long)
 
     def test_windows_never_cross_document_boundaries(self):
         actual = make_document_windows([[1, 2, 3], [], [9], [4, 5, 6, 7]], 3)
@@ -47,8 +47,8 @@ class DocumentWindowTests(unittest.TestCase):
         for documents in ([], [[]], [[1, 2], [3, 4]]):
             with self.subTest(documents=documents):
                 actual = make_document_windows(documents, 5)
-                self.assertEqual(actual.shape, (0, 5))
-                self.assertEqual(actual.dtype, np.int64)
+                self.assertEqual(tuple(actual.shape), (0, 5))
+                self.assertEqual(actual.dtype, torch.long)
 
     def test_width_one_keeps_every_token(self):
         np.testing.assert_array_equal(
@@ -68,7 +68,7 @@ class DocumentWindowTests(unittest.TestCase):
         ]
         np.testing.assert_array_equal(make_document_windows(documents, 5), previous_rows)
 
-    def test_inline_lesson_builders_use_numpy_and_match_shared_helper(self):
+    def test_inline_lesson_builders_use_unfold_and_match_shared_helper(self):
         chapter = Path(__file__).resolve().parent
         stem = "03A-training-skeleton-and-word-objectives"
         notebook = json.loads((chapter / f"{stem}.ipynb").read_text(encoding="utf-8"))
@@ -89,34 +89,32 @@ class DocumentWindowTests(unittest.TestCase):
                 ]
                 self.assertEqual(len(functions), 1)
                 definitions.append(ast.dump(functions[0]))
-                namespace = {"np": np}
+                namespace = {"torch": torch}
                 module = ast.Module(body=functions, type_ignores=[])
                 exec(compile(module, name, "exec"), namespace)
                 builder = namespace["make_document_windows"]
-                with patch(
-                    "numpy.lib.stride_tricks.sliding_window_view",
-                    wraps=np.lib.stride_tricks.sliding_window_view,
-                ) as sliding_windows:
+                unfolded, original_unfold = [], torch.Tensor.unfold
+
+                def recording_unfold(tensor, *args):
+                    unfolded.append(tensor.tolist())
+                    return original_unfold(tensor, *args)
+
+                with patch.object(torch.Tensor, "unfold", recording_unfold):
                     builder(documents, 3)
-                self.assertEqual(sliding_windows.call_count, 2)
-                self.assertEqual(
-                    [call.args[0].tolist() for call in sliding_windows.call_args_list],
-                    [documents[0], documents[-1]],
-                )
+                self.assertEqual(unfolded, [documents[0], documents[-1]])
                 for width in (1, 3, 5, 8):
                     for inputs in (documents, [], [[]], [[1, 2]]):
                         actual = builder(inputs, width)
                         expected = make_document_windows(inputs, width)
-                        np.testing.assert_array_equal(actual, expected)
-                        self.assertEqual(actual.shape, expected.shape)
-                        self.assertEqual(actual.dtype, np.int64)
+                        torch.testing.assert_close(actual, expected, rtol=0, atol=0)
+                        self.assertEqual(actual.dtype, torch.long)
                 for width in (0, -1):
                     with self.assertRaisesRegex(ValueError, "at least one"):
                         builder(documents, width)
         self.assertEqual(definitions[0], definitions[1])
 
     def test_each_objective_uses_the_same_raw_windows_differently(self):
-        windows = torch.tensor(make_document_windows([[1, 2, 3, 4, 5, 6]], 5))
+        windows = make_document_windows([[1, 2, 3, 4, 5, 6]], 5)
         cbow_inputs, cbow_answers = objective_pairs(windows, "CBOW", bos_id=9)
         self.assertEqual(cbow_inputs.tolist(), [[1, 2, 4, 5], [2, 3, 5, 6]])
         self.assertEqual(cbow_answers.tolist(), [3, 4])
@@ -126,7 +124,7 @@ class DocumentWindowTests(unittest.TestCase):
         sources, targets = objective_pairs(windows, "Encoder-decoder", bos_id=9)
         self.assertEqual(sources.tolist(), [[1, 2, 3], [2, 3, 4]])
         self.assertEqual(targets.tolist(), [[9, 4, 5], [9, 5, 6]])
-        six_words = torch.tensor(make_document_windows([[1, 2, 3, 4, 5, 6]], 6))
+        six_words = make_document_windows([[1, 2, 3, 4, 5, 6]], 6)
         sources, targets = objective_pairs(six_words, "Encoder-decoder", bos_id=9)
         self.assertEqual(sources.tolist(), [[1, 2, 3]])
         self.assertEqual(targets.tolist(), [[9, 4, 5, 6]])
@@ -622,7 +620,7 @@ class CoreLessonTests(unittest.TestCase):
         stem = "03A-training-skeleton-and-word-objectives"
         cls.notebook = json.loads((chapter / f"{stem}.ipynb").read_text(encoding="utf-8"))
         cls.companion = (chapter / f"{stem}.py").read_text(encoding="utf-8")
-        cls.lab = json.loads((chapter / "03A-word-objective-comparison-lab.ipynb").read_text(encoding="utf-8"))
+        cls.lab = json.loads((chapter / "optional" / "03A-word-objective-comparison-lab.ipynb").read_text(encoding="utf-8"))
         cls.lab_code = {cell["id"]: "".join(cell["source"]) for cell in cls.lab["cells"]
                         if cell["cell_type"] == "code"}
         cls.code = {

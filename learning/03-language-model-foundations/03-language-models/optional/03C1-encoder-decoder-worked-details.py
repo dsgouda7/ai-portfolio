@@ -1,4 +1,4 @@
-"""Code companion for 03C1-encoder-decoder-worked-details.ipynb. Run from this directory."""
+"""Code companion for 03C1-encoder-decoder-worked-details.ipynb. Run from this folder or the chapter folder."""
 
 # %% 2. Teacher forcing keeps the training example on track
 import json
@@ -11,6 +11,16 @@ import matplotlib.pyplot as plt
 import torch
 from torch import nn
 from torch.nn import functional as F
+import sys
+# Helpers live in the chapter folder, one level above this optional lab.
+CHAPTER_DIR = next(
+    folder for folder in (
+        Path.cwd(), Path.cwd().parent,
+        Path.cwd() / "learning" / "03-language-model-foundations" / "03-language-models",
+    ) if (folder / "language_data.py").is_file()
+)
+if str(CHAPTER_DIR) not in sys.path:
+    sys.path.insert(0, str(CHAPTER_DIR))
 from language_data import CAT_SENTENCE, CAT_WORDS, CAT_FAMILY_WORDS
 random.seed(17); np.random.seed(17); torch.manual_seed(17)
 torch.set_num_threads(1)
@@ -259,7 +269,7 @@ for detached, offset, label in ((False, -.18, "Connected handoff"), (True, .18, 
 ax.set_xticks(positions, list(role_modules))
 ax.set(ylabel="Weight-gradient norm", title="Same prediction, but can its error teach the encoder?")
 ax.legend(); fig.tight_layout()
-fig.savefig(Path("images") / "03c-training-gradient-paths.png", dpi=160)
+fig.savefig(CHAPTER_DIR / "images" / "03c-training-gradient-paths.png", dpi=160)
 plt.show(); plt.close(fig)
 
 # %% 4.5 When do the weights actually change?
@@ -484,7 +494,7 @@ for mode, label, color in [(False, "One learned card", "#ef8a23"), (True, "Write
 ax.set(xlabel="Source length", ylabel="Complete free-running accuracy", ylim=(0, 1.05))
 ax.set_title("Word-order reversal: cat-family controlled access test")
 ax.legend(); fig.tight_layout()
-fig.savefig(Path("images") / "03c-cat-accuracy-by-length.png", dpi=160)
+fig.savefig(CHAPTER_DIR / "images" / "03c-cat-accuracy-by-length.png", dpi=160)
 plt.show(); plt.close(fig)
 
 # %% 5. Can it write without the teacher's history?
@@ -522,7 +532,7 @@ ax.set(xlabel="Reader source word and position", ylabel="Writer step",
        title="Measured free-running weights: diagnostic, not proof")
 fig.suptitle("Source: " + " ".join(source_to_reverse))
 fig.colorbar(image, ax=ax, label="Read weight"); fig.tight_layout()
-fig.savefig(Path("images") / "03c-cat-attention-map.png", dpi=160)
+fig.savefig(CHAPTER_DIR / "images" / "03c-cat-attention-map.png", dpi=160)
 plt.show(); plt.close(fig)
 # Sum only source columns [L+1,L] -> [L+1], one reading budget at each writer step.
 print("Row sums:", heat.sum(1).round(6).tolist())
@@ -550,7 +560,7 @@ evidence = {"fixed_summary_mean_free_sequence_accuracy": round(float(fixed_mean)
        "required_words": decode_ids(reversal_targets(probe)[0]),
        "most_read_addresses": heat.argmax(1).tolist(), "required_addresses": expected_addresses,
        "training_walkthrough": training_evidence}
-Path("images", "03c-cat-measured-evidence.json").write_text(
+(CHAPTER_DIR / "images" / "03c-cat-measured-evidence.json").write_text(
     json.dumps(evidence, indent=2) + "\n", encoding="utf-8",
 )
 print(evidence)

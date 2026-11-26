@@ -15,7 +15,6 @@ import torch
 from matplotlib.animation import FuncAnimation
 from matplotlib.patches import FancyBboxPatch
 from torch import nn
-from numpy.lib.stride_tricks import sliding_window_view
 
 from language_data import CAT_WORDS, CBOWDataLoader, SkipGramDataLoader, WindowDataLoader
 from language_validation import ModelValidator
@@ -81,14 +80,21 @@ def make_document_windows(id_documents, window_width):
     """Keep complete windows in document order; never bridge document boundaries."""
     if window_width < 1:
         raise ValueError("window_width must be at least one.")
+
     per_document = [
-        sliding_window_view(np.asarray(ids, dtype=np.int64), window_width)
-        for ids in id_documents
-        if len(ids) >= window_width
+        # unfold(dimension, size, step) slides a width-sized window one token at a time:
+        # a sentence of length L becomes [L - width + 1, width] windows.
+        torch.tensor(document, dtype=torch.long).unfold(0, window_width, 1)
+        for document in id_documents
+        if len(document) >= window_width
     ]
+
+    # If no document is long enough, return an empty [0, width] tensor.
     if not per_document:
-        return np.empty((0, window_width), dtype=np.int64)
-    return np.concatenate(per_document)
+        return torch.empty((0, window_width), dtype=torch.long)
+
+    # Concatenate windows from each document without crossing boundaries.
+    return torch.cat(per_document)
 
 
 def prepare_validation_windows(
@@ -104,7 +110,7 @@ def prepare_validation_windows(
         raise ValueError("The corpus does not contain the requested reserved stories.")
     documents = [sentence for story in stories for sentence in story_sentences(story)]
     ids = [[stoi.get(word, stoi["<unk>"]) for word in document] for document in documents]
-    windows = torch.tensor(make_document_windows(ids, window_width)[:max_windows], dtype=torch.long)
+    windows = make_document_windows(ids, window_width)[:max_windows]
     if len(windows) == 0:
         raise ValueError("Reserved stories must supply at least one complete validation window.")
     print(f"Reserved stories: {training_stories + 1} through "
@@ -129,7 +135,7 @@ def load_real_text(stories=STORY_BUDGET, train_windows=40_000, valid_windows=4_0
 
     def windows_for(sentences, limit, width=5, *, rng=generator):
         id_documents = [[word_ids.get(word, 0) for word in sentence] for sentence in sentences]
-        windows = torch.tensor(make_document_windows(id_documents, width), dtype=torch.long)
+        windows = make_document_windows(id_documents, width)
         # Sample whole rows independently for each window width,
         # never concatenate sentence ends with the next sentence's beginning.
         return windows[torch.randperm(len(windows), generator=rng)[:limit]]

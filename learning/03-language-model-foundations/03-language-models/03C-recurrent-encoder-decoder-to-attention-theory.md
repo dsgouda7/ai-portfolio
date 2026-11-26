@@ -16,7 +16,7 @@ Follow [03C](03C-recurrent-encoder-decoder-to-attention.ipynb) or its
 The main notebook explains the roles and learning process in plain English, with
 three short cells for fixed data, the model and training. Its recorded player
 compares practice with generation; the standalone evaluation stays in worked details.
-[Worked details](03C1-encoder-decoder-worked-details.ipynb) preserve every separate
+[Worked details](optional/03C1-encoder-decoder-worked-details.ipynb) preserve every separate
 diagnostic and the original two-model experiment; the measured comparisons below
 belong to that route, not the compact main demo.
 Keep **the cat sat on the mat**. Our checkable answer is
@@ -151,7 +151,7 @@ state, and across that boundary into the reader's source calculations.
 Shared reader weights gather contributions from the reads that helped make the summary.
 That is how the reader learns which details a later writer will need.
 
-The [worked gradient check](03C1-encoder-decoder-worked-details.ipynb#gradients)
+The [worked gradient check](optional/03C1-encoder-decoder-worked-details.ipynb#gradients)
 cuts only this backward connection with `detach`.
 The forward summary numbers, predictions and loss stay identical.
 But encoder weight gradients disappear; decoder and head gradients remain.
@@ -170,14 +170,14 @@ Backward populates gradients while leaving weights and saved forward values unch
 Adam then changes reader, writer, word-table and head weights.
 The next forward pass computes new states using those updated rules.
 
-The [worked optimizer check](03C1-encoder-decoder-worked-details.ipynb#optimizer)
+The [worked optimizer check](optional/03C1-encoder-decoder-worked-details.ipynb#optimizer)
 takes one update on a copy: this example's error falls from 2.5996 to 2.4178.
 That verifies the wiring, not generalization. The full comparison separately trains
 fresh models for 1,000 updates with matched batches and gradient clipping.
 Independent sources start fresh states; learned weights persist.
 
 To isolate the encoder's contribution, the
-[encoder-only proof](03C1-encoder-decoder-worked-details.ipynb#encoder-only) freezes the word table,
+[encoder-only proof](optional/03C1-encoder-decoder-worked-details.ipynb#encoder-only) freezes the word table,
 decoder and head. Only encoder weights change on the mat/rug pair.
 Its notes change and its first-answer error falls with the decoder fixed.
 That is a directly checkable meaning of **a better encoding**: more useful for
@@ -211,7 +211,7 @@ The comparison tests familiar lengths, not longer-length extrapolation.
 The practical question is: can the writer return a new input list in reverse
 without being given the answer words? A low practice loss alone does not answer it.
 
-The original [worked-details comparison](03C1-encoder-decoder-worked-details.ipynb#evaluation)
+The original [worked-details comparison](optional/03C1-encoder-decoder-worked-details.ipynb#evaluation)
 records complete free-running scores averaging 76.43% for one card and 97.50%
 for look-back. At length eight they are 17.5% and 90%.
 Parameter counts differ: 35,717 versus 52,933. Access and extra capacity arrive
@@ -229,7 +229,7 @@ is right, and are not needed to grade an exact reversal.
 
 The data creates correct answers. In the compact main demo, the training loop explicitly
 shifts them into previous-answer inputs before calling the model. In the original
-[worked adapter](03C1-encoder-decoder-worked-details.ipynb#adapter), `ReaderWriter`
+[worked adapter](optional/03C1-encoder-decoder-worked-details.ipynb#adapter), `ReaderWriter`
 receives the answers explicitly and builds those shifted inputs itself.
 A small registered wrapper passes word scores to the common
 loss while leaving attention maps out. Targets already align with scores; there is
@@ -259,7 +259,7 @@ Attention reads reusable information. It does not delete a source word, subtract
 remaining meaning, or guarantee one source word per answer word.
 Source activations stay fixed during this decode; training can still change the weights
 that will compute the next input's activations.
-The [read-only check](03C1-encoder-decoder-worked-details.ipynb#source-memory-check)
+The [read-only check](optional/03C1-encoder-decoder-worked-details.ipynb#source-memory-check)
 tests that distinction without another fit.
 
 The main [Concept recap](03C-recurrent-encoder-decoder-to-attention.ipynb#concept-recap)
